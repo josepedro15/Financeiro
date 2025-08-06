@@ -108,8 +108,9 @@ export default function Dashboard() {
       
       // Get all income transactions for current month
       const currentMonthIncome = allIncomeTransactions.filter(t => {
-        const transactionDate = new Date(t.transaction_date);
-        // JavaScript months are 0-based, but database months are 1-based
+        // Parse date correctly to avoid timezone issues
+        const [year, month, day] = t.transaction_date.split('-').map(Number);
+        const transactionDate = new Date(year, month - 1, day); // month - 1 because JS months are 0-based
         const transactionMonth = transactionDate.getMonth();
         const transactionYear = transactionDate.getFullYear();
         return transactionMonth === currentMonth && transactionYear === currentYear;
@@ -118,9 +119,11 @@ export default function Dashboard() {
       // Group by day
       const dailyRevenueMap = new Map();
       currentMonthIncome.forEach(t => {
-        const day = new Date(t.transaction_date).getDate();
-        const currentAmount = dailyRevenueMap.get(day) || 0;
-        dailyRevenueMap.set(day, currentAmount + Number(t.amount));
+        const [year, month, day] = t.transaction_date.split('-').map(Number);
+        const transactionDate = new Date(year, month - 1, day);
+        const dayOfMonth = transactionDate.getDate();
+        const currentAmount = dailyRevenueMap.get(dayOfMonth) || 0;
+        dailyRevenueMap.set(dayOfMonth, currentAmount + Number(t.amount));
       });
       
       // Create array for all days of month
@@ -135,16 +138,19 @@ export default function Dashboard() {
 
       // Calculate monthly revenue for current year - SIMPLIFIED
       const currentYearIncome = allIncomeTransactions.filter(t => {
-        const transactionDate = new Date(t.transaction_date);
+        const [year, month, day] = t.transaction_date.split('-').map(Number);
+        const transactionDate = new Date(year, month - 1, day);
         return transactionDate.getFullYear() === currentYear;
       });
       
       // Group by month
       const monthlyRevenueMap = new Map();
       currentYearIncome.forEach(t => {
-        const month = new Date(t.transaction_date).getMonth();
-        const currentAmount = monthlyRevenueMap.get(month) || 0;
-        monthlyRevenueMap.set(month, currentAmount + Number(t.amount));
+        const [year, month, day] = t.transaction_date.split('-').map(Number);
+        const transactionDate = new Date(year, month - 1, day);
+        const monthIndex = transactionDate.getMonth();
+        const currentAmount = monthlyRevenueMap.get(monthIndex) || 0;
+        monthlyRevenueMap.set(monthIndex, currentAmount + Number(t.amount));
       });
       
       const monthNames = [
@@ -172,7 +178,8 @@ export default function Dashboard() {
       // Debug month comparison
       console.log('=== MONTH COMPARISON DEBUG ===');
       allIncomeTransactions.slice(0, 3).forEach((t, index) => {
-        const transactionDate = new Date(t.transaction_date);
+        const [year, month, day] = t.transaction_date.split('-').map(Number);
+        const transactionDate = new Date(year, month - 1, day);
         const transactionMonth = transactionDate.getMonth();
         const transactionYear = transactionDate.getFullYear();
         console.log(`Transaction ${index + 1}:`, {
