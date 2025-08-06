@@ -28,9 +28,8 @@ interface Transaction {
   transaction_type: 'income' | 'expense' | 'transfer';
   category: string;
   transaction_date: string;
-  client_id?: string;
+  client_name?: string;
   account_id: string;
-  clients?: { name: string };
   accounts?: { name: string };
 }
 
@@ -40,10 +39,7 @@ interface Account {
   code: string;
 }
 
-interface Client {
-  id: string;
-  name: string;
-}
+
 
 export default function Transactions() {
   const { user } = useAuth();
@@ -52,7 +48,6 @@ export default function Transactions() {
   
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -64,7 +59,7 @@ export default function Transactions() {
     transaction_type: 'income' as 'income' | 'expense' | 'transfer',
     category: '',
     transaction_date: new Date().toISOString().split('T')[0],
-    client_id: '',
+    client_name: '',
     account_id: ''
   });
 
@@ -88,7 +83,7 @@ export default function Transactions() {
       // Load transactions
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('transactions')
-        .select('*, clients(name), accounts(name)')
+        .select('*, accounts(name)')
         .eq('user_id', user.id)
         .order('transaction_date', { ascending: false });
 
@@ -116,31 +111,15 @@ export default function Transactions() {
         });
       }
 
-      // Load clients
-      const { data: clientsData, error: clientsError } = await supabase
-        .from('clients')
-        .select('id, name')
-        .eq('user_id', user.id)
-        .eq('is_active', true);
 
-      if (clientsError) {
-        console.error('Error loading clients:', clientsError);
-        toast({
-          title: "Erro",
-          description: `Erro ao carregar clientes: ${clientsError.message}`,
-          variant: "destructive"
-        });
-      }
 
       console.log('Loaded data:', {
         transactions: transactionsData?.length || 0,
-        accounts: accountsData?.length || 0,
-        clients: clientsData?.length || 0
+        accounts: accountsData?.length || 0
       });
 
       setTransactions((transactionsData as Transaction[]) || []);
       setAccounts(accountsData || []);
-      setClients(clientsData || []);
 
       // If no accounts exist, show a warning
       if (!accountsData || accountsData.length === 0) {
@@ -185,7 +164,7 @@ export default function Transactions() {
         category: formData.category,
         transaction_date: formData.transaction_date,
         account_id: formData.account_id,
-        client_id: formData.client_id || null
+        client_name: formData.client_name || null
       };
 
       if (editingTransaction) {
@@ -220,7 +199,7 @@ export default function Transactions() {
         transaction_type: 'income',
         category: '',
         transaction_date: new Date().toISOString().split('T')[0],
-        client_id: '',
+        client_name: '',
         account_id: ''
       });
       setEditingTransaction(null);
@@ -254,7 +233,7 @@ export default function Transactions() {
       transaction_type: transaction.transaction_type,
       category: transaction.category || '',
       transaction_date: transaction.transaction_date,
-      client_id: transaction.client_id || '',
+      client_name: transaction.client_name || '',
       account_id: transaction.account_id
     });
     setDialogOpen(true);
@@ -360,7 +339,7 @@ export default function Transactions() {
               <Button onClick={() => {
                 console.log('Button clicked - opening dialog');
                 console.log('Current accounts:', accounts);
-                console.log('Current clients:', clients);
+            
                 setEditingTransaction(null);
                 setFormData({
                   description: '',
@@ -447,23 +426,13 @@ export default function Transactions() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="client_id">Cliente (Opcional)</Label>
-                  <Select 
-                    value={formData.client_id || "none"} 
-                    onValueChange={(value) => setFormData({ ...formData, client_id: value === "none" ? null : value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um cliente" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhum cliente</SelectItem>
-                      {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="client_name">Cliente (Opcional)</Label>
+                  <Input
+                    id="client_name"
+                    placeholder="Digite o nome do cliente"
+                    value={formData.client_name}
+                    onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -546,7 +515,7 @@ export default function Transactions() {
                       <div>
                         <p className="font-medium">{transaction.description}</p>
                         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                          <span>{transaction.clients?.name || 'Sem cliente'}</span>
+                          <span>{transaction.client_name || 'Sem cliente'}</span>
                           <span>•</span>
                           <span>{transaction.accounts?.name}</span>
                           <span>•</span>
