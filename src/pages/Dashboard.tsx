@@ -168,14 +168,26 @@ export default function Dashboard() {
       console.log('Current month/year:', currentMonth + 1, currentYear);
       console.log('Current month income transactions:', currentMonthIncome.length);
       console.log('Current year income transactions:', currentYearIncome.length);
-      console.log('All transaction dates:', allIncomeTransactions.map(t => ({ 
-        date: t.transaction_date, 
-        amount: t.amount,
-        parsedDate: new Date(t.transaction_date),
-        day: new Date(t.transaction_date).getDate(),
-        month: new Date(t.transaction_date).getMonth() + 1,
-        year: new Date(t.transaction_date).getFullYear()
-      })));
+      
+      // Debug month comparison
+      console.log('=== MONTH COMPARISON DEBUG ===');
+      allIncomeTransactions.slice(0, 3).forEach((t, index) => {
+        const transactionDate = new Date(t.transaction_date);
+        const transactionMonth = transactionDate.getMonth();
+        const transactionYear = transactionDate.getFullYear();
+        console.log(`Transaction ${index + 1}:`, {
+          originalDate: t.transaction_date,
+          parsedDate: transactionDate,
+          transactionMonth,
+          transactionYear,
+          currentMonth,
+          currentYear,
+          monthMatch: transactionMonth === currentMonth,
+          yearMatch: transactionYear === currentYear,
+          bothMatch: transactionMonth === currentMonth && transactionYear === currentYear
+        });
+      });
+      
       console.log('Daily revenue map:', Object.fromEntries(dailyRevenueMap));
       console.log('Monthly revenue map:', Object.fromEntries(monthlyRevenueMap));
       console.log('Daily revenue data:', dailyRevenue);
