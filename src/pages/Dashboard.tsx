@@ -141,6 +141,16 @@ export default function Dashboard() {
         });
       }
 
+      // Debug logs
+      console.log('=== DEBUG DASHBOARD ===');
+      console.log('Total transactions loaded:', transactionsData?.length || 0);
+      console.log('Income transactions:', transactionsData?.filter(t => t.transaction_type === 'income').length || 0);
+      console.log('Total income:', totalIncome);
+      console.log('Daily revenue data:', dailyRevenue);
+      console.log('Monthly revenue data:', monthlyRevenue);
+      console.log('Sample transactions:', transactionsData?.slice(0, 3));
+      console.log('=======================');
+
       setFinancialData({
         totalIncome,
         totalExpenses,
