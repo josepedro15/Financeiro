@@ -109,8 +109,10 @@ export default function Dashboard() {
       // Get all income transactions for current month
       const currentMonthIncome = allIncomeTransactions.filter(t => {
         const transactionDate = new Date(t.transaction_date);
-        return transactionDate.getMonth() === currentMonth && 
-               transactionDate.getFullYear() === currentYear;
+        // JavaScript months are 0-based, but database months are 1-based
+        const transactionMonth = transactionDate.getMonth();
+        const transactionYear = transactionDate.getFullYear();
+        return transactionMonth === currentMonth && transactionYear === currentYear;
       });
       
       // Group by day
