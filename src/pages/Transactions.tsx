@@ -23,10 +23,10 @@ import {
 
 interface Transaction {
   id: string;
-  description: string;
+  description?: string;
   amount: number;
   transaction_type: 'income' | 'expense' | 'transfer';
-  category: string;
+  category?: string;
   transaction_date: string;
   client_name?: string;
   account_id: string;
@@ -367,13 +367,12 @@ export default function Transactions() {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="description">Descrição</Label>
+                  <Label htmlFor="description">Descrição (Opcional)</Label>
                   <Input
                     id="description"
                     placeholder="Descrição da transação"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    required
                   />
                 </div>
 
@@ -513,7 +512,7 @@ export default function Transactions() {
                         )}
                       </div>
                       <div>
-                        <p className="font-medium">{transaction.description}</p>
+                        <p className="font-medium">{transaction.description || 'Sem descrição'}</p>
                         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                           <span>{transaction.client_name || 'Sem cliente'}</span>
                           <span>•</span>
