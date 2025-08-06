@@ -163,7 +163,19 @@ export default function Dashboard() {
       console.log('Income transactions:', transactionsData?.filter(t => t.transaction_type === 'income').length || 0);
       console.log('Total income:', totalIncome);
       console.log('Current month/year:', currentMonth + 1, currentYear);
-      console.log('Sample transaction dates:', transactionsData?.slice(0, 3).map(t => ({ date: t.transaction_date, type: t.transaction_type, amount: t.amount })));
+      console.log('Current month income transactions:', currentMonthIncome.length);
+      console.log('Current year income transactions:', currentYearIncome.length);
+      console.log('Sample transaction dates:', transactionsData?.slice(0, 3).map(t => ({ 
+        date: t.transaction_date, 
+        type: t.transaction_type, 
+        amount: t.amount,
+        parsedDate: new Date(t.transaction_date),
+        day: new Date(t.transaction_date).getDate(),
+        month: new Date(t.transaction_date).getMonth(),
+        year: new Date(t.transaction_date).getFullYear()
+      })));
+      console.log('Daily revenue map:', Object.fromEntries(dailyRevenueMap));
+      console.log('Monthly revenue map:', Object.fromEntries(monthlyRevenueMap));
       console.log('Daily revenue data:', dailyRevenue);
       console.log('Monthly revenue data:', monthlyRevenue);
       console.log('=======================');
