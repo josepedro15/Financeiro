@@ -237,18 +237,18 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-primary-foreground" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
+              <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
             </div>
-            <h1 className="text-2xl font-bold">FinanceiroLogotiq</h1>
+            <h1 className="text-lg sm:text-2xl font-bold">FinanceiroLogotiq</h1>
           </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-muted-foreground">
+          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
+            <span className="text-xs sm:text-sm text-muted-foreground text-center">
               Bem-vindo, {user?.email}
             </span>
-            <Button variant="outline" onClick={signOut}>
+            <Button variant="outline" size="sm" onClick={signOut}>
               Sair
             </Button>
           </div>
@@ -256,21 +256,21 @@ export default function Dashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Saldo Total Card */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <Card className="shadow-finance-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-semibold">Saldo Total</CardTitle>
-              <DollarSign className="h-6 w-6 text-primary" />
+              <CardTitle className="text-sm sm:text-lg font-semibold">Saldo Total</CardTitle>
+              <DollarSign className="h-4 w-4 sm:h-6 sm:w-6 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className={`text-4xl font-bold ${
+              <div className={`text-2xl sm:text-4xl font-bold ${
                 (financialData.balancePJ + financialData.balanceCheckout) >= 0 ? 'text-success' : 'text-destructive'
               }`}>
                 {formatCurrency(financialData.balancePJ + financialData.balanceCheckout)}
               </div>
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                 Soma dos saldos: Conta PJ + Conta Checkout
               </p>
             </CardContent>
@@ -278,14 +278,14 @@ export default function Dashboard() {
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           <Card className="shadow-finance-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Receitas</CardTitle>
-              <TrendingUp className="h-4 w-4 text-success" />
+              <CardTitle className="text-xs sm:text-sm font-medium">Receitas</CardTitle>
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-success">
+              <div className="text-lg sm:text-2xl font-bold text-success">
                 {formatCurrency(financialData.totalIncome)}
               </div>
             </CardContent>
@@ -293,11 +293,11 @@ export default function Dashboard() {
 
           <Card className="shadow-finance-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Despesas</CardTitle>
-              <TrendingDown className="h-4 w-4 text-destructive" />
+              <CardTitle className="text-xs sm:text-sm font-medium">Despesas</CardTitle>
+              <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-destructive" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-destructive">
+              <div className="text-lg sm:text-2xl font-bold text-destructive">
                 {formatCurrency(financialData.totalExpenses)}
               </div>
             </CardContent>
@@ -305,11 +305,11 @@ export default function Dashboard() {
 
           <Card className="shadow-finance-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Saldo Conta PJ</CardTitle>
-              <DollarSign className="h-4 w-4 text-primary" />
+              <CardTitle className="text-xs sm:text-sm font-medium">Saldo PJ</CardTitle>
+              <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${
+              <div className={`text-lg sm:text-2xl font-bold ${
                 financialData.balancePJ >= 0 ? 'text-success' : 'text-destructive'
               }`}>
                 {formatCurrency(financialData.balancePJ)}
@@ -319,28 +319,11 @@ export default function Dashboard() {
 
           <Card className="shadow-finance-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Saldo Conta Checkout</CardTitle>
-              <CreditCard className="h-4 w-4 text-info" />
+              <CardTitle className="text-xs sm:text-sm font-medium">Clientes</CardTitle>
+              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-info" />
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${
-                financialData.balanceCheckout >= 0 ? 'text-success' : 'text-destructive'
-              }`}>
-                {formatCurrency(financialData.balanceCheckout)}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Clientes Card */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="shadow-finance-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Clientes</CardTitle>
-              <Users className="h-4 w-4 text-info" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-info">
+              <div className="text-lg sm:text-2xl font-bold text-info">
                 {financialData.clientsCount}
               </div>
             </CardContent>
@@ -348,27 +331,27 @@ export default function Dashboard() {
         </div>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
           {/* Daily Revenue Chart */}
           <Card className="shadow-finance-md">
             <CardHeader>
-              <CardTitle>Faturamento Diário - Mês Atual</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-sm sm:text-base">Faturamento Diário - Mês Atual</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
                 Receitas por dia do mês em vigor
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={financialData.dailyRevenue}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     dataKey="date" 
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 10 }}
                     interval={2}
                   />
                   <YAxis 
                     tickFormatter={(value) => `R$ ${value}`}
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 10 }}
                   />
                   <Tooltip 
                     formatter={(value: any) => [`R$ ${value}`, 'Receita']}
@@ -379,8 +362,8 @@ export default function Dashboard() {
                     dataKey="revenue" 
                     stroke="#10b981" 
                     strokeWidth={2}
-                    dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2 }}
+                    dot={{ fill: '#10b981', strokeWidth: 2, r: 3 }}
+                    activeDot={{ r: 5, stroke: '#10b981', strokeWidth: 2 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -390,22 +373,22 @@ export default function Dashboard() {
           {/* Monthly Revenue Chart */}
           <Card className="shadow-finance-md">
             <CardHeader>
-              <CardTitle>Evolução Mensal - Ano Atual</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-sm sm:text-base">Evolução Mensal - Ano Atual</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
                 Receitas por mês desde o início do ano
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={financialData.monthlyRevenue}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     dataKey="month" 
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 10 }}
                   />
                   <YAxis 
                     tickFormatter={(value) => `R$ ${value}`}
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 10 }}
                   />
                   <Tooltip 
                     formatter={(value: any) => [`R$ ${value}`, 'Receita']}
@@ -425,49 +408,49 @@ export default function Dashboard() {
         {/* Recent Transactions */}
         <Card className="shadow-finance-md">
           <CardHeader>
-            <CardTitle>Transações Recentes</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-sm sm:text-base">Transações Recentes</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               Últimas movimentações financeiras
             </CardDescription>
           </CardHeader>
           <CardContent>
             {financialData.recentTransactions.length === 0 ? (
               <div className="text-center py-8">
-                <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
+                <CreditCard className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Nenhuma transação encontrada. Comece adicionando suas primeiras movimentações.
                 </p>
-                <Button className="mt-4" onClick={() => navigate('/transactions')}>
+                <Button className="mt-4" size="sm" onClick={() => navigate('/transactions')}>
                   Adicionar Transação
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {financialData.recentTransactions.map((transaction) => (
                   <div 
                     key={transaction.id} 
-                    className="flex items-center justify-between p-4 rounded-lg border"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-lg border gap-2 sm:gap-0"
                   >
-                    <div className="flex items-center space-x-4">
-                      <div className={`p-2 rounded-full ${
+                    <div className="flex items-center space-x-3 sm:space-x-4">
+                      <div className={`p-1.5 sm:p-2 rounded-full ${
                         transaction.transaction_type === 'income' 
                           ? 'bg-success/10' 
                           : 'bg-destructive/10'
                       }`}>
                         {transaction.transaction_type === 'income' ? (
-                          <ArrowUpRight className="h-4 w-4 text-success" />
+                          <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
                         ) : (
-                          <ArrowDownRight className="h-4 w-4 text-destructive" />
+                          <ArrowDownRight className="h-3 w-3 sm:h-4 sm:w-4 text-destructive" />
                         )}
                       </div>
-                      <div>
-                        <p className="font-medium">{transaction.description}</p>
-                        <p className="text-sm text-muted-foreground">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm sm:text-base truncate">{transaction.description}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">
                           {transaction.client_name || 'Sem cliente'} • {transaction.account_name}
                         </p>
                       </div>
                     </div>
-                    <div className={`font-semibold ${
+                    <div className={`font-semibold text-sm sm:text-base ${
                       transaction.transaction_type === 'income' ? 'text-success' : 'text-destructive'
                     }`}>
                       {transaction.transaction_type === 'income' ? '+' : '-'}
@@ -481,22 +464,22 @@ export default function Dashboard() {
         </Card>
 
         {/* Quick Actions */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <Button 
-            className="h-20 text-lg"
+            className="h-16 sm:h-20 text-sm sm:text-lg"
             onClick={() => navigate('/transactions')}
           >
             Gerenciar Transações
           </Button>
           <Button 
-            className="h-20 text-lg" 
+            className="h-16 sm:h-20 text-sm sm:text-lg" 
             variant="outline"
             onClick={() => navigate('/clients')}
           >
             Gerenciar Clientes
           </Button>
           <Button 
-            className="h-20 text-lg" 
+            className="h-16 sm:h-20 text-sm sm:text-lg col-span-1 sm:col-span-2 lg:col-span-1" 
             variant="secondary"
             onClick={() => navigate('/reports')}
           >
