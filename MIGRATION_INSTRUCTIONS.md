@@ -1,12 +1,18 @@
-# Instruções para Migração do Campo Cliente
+# Instruções para Migração dos Campos Cliente e Conta
 
 ## O que foi alterado
 
-O campo "Cliente (Opcional)" na página de transações foi alterado de um dropdown (que puxava dados do cadastro de clientes) para um campo de texto livre, onde você pode digitar qualquer nome de cliente.
+1. **Campo "Cliente (Opcional)"**: Alterado de dropdown (que puxava dados do cadastro de clientes) para um campo de texto livre, onde você pode digitar qualquer nome de cliente.
+
+2. **Campo "Conta"**: Simplificado para ter apenas 2 opções fixas:
+   - **Conta PJ**
+   - **Conta Checkout**
 
 ## Alterações no Código
 
-✅ **Concluído**: O código foi atualizado para usar um campo de texto livre ao invés do dropdown.
+✅ **Concluído**: O código foi atualizado para usar:
+- Campo de texto livre para cliente
+- Dropdown fixo com apenas 2 opções de conta
 
 ## Migração do Banco de Dados
 
@@ -25,18 +31,20 @@ Para aplicar as alterações no banco de dados, siga estes passos:
 
 ### 3. Verifique a Migração
 - A consulta final do arquivo SQL mostrará as colunas da tabela `transactions`
-- Confirme que a coluna `client_name` foi criada e `client_id` foi removida
+- Confirme que as colunas `client_name` e `account_name` foram criadas
+- Confirme que as colunas `client_id` e `account_id` foram removidas
 
 ## Resultado
 
 Após aplicar a migração:
 - O campo "Cliente (Opcional)" será um campo de texto livre
+- O campo "Conta" terá apenas 2 opções: "Conta PJ" e "Conta Checkout"
 - Você poderá digitar qualquer nome de cliente
-- O campo não será mais vinculado ao cadastro de clientes
 - As transações existentes manterão seus dados (se houver)
 
 ## Observações
 
 - Esta alteração não afeta o cadastro de clientes em outras partes do sistema
-- O campo continua sendo opcional
-- Você pode deixar em branco se não quiser especificar um cliente 
+- O campo cliente continua sendo opcional
+- O campo conta agora é obrigatório e tem apenas 2 opções fixas
+- Você pode deixar o campo cliente em branco se não quiser especificar 

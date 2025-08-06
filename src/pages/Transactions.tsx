@@ -29,14 +29,12 @@ interface Transaction {
   category?: string;
   transaction_date: string;
   client_name?: string;
-  account_id: string;
-  accounts?: { name: string };
+  account_name: string;
 }
 
 interface Account {
   id: string;
   name: string;
-  code: string;
 }
 
 
@@ -47,7 +45,6 @@ export default function Transactions() {
   const { toast } = useToast();
   
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -60,8 +57,14 @@ export default function Transactions() {
     category: '',
     transaction_date: new Date().toISOString().split('T')[0],
     client_name: '',
-    account_id: ''
+    account_name: ''
   });
+
+  // Contas fixas
+  const accounts: Account[] = [
+    { id: 'pj', name: 'Conta PJ' },
+    { id: 'checkout', name: 'Conta Checkout' }
+  ];
 
   useEffect(() => {
     if (!user) {
@@ -83,7 +86,7 @@ export default function Transactions() {
       // Load transactions
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('transactions')
-        .select('*, accounts(name)')
+        .select('*')
         .eq('user_id', user.id)
         .order('transaction_date', { ascending: false });
 
@@ -96,39 +99,15 @@ export default function Transactions() {
         });
       }
 
-      // Load accounts
-      const { data: accountsData, error: accountsError } = await supabase
-        .from('accounts')
-        .select('id, name, code')
-        .eq('is_active', true);
 
-      if (accountsError) {
-        console.error('Error loading accounts:', accountsError);
-        toast({
-          title: "Erro",
-          description: `Erro ao carregar contas: ${accountsError.message}`,
-          variant: "destructive"
-        });
-      }
 
 
 
       console.log('Loaded data:', {
-        transactions: transactionsData?.length || 0,
-        accounts: accountsData?.length || 0
+        transactions: transactionsData?.length || 0
       });
 
       setTransactions((transactionsData as Transaction[]) || []);
-      setAccounts(accountsData || []);
-
-      // If no accounts exist, show a warning
-      if (!accountsData || accountsData.length === 0) {
-        toast({
-          title: "Aviso",
-          description: "Nenhuma conta encontrada. Você precisa criar contas antes de adicionar transações.",
-          variant: "destructive"
-        });
-      }
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
@@ -163,7 +142,7 @@ export default function Transactions() {
         transaction_type: formData.transaction_type,
         category: formData.category,
         transaction_date: formData.transaction_date,
-        account_id: formData.account_id,
+        account_name: formData.account_name,
         client_name: formData.client_name || null
       };
 
@@ -200,7 +179,7 @@ export default function Transactions() {
         category: '',
         transaction_date: new Date().toISOString().split('T')[0],
         client_name: '',
-        account_id: ''
+        account_name: ''
       });
       setEditingTransaction(null);
       setDialogOpen(false);
@@ -234,7 +213,7 @@ export default function Transactions() {
       category: transaction.category || '',
       transaction_date: transaction.transaction_date,
       client_name: transaction.client_name || '',
-      account_id: transaction.account_id
+      account_name: transaction.account_name
     });
     setDialogOpen(true);
   };
@@ -281,6 +260,8 @@ export default function Transactions() {
       currency: 'BRL'
     }).format(amount);
   };
+
+
 
   const runAuthTests = async () => {
     console.log('🧪 Executando testes de autorização...');
@@ -406,18 +387,18 @@ export default function Transactions() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="account_id">Conta</Label>
+                  <Label htmlFor="account_name">Conta</Label>
                   <Select 
-                    value={formData.account_id || ""} 
-                    onValueChange={(value) => setFormData({ ...formData, account_id: value })}
+                    value={formData.account_name || ""} 
+                    onValueChange={(value) => setFormData({ ...formData, account_name: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione uma conta" />
                     </SelectTrigger>
                     <SelectContent>
                       {accounts.map((account) => (
-                        <SelectItem key={account.id} value={account.id}>
-                          {account.code} - {account.name}
+                        <SelectItem key={account.id} value={account.name}>
+                          {account.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -516,7 +497,7 @@ export default function Transactions() {
                         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                           <span>{transaction.client_name || 'Sem cliente'}</span>
                           <span>•</span>
-                          <span>{transaction.accounts?.name}</span>
+                          <span>{transaction.account_name}</span>
                           <span>•</span>
                           <span>{new Date(transaction.transaction_date).toLocaleDateString('pt-BR')}</span>
                           {transaction.category && (

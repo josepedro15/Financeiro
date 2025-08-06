@@ -17,7 +17,8 @@ import {
 interface FinancialData {
   totalIncome: number;
   totalExpenses: number;
-  balance: number;
+  balancePJ: number;
+  balanceCheckout: number;
   clientsCount: number;
   recentTransactions: any[];
 }
@@ -28,7 +29,8 @@ export default function Dashboard() {
   const [financialData, setFinancialData] = useState<FinancialData>({
     totalIncome: 0,
     totalExpenses: 0,
-    balance: 0,
+    balancePJ: 0,
+    balanceCheckout: 0,
     clientsCount: 0,
     recentTransactions: []
   });
@@ -46,19 +48,11 @@ export default function Dashboard() {
     if (!user) return;
 
     try {
-      // Get income transactions
-      const { data: incomeData } = await supabase
+      // Get all transactions
+      const { data: transactionsData } = await supabase
         .from('transactions')
-        .select('amount')
-        .eq('user_id', user.id)
-        .eq('transaction_type', 'income');
-
-      // Get expense transactions
-      const { data: expenseData } = await supabase
-        .from('transactions')
-        .select('amount')
-        .eq('user_id', user.id)
-        .eq('transaction_type', 'expense');
+        .select('amount, transaction_type, account_name')
+        .eq('user_id', user.id);
 
       // Get clients count
       const { data: clientsData } = await supabase
@@ -70,19 +64,40 @@ export default function Dashboard() {
       // Get recent transactions
       const { data: recentData } = await supabase
         .from('transactions')
-        .select('*, clients(name), accounts(name)')
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(5);
 
-      const totalIncome = incomeData?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
-      const totalExpenses = expenseData?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
-      const balance = totalIncome - totalExpenses;
+      // Calculate totals
+      const totalIncome = transactionsData
+        ?.filter(t => t.transaction_type === 'income')
+        ?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+
+      const totalExpenses = transactionsData
+        ?.filter(t => t.transaction_type === 'expense')
+        ?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+
+      // Calculate balance by account
+      const balancePJ = transactionsData
+        ?.filter(t => t.account_name === 'Conta PJ')
+        ?.reduce((sum, t) => {
+          const amount = Number(t.amount);
+          return t.transaction_type === 'income' ? sum + amount : sum - amount;
+        }, 0) || 0;
+
+      const balanceCheckout = transactionsData
+        ?.filter(t => t.account_name === 'Conta Checkout')
+        ?.reduce((sum, t) => {
+          const amount = Number(t.amount);
+          return t.transaction_type === 'income' ? sum + amount : sum - amount;
+        }, 0) || 0;
 
       setFinancialData({
         totalIncome,
         totalExpenses,
-        balance,
+        balancePJ,
+        balanceCheckout,
         clientsCount: clientsData?.length || 0,
         recentTransactions: recentData || []
       });
@@ -160,18 +175,35 @@ export default function Dashboard() {
 
           <Card className="shadow-finance-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Saldo</CardTitle>
+              <CardTitle className="text-sm font-medium">Saldo Conta PJ</CardTitle>
               <DollarSign className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className={`text-2xl font-bold ${
-                financialData.balance >= 0 ? 'text-success' : 'text-destructive'
+                financialData.balancePJ >= 0 ? 'text-success' : 'text-destructive'
               }`}>
-                {formatCurrency(financialData.balance)}
+                {formatCurrency(financialData.balancePJ)}
               </div>
             </CardContent>
           </Card>
 
+          <Card className="shadow-finance-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Saldo Conta Checkout</CardTitle>
+              <CreditCard className="h-4 w-4 text-info" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${
+                financialData.balanceCheckout >= 0 ? 'text-success' : 'text-destructive'
+              }`}>
+                {formatCurrency(financialData.balanceCheckout)}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Clientes Card */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="shadow-finance-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Clientes</CardTitle>
@@ -226,7 +258,7 @@ export default function Dashboard() {
                       <div>
                         <p className="font-medium">{transaction.description}</p>
                         <p className="text-sm text-muted-foreground">
-                          {transaction.clients?.name || 'Sem cliente'} • {transaction.accounts?.name}
+                          {transaction.client_name || 'Sem cliente'} • {transaction.account_name}
                         </p>
                       </div>
                     </div>
