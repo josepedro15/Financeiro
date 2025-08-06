@@ -103,13 +103,15 @@ export default function Dashboard() {
       const currentMonth = currentDate.getMonth();
       const currentYear = currentDate.getFullYear();
       
+      // Get all income transactions (not just current month)
+      const allIncomeTransactions = transactionsData?.filter(t => t.transaction_type === 'income') || [];
+      
       // Get all income transactions for current month
-      const currentMonthIncome = transactionsData?.filter(t => {
+      const currentMonthIncome = allIncomeTransactions.filter(t => {
         const transactionDate = new Date(t.transaction_date);
-        return t.transaction_type === 'income' && 
-               transactionDate.getMonth() === currentMonth && 
+        return transactionDate.getMonth() === currentMonth && 
                transactionDate.getFullYear() === currentYear;
-      }) || [];
+      });
       
       // Group by day
       const dailyRevenueMap = new Map();
@@ -130,11 +132,10 @@ export default function Dashboard() {
       }
 
       // Calculate monthly revenue for current year - SIMPLIFIED
-      const currentYearIncome = transactionsData?.filter(t => {
+      const currentYearIncome = allIncomeTransactions.filter(t => {
         const transactionDate = new Date(t.transaction_date);
-        return t.transaction_type === 'income' && 
-               transactionDate.getFullYear() === currentYear;
-      }) || [];
+        return transactionDate.getFullYear() === currentYear;
+      });
       
       // Group by month
       const monthlyRevenueMap = new Map();
@@ -160,18 +161,17 @@ export default function Dashboard() {
       // Debug logs
       console.log('=== DEBUG DASHBOARD ===');
       console.log('Total transactions loaded:', transactionsData?.length || 0);
-      console.log('Income transactions:', transactionsData?.filter(t => t.transaction_type === 'income').length || 0);
+      console.log('All income transactions:', allIncomeTransactions.length);
       console.log('Total income:', totalIncome);
       console.log('Current month/year:', currentMonth + 1, currentYear);
       console.log('Current month income transactions:', currentMonthIncome.length);
       console.log('Current year income transactions:', currentYearIncome.length);
-      console.log('Sample transaction dates:', transactionsData?.slice(0, 3).map(t => ({ 
+      console.log('All transaction dates:', allIncomeTransactions.map(t => ({ 
         date: t.transaction_date, 
-        type: t.transaction_type, 
         amount: t.amount,
         parsedDate: new Date(t.transaction_date),
         day: new Date(t.transaction_date).getDate(),
-        month: new Date(t.transaction_date).getMonth(),
+        month: new Date(t.transaction_date).getMonth() + 1,
         year: new Date(t.transaction_date).getFullYear()
       })));
       console.log('Daily revenue map:', Object.fromEntries(dailyRevenueMap));
