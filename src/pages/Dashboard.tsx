@@ -13,6 +13,7 @@ import {
   ArrowUpRight,
   ArrowDownRight
 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 interface FinancialData {
   totalIncome: number;
@@ -21,6 +22,8 @@ interface FinancialData {
   balanceCheckout: number;
   clientsCount: number;
   recentTransactions: any[];
+  dailyRevenue: Array<{ date: string; revenue: number }>;
+  monthlyRevenue: Array<{ month: string; revenue: number }>;
 }
 
 export default function Dashboard() {
@@ -32,7 +35,9 @@ export default function Dashboard() {
     balancePJ: 0,
     balanceCheckout: 0,
     clientsCount: 0,
-    recentTransactions: []
+    recentTransactions: [],
+    dailyRevenue: [],
+    monthlyRevenue: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -93,13 +98,58 @@ export default function Dashboard() {
           return t.transaction_type === 'income' ? sum + amount : sum - amount;
         }, 0) || 0;
 
+      // Calculate daily revenue for current month
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth();
+      const currentYear = currentDate.getFullYear();
+      
+      const dailyRevenue = [];
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayRevenue = transactionsData
+          ?.filter(t => t.transaction_type === 'income' && t.transaction_date === dateStr)
+          ?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+        
+        dailyRevenue.push({
+          date: `${day}`,
+          revenue: dayRevenue
+        });
+      }
+
+      // Calculate monthly revenue for current year
+      const monthlyRevenue = [];
+      const monthNames = [
+        'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+        'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+      ];
+      
+      for (let month = 0; month < 12; month++) {
+        const monthRevenue = transactionsData
+          ?.filter(t => {
+            const transactionDate = new Date(t.transaction_date);
+            return t.transaction_type === 'income' && 
+                   transactionDate.getMonth() === month && 
+                   transactionDate.getFullYear() === currentYear;
+          })
+          ?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+        
+        monthlyRevenue.push({
+          month: monthNames[month],
+          revenue: monthRevenue
+        });
+      }
+
       setFinancialData({
         totalIncome,
         totalExpenses,
         balancePJ,
         balanceCheckout,
         clientsCount: clientsData?.length || 0,
-        recentTransactions: recentData || []
+        recentTransactions: recentData || [],
+        dailyRevenue,
+        monthlyRevenue
       });
     } catch (error) {
       console.error('Error loading financial data:', error);
@@ -147,6 +197,26 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
+        {/* Saldo Total Card */}
+        <div className="mb-8">
+          <Card className="shadow-finance-md">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-lg font-semibold">Saldo Total</CardTitle>
+              <DollarSign className="h-6 w-6 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-4xl font-bold ${
+                (financialData.balancePJ + financialData.balanceCheckout) >= 0 ? 'text-success' : 'text-destructive'
+              }`}>
+                {formatCurrency(financialData.balancePJ + financialData.balanceCheckout)}
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Soma dos saldos: Conta PJ + Conta Checkout
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="shadow-finance-sm">
@@ -213,6 +283,81 @@ export default function Dashboard() {
               <div className="text-2xl font-bold text-info">
                 {financialData.clientsCount}
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Daily Revenue Chart */}
+          <Card className="shadow-finance-md">
+            <CardHeader>
+              <CardTitle>Faturamento Diário - Mês Atual</CardTitle>
+              <CardDescription>
+                Receitas por dia do mês em vigor
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={financialData.dailyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 12 }}
+                    interval={2}
+                  />
+                  <YAxis 
+                    tickFormatter={(value) => `R$ ${value}`}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <Tooltip 
+                    formatter={(value: any) => [`R$ ${value}`, 'Receita']}
+                    labelFormatter={(label) => `Dia ${label}`}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="#10b981" 
+                    strokeWidth={2}
+                    dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Monthly Revenue Chart */}
+          <Card className="shadow-finance-md">
+            <CardHeader>
+              <CardTitle>Evolução Mensal - Ano Atual</CardTitle>
+              <CardDescription>
+                Receitas por mês desde o início do ano
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={financialData.monthlyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="month" 
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis 
+                    tickFormatter={(value) => `R$ ${value}`}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <Tooltip 
+                    formatter={(value: any) => [`R$ ${value}`, 'Receita']}
+                    labelFormatter={(label) => `${label}`}
+                  />
+                  <Bar 
+                    dataKey="revenue" 
+                    fill="#10b981" 
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>
