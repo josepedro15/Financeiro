@@ -125,7 +125,7 @@ export default function Transactions() {
     if (!user) return;
 
     // Validação adicional
-    if (!formData.account_id) {
+    if (!formData.account_name) {
       toast({
         title: "Erro",
         description: "Selecione uma conta para a transação",
