@@ -56,7 +56,7 @@ export default function Dashboard() {
       // Get all transactions
       const { data: transactionsData } = await supabase
         .from('transactions')
-        .select('amount, transaction_type, account_name')
+        .select('amount, transaction_type, account_name, transaction_date')
         .eq('user_id', user.id);
 
       // Get clients count
