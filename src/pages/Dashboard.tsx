@@ -98,46 +98,62 @@ export default function Dashboard() {
           return t.transaction_type === 'income' ? sum + amount : sum - amount;
         }, 0) || 0;
 
-      // Calculate daily revenue for current month
+      // Calculate daily revenue for current month - SIMPLIFIED
       const currentDate = new Date();
       const currentMonth = currentDate.getMonth();
       const currentYear = currentDate.getFullYear();
       
-      const dailyRevenue = [];
-      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      // Get all income transactions for current month
+      const currentMonthIncome = transactionsData?.filter(t => {
+        const transactionDate = new Date(t.transaction_date);
+        return t.transaction_type === 'income' && 
+               transactionDate.getMonth() === currentMonth && 
+               transactionDate.getFullYear() === currentYear;
+      }) || [];
       
+      // Group by day
+      const dailyRevenueMap = new Map();
+      currentMonthIncome.forEach(t => {
+        const day = new Date(t.transaction_date).getDate();
+        const currentAmount = dailyRevenueMap.get(day) || 0;
+        dailyRevenueMap.set(day, currentAmount + Number(t.amount));
+      });
+      
+      // Create array for all days of month
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      const dailyRevenue = [];
       for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayRevenue = transactionsData
-          ?.filter(t => t.transaction_type === 'income' && t.transaction_date === dateStr)
-          ?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
-        
         dailyRevenue.push({
           date: `${day}`,
-          revenue: dayRevenue
+          revenue: dailyRevenueMap.get(day) || 0
         });
       }
 
-      // Calculate monthly revenue for current year
-      const monthlyRevenue = [];
+      // Calculate monthly revenue for current year - SIMPLIFIED
+      const currentYearIncome = transactionsData?.filter(t => {
+        const transactionDate = new Date(t.transaction_date);
+        return t.transaction_type === 'income' && 
+               transactionDate.getFullYear() === currentYear;
+      }) || [];
+      
+      // Group by month
+      const monthlyRevenueMap = new Map();
+      currentYearIncome.forEach(t => {
+        const month = new Date(t.transaction_date).getMonth();
+        const currentAmount = monthlyRevenueMap.get(month) || 0;
+        monthlyRevenueMap.set(month, currentAmount + Number(t.amount));
+      });
+      
       const monthNames = [
         'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
         'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
       ];
       
+      const monthlyRevenue = [];
       for (let month = 0; month < 12; month++) {
-        const monthRevenue = transactionsData
-          ?.filter(t => {
-            const transactionDate = new Date(t.transaction_date);
-            return t.transaction_type === 'income' && 
-                   transactionDate.getMonth() === month && 
-                   transactionDate.getFullYear() === currentYear;
-          })
-          ?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
-        
         monthlyRevenue.push({
           month: monthNames[month],
-          revenue: monthRevenue
+          revenue: monthlyRevenueMap.get(month) || 0
         });
       }
 
