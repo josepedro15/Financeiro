@@ -100,8 +100,9 @@ export default function Dashboard() {
 
       // Calculate daily revenue for current month - SIMPLIFIED
       const currentDate = new Date();
-      const currentMonth = currentDate.getMonth();
-      const currentYear = currentDate.getFullYear();
+      // FORCE APRIL 2025 FOR TESTING
+      const currentMonth = 3; // April is month 3 in JavaScript (0-based)
+      const currentYear = 2025; // Force 2025
       
       // Get all income transactions (not just current month)
       const allIncomeTransactions = transactionsData?.filter(t => t.transaction_type === 'income') || [];
@@ -113,6 +114,22 @@ export default function Dashboard() {
         const transactionDate = new Date(year, month - 1, day); // month - 1 because JS months are 0-based
         const transactionMonth = transactionDate.getMonth();
         const transactionYear = transactionDate.getFullYear();
+        
+        // Debug log for april transactions
+        if (month === 4 && year === 2025) {
+          console.log('April 2025 transaction found:', {
+            originalDate: t.transaction_date,
+            parsedDate: transactionDate,
+            transactionMonth,
+            transactionYear,
+            currentMonth,
+            currentYear,
+            monthMatch: transactionMonth === currentMonth,
+            yearMatch: transactionYear === currentYear,
+            bothMatch: transactionMonth === currentMonth && transactionYear === currentYear
+          });
+        }
+        
         return transactionMonth === currentMonth && transactionYear === currentYear;
       });
       
@@ -335,10 +352,10 @@ export default function Dashboard() {
           {/* Daily Revenue Chart */}
           <Card className="shadow-finance-md">
             <CardHeader>
-              <CardTitle className="text-sm sm:text-base">Faturamento Diário - Mês Atual</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                Receitas por dia do mês em vigor
-              </CardDescription>
+                          <CardTitle className="text-sm sm:text-base">Faturamento Diário - Abril 2025</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Receitas por dia de abril de 2025
+            </CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>

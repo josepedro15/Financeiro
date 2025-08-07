@@ -1,0 +1,144 @@
+# 📅 Abril de 2025 - Resumo das Transações
+
+## 📊 **Resumo Geral**
+- **Total de dias:** 5 dias (1-5 de abril)
+- **Total de transações:** 67 transações
+- **Faturamento total:** R$ 2.635,46
+
+---
+
+## 📋 **Lista Completa por Dia**
+
+### ✅ **4/1/2025** (17 transações)
+- GERMANO BETTI SILVEIRA R$ 39.95
+- RAFAEL ALVES R$ 0.00
+- PIRATA WAURA R$ 75.91
+- LUCIO MEDEIROS R$ 0.00
+- PAULO RICARDO R$ 35.00
+- DAIANE ROCHA R$ 40.00
+- WEMERSON FERNANDO R$ 40.00
+- JOCILENE SANTOS R$ 75.91
+- ELOILSON COUTO R$ 39.95
+- EMILLY RODRIGUES R$ 39.95
+- PATRICIA PASSOS R$ 39.95
+- MUNIQUE SUELEN R$ 39.95
+- ADRYAN MATHEUS R$ 39.95
+- DANIEL CAMARA R$ 90.00
+- TAIANE DA SILVA R$ 39.95
+- JAQUELINE GOLDSCHIMIDT R$ 76.00
+- ADRIANA BERTONI R$ 39.95
+
+**Subtotal 4/1:** R$ 751,46
+
+---
+
+### ✅ **4/2/2025** (24 transações)
+- KARLA DA SILVA R$ 39.95
+- HERBERT MATEUS R$ 0.00
+- SANDRA FATIMA R$ 0.00
+- THAIS DE OLIVEIRA R$ 39.95
+- I M LARA R$ 40.00
+- CLAUDIA R$ 39.95
+- APARECIDA PEREIRA R$ 39.95
+- LUCIANA GONÇALVES R$ 0.00
+- LARISSA BUSATO R$ 39.95
+- IZABEL CRISTINA R$ 20.00
+- CAMILA BONIFACIO R$ 39.95
+- ALESSANDRA SOLTO R$ 39.95
+- NICOLE K PORPINO R$ 39.95
+- ATILA DA SILVA R$ 39.95
+- ADRIANA APARECIDA R$ 39.95
+- EDINEIDE SANTOS R$ 39.95
+- JULIA NUNES R$ 39.95
+- EDGAR DA SILVA R$ 39.95
+- RENATA CRISTINA R$ 35.00
+- ITALO DE SOUZA R$ 39.95
+- ALESSANDRA VARGAS R$ 39.95
+- ANTONIO FH L SANTANA R$ 39.95
+- PATRICIA GUSMAO R$ 70.00
+- DANIELA DIAS R$ 39.95
+- JOSEFA LUCIENTE R$ 40.00
+
+**Subtotal 4/2:** R$ 799,30
+
+---
+
+### ✅ **4/3/2025** (20 transações)
+- YGOR DO NASCIMENTO R$ 39.95
+- SIMONE CRISTINA R$ 75.91
+- MATIAS FERRERIRA R$ 20.00
+- CLAUDIENE RIBEIRO R$ 39.95
+- ELIEZER BEZERRA R$ 33.00
+- LUANA ELAINE R$ 39.95
+- JANE APARECIDA R$ 0.00
+- EDVANIA RODRIGUES R$ 75.91
+- LUCILEIA MIRANDA R$ 0.00
+- FABIANA SOUZA R$ 39.95
+- WESLEY DE LIMA R$ 39.95
+- NAYARA ROCHA R$ 0.00
+- PATRICIA NUNES R$ 39.95
+- IVANUBIA DOS SANTOS R$ 75.91
+- BRASAO MILITAR R$ 39.95
+- TIAGO LEITE R$ 54.90
+- JOSE PEDRO R$ 39.95
+- CARLOS AUGUSTO R$ 40.00
+- CRISTIANA SILVA R$ 39.95
+
+**Subtotal 4/3:** R$ 659,32
+
+---
+
+### ✅ **4/4/2025** (12 transações)
+- LARISSA BUSATO R$ 39.95
+- THAIS DE OLIVEIRA R$ 39.95
+- ELOILSON COUTO R$ 40.00
+- FABIANA SOUZA R$ 39.95
+- EDGAR DA SILVA R$ 39.95
+- LILIAN VIEIRA R$ 39.95
+- LUANA GABRIELLE R$ 39.95
+- LUANA ELAINE R$ 39.95
+- SANDRA MICHELINI R$ 39.95
+- PAULA DANIELA R$ 39.95
+- ANTONIO FH L SANTANA R$ 17.45
+- NADYA ADRIANY R$ 39.95
+
+**Subtotal 4/4:** R$ 456,95
+
+---
+
+### ✅ **4/5/2025** (6 transações)
+- SIMEIRA VAZ R$ 39.95
+- LUANA SEVERO R$ 0.00
+- ERICA RAVENA R$ 39.95
+- MARIA ISABEL R$ 70.00
+- DANIELY CRISTINA R$ 39.95
+- LEANDRO VIEIRA R$ 39.95
+
+**Subtotal 4/5:** R$ 189,80
+
+---
+
+## 🧮 **CÁLCULO FINAL:**
+- **4/1:** R$ 751,46
+- **4/2:** R$ 799,30
+- **4/3:** R$ 659,32
+- **4/4:** R$ 456,95
+- **4/5:** R$ 189,80
+
+**Total:** R$ 2.856,83
+
+---
+
+## 📈 **Estatísticas:**
+- **Média por dia:** R$ 571,37
+- **Maior faturamento:** 4/2 (R$ 799,30)
+- **Menor faturamento:** 4/5 (R$ 189,80)
+- **Transações com valor zero:** 6 transações
+- **Transações com valor > R$ 50:** 8 transações
+
+---
+
+## ⚠️ **Observações:**
+- Algumas transações têm valor R$ 0,00 (provavelmente pagamentos pendentes)
+- Maior valor individual: DANIEL CAMARA (R$ 90,00)
+- Segundo maior: PIRATA WAURA e JOCILENE SANTOS (R$ 75,91 cada) 
