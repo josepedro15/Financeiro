@@ -101,77 +101,71 @@ export default function Dashboard() {
 
       const balanceCheckout = 0; // Simplified since we don't have account separation
 
-      // NOVA LÓGICA SIMPLIFICADA PARA GRÁFICO MENSAL
+      // NOVA LÓGICA COMPLETAMENTE REESCRITA PARA GRÁFICO MENSAL
       console.log('=== NOVA LÓGICA MENSAL ===');
       
-      // Filtrar apenas transações de receita
-      const allIncomeTransactions = transactionsData?.filter(t => t.transaction_type === 'income') || [];
-      console.log('Total income transactions:', allIncomeTransactions.length);
-      
-      // Agrupar por mês de 2025
-      const monthlyRevenueMap = new Map();
-      
-      allIncomeTransactions.forEach(t => {
-        const [year, month, day] = t.transaction_date.split('-').map(Number);
-        const transactionDate = new Date(year, month - 1, day);
-        const transactionYear = transactionDate.getFullYear();
-        const monthIndex = transactionDate.getMonth();
+      // 1. Pegar todas as transações de receita de 2025
+      const transactions2025 = transactionsData?.filter(t => {
+        if (t.transaction_type !== 'income') return false;
         
-        // Apenas transações de 2025
-        if (transactionYear === 2025) {
-          const currentAmount = monthlyRevenueMap.get(monthIndex) || 0;
-          const newAmount = currentAmount + Number(t.amount);
-          monthlyRevenueMap.set(monthIndex, newAmount);
-          
-          // Debug para abril e maio
-          if (monthIndex === 3) {
-            console.log('Abril transaction:', {
-              date: t.transaction_date,
-              amount: t.amount,
-              currentAmount,
-              newAmount
-            });
-          }
-          if (monthIndex === 4) {
-            console.log('Maio transaction:', {
-              date: t.transaction_date,
-              amount: t.amount,
-              currentAmount,
-              newAmount
-            });
-          }
+        const [year, month, day] = t.transaction_date.split('-').map(Number);
+        return year === 2025;
+      }) || [];
+      
+      console.log('Transações de 2025 encontradas:', transactions2025.length);
+      
+      // 2. Criar mapa simples por mês
+      const monthlyData = {
+        0: 0, // Janeiro
+        1: 0, // Fevereiro  
+        2: 0, // Março
+        3: 0, // Abril
+        4: 0, // Maio
+        5: 0, // Junho
+        6: 0, // Julho
+        7: 0, // Agosto
+        8: 0, // Setembro
+        9: 0, // Outubro
+        10: 0, // Novembro
+        11: 0  // Dezembro
+      };
+      
+      // 3. Processar cada transação
+      transactions2025.forEach(t => {
+        const [year, month, day] = t.transaction_date.split('-').map(Number);
+        const monthIndex = month - 1; // Converter para 0-based
+        const amount = Number(t.amount);
+        
+        monthlyData[monthIndex] += amount;
+        
+        // Debug para abril
+        if (monthIndex === 3) {
+          console.log('Abril transaction:', {
+            date: t.transaction_date,
+            amount: amount,
+            monthIndex: monthIndex,
+            runningTotal: monthlyData[monthIndex]
+          });
         }
       });
       
-      // Criar array para o gráfico
+      // 4. Criar array para o gráfico
       const monthNames = [
         'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
         'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
       ];
       
-      const monthlyRevenue = [];
-      for (let month = 0; month < 12; month++) {
-        const revenue = monthlyRevenueMap.get(month) || 0;
-        monthlyRevenue.push({
-          month: monthNames[month],
-          revenue: revenue
-        });
-        
-        // Debug dos totais
-        if (month === 3) {
-          console.log('=== ABRIL FINAL ===');
-          console.log('Abril total:', revenue);
-          console.log('Abril expected:', 7624.88);
-          console.log('Difference:', revenue - 7624.88);
-        }
-        if (month === 4) {
-          console.log('=== MAIO FINAL ===');
-          console.log('Maio total:', revenue);
-        }
-      }
+      const monthlyRevenue = monthNames.map((name, index) => ({
+        month: name,
+        revenue: monthlyData[index]
+      }));
       
-      console.log('Monthly revenue map:', Object.fromEntries(monthlyRevenueMap));
-      console.log('Monthly revenue data:', monthlyRevenue);
+      // 5. Debug final
+      console.log('=== RESULTADO FINAL ===');
+      console.log('Abril total:', monthlyData[3]);
+      console.log('Maio total:', monthlyData[4]);
+      console.log('Todos os meses:', monthlyData);
+      console.log('Array para gráfico:', monthlyRevenue);
 
       setFinancialData({
         totalIncome,
