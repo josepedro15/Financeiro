@@ -56,7 +56,7 @@ export default function Dashboard() {
       // Get all transactions
       const { data: transactionsData, error } = await supabase
         .from('transactions')
-        .select('amount, transaction_type, transaction_date')
+        .select('*')
         .eq('user_id', user.id);
 
       // DEBUG: Verificar dados carregados
