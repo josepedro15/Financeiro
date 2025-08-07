@@ -54,10 +54,23 @@ export default function Dashboard() {
 
     try {
       // Get all transactions
-      const { data: transactionsData } = await supabase
+      const { data: transactionsData, error } = await supabase
         .from('transactions')
-        .select('amount, transaction_type, transaction_date, account_name')
+        .select('amount, transaction_type, transaction_date')
         .eq('user_id', user.id);
+
+      // DEBUG: Verificar dados carregados
+      console.log('=== SUPABASE DEBUG ===');
+      console.log('Error:', error);
+      console.log('Total transactions loaded:', transactionsData?.length || 0);
+      console.log('Sample transactions:', transactionsData?.slice(0, 5));
+      
+      // Verificar transações de abril especificamente
+      const abrilTransactions = transactionsData?.filter(t => 
+        t.transaction_date?.startsWith('2025-04')
+      ) || [];
+      console.log('Abril transactions found:', abrilTransactions.length);
+      console.log('Abril transactions sample:', abrilTransactions.slice(0, 3));
 
       // Get clients count
       const { data: clientsData } = await supabase
@@ -85,18 +98,10 @@ export default function Dashboard() {
 
       // Calculate balance by account
       const balancePJ = transactionsData
-        ?.filter(t => t.account_name === 'Conta PJ')
-        ?.reduce((sum, t) => {
-          const amount = Number(t.amount);
-          return t.transaction_type === 'income' ? sum + amount : sum - amount;
-        }, 0) || 0;
+        ?.filter(t => t.transaction_type === 'income')
+        ?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
 
-      const balanceCheckout = transactionsData
-        ?.filter(t => t.account_name === 'Conta Checkout')
-        ?.reduce((sum, t) => {
-          const amount = Number(t.amount);
-          return t.transaction_type === 'income' ? sum + amount : sum - amount;
-        }, 0) || 0;
+      const balanceCheckout = 0; // Simplified since we don't have account separation
 
       // Calculate daily revenue for current month
       // FORÇAR ABRIL 2025 PARA CORRIGIR O GRÁFICO MENSAL
