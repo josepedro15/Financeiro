@@ -13,7 +13,7 @@ import {
   ArrowUpRight,
   ArrowDownRight
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Area } from 'recharts';
 
 interface FinancialData {
   totalIncome: number;
@@ -299,36 +299,66 @@ export default function Dashboard() {
 
         {/* Charts */}
         <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-8">
-          {/* Monthly Revenue Chart - REESCRITO */}
+          {/* NOVO GRÁFICO DE EVOLUÇÃO MENSAL */}
           <Card className="shadow-finance-md">
             <CardHeader>
-              <CardTitle className="text-sm sm:text-base">Evolução Mensal - Ano Atual</CardTitle>
+              <CardTitle className="text-sm sm:text-base">Evolução Financeira 2025</CardTitle>
               <CardDescription className="text-xs sm:text-sm">
-                Receitas por mês desde o início do ano
+                Receitas mensais do ano atual
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={financialData.monthlyRevenue}>
-                  <CartesianGrid strokeDasharray="3 3" />
+              <ResponsiveContainer width="100%" height={350}>
+                <LineChart data={financialData.monthlyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis 
                     dataKey="month" 
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    axisLine={{ stroke: '#d1d5db' }}
+                    tickLine={{ stroke: '#d1d5db' }}
                   />
                   <YAxis 
-                    tickFormatter={(value) => `R$ ${value}`}
-                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => `R$ ${value.toLocaleString()}`}
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    axisLine={{ stroke: '#d1d5db' }}
+                    tickLine={{ stroke: '#d1d5db' }}
                   />
                   <Tooltip 
-                    formatter={(value: any) => [`R$ ${value}`, 'Receita']}
-                    labelFormatter={(label) => `${label}`}
+                    formatter={(value: any) => [`R$ ${Number(value).toLocaleString()}`, 'Receita']}
+                    labelFormatter={(label) => `${label} 2025`}
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
                   />
-                  <Bar 
+                  <Line 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="#10b981" 
+                    strokeWidth={3}
+                    dot={{ 
+                      fill: '#10b981', 
+                      strokeWidth: 2, 
+                      r: 6,
+                      stroke: '#ffffff'
+                    }}
+                    activeDot={{ 
+                      r: 8, 
+                      stroke: '#10b981', 
+                      strokeWidth: 3,
+                      fill: '#ffffff'
+                    }}
+                  />
+                  <Area 
+                    type="monotone" 
                     dataKey="revenue" 
                     fill="#10b981" 
-                    radius={[4, 4, 0, 0]}
+                    fillOpacity={0.1}
+                    stroke="none"
                   />
-                </BarChart>
+                </LineChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
