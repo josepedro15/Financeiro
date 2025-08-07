@@ -22,7 +22,6 @@ interface FinancialData {
   balanceCheckout: number;
   clientsCount: number;
   recentTransactions: any[];
-  dailyRevenue: Array<{ date: string; revenue: number }>;
   monthlyRevenue: Array<{ month: string; revenue: number }>;
 }
 
@@ -36,7 +35,6 @@ export default function Dashboard() {
     balanceCheckout: 0,
     clientsCount: 0,
     recentTransactions: [],
-    dailyRevenue: [],
     monthlyRevenue: []
   });
   const [loading, setLoading] = useState(true);
@@ -103,103 +101,49 @@ export default function Dashboard() {
 
       const balanceCheckout = 0; // Simplified since we don't have account separation
 
-      // Calculate daily revenue for current month
-      // FORÇAR ABRIL 2025 PARA CORRIGIR O GRÁFICO MENSAL
-      const currentDate = new Date();
-      const currentMonth = 3; // Abril é mês 3 em JavaScript (0-based)
-      const currentYear = 2025; // Forçar 2025
+      // NOVA LÓGICA SIMPLIFICADA PARA GRÁFICO MENSAL
+      console.log('=== NOVA LÓGICA MENSAL ===');
       
-      // Get all income transactions (not just current month)
+      // Filtrar apenas transações de receita
       const allIncomeTransactions = transactionsData?.filter(t => t.transaction_type === 'income') || [];
+      console.log('Total income transactions:', allIncomeTransactions.length);
       
-      // Get all income transactions for current month
-      const currentMonthIncome = allIncomeTransactions.filter(t => {
-        // Parse date correctly to avoid timezone issues
-        const [year, month, day] = t.transaction_date.split('-').map(Number);
-        const transactionDate = new Date(year, month - 1, day); // month - 1 because JS months are 0-based
-        const transactionMonth = transactionDate.getMonth();
-        const transactionYear = transactionDate.getFullYear();
-        
-        // Debug log for current month transactions
-        if (transactionMonth === currentMonth && transactionYear === currentYear) {
-          console.log('Current month transaction found:', {
-            originalDate: t.transaction_date,
-            parsedDate: transactionDate,
-            transactionMonth,
-            transactionYear,
-            currentMonth,
-            currentYear,
-            monthMatch: transactionMonth === currentMonth,
-            yearMatch: transactionYear === currentYear,
-            bothMatch: transactionMonth === currentMonth && transactionYear === currentYear,
-            amount: t.amount
-          });
-        }
-        
-        return transactionMonth === currentMonth && transactionYear === currentYear;
-      });
-      
-      // Group by day
-      const dailyRevenueMap = new Map();
-      currentMonthIncome.forEach(t => {
-        const [year, month, day] = t.transaction_date.split('-').map(Number);
-        const transactionDate = new Date(year, month - 1, day);
-        const dayOfMonth = transactionDate.getDate();
-        const currentAmount = dailyRevenueMap.get(dayOfMonth) || 0;
-        dailyRevenueMap.set(dayOfMonth, currentAmount + Number(t.amount));
-      });
-      
-      // Create array for all days of month
-      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-      const dailyRevenue = [];
-      for (let day = 1; day <= daysInMonth; day++) {
-        dailyRevenue.push({
-          date: `${day}`,
-          revenue: dailyRevenueMap.get(day) || 0
-        });
-      }
-
-      // Calculate monthly revenue for current year - SIMPLIFIED
-      const currentYearIncome = allIncomeTransactions.filter(t => {
-        const [year, month, day] = t.transaction_date.split('-').map(Number);
-        const transactionDate = new Date(year, month - 1, day);
-        return transactionDate.getFullYear() === currentYear;
-      });
-      
-      // Group by month
+      // Agrupar por mês de 2025
       const monthlyRevenueMap = new Map();
-      currentYearIncome.forEach(t => {
+      
+      allIncomeTransactions.forEach(t => {
         const [year, month, day] = t.transaction_date.split('-').map(Number);
         const transactionDate = new Date(year, month - 1, day);
+        const transactionYear = transactionDate.getFullYear();
         const monthIndex = transactionDate.getMonth();
-        const currentAmount = monthlyRevenueMap.get(monthIndex) || 0;
-        monthlyRevenueMap.set(monthIndex, currentAmount + Number(t.amount));
         
-        // Debug específico para abril (mês 3)
-        if (monthIndex === 3) {
-          console.log('Abril transaction found:', {
-            originalDate: t.transaction_date,
-            parsedDate: transactionDate,
-            monthIndex,
-            amount: t.amount,
-            currentAmount,
-            newAmount: currentAmount + Number(t.amount)
-          });
-        }
-        
-        // Debug específico para maio (mês 4) - COMPARAÇÃO
-        if (monthIndex === 4) {
-          console.log('Maio transaction found:', {
-            originalDate: t.transaction_date,
-            parsedDate: transactionDate,
-            monthIndex,
-            amount: t.amount,
-            currentAmount,
-            newAmount: currentAmount + Number(t.amount)
-          });
+        // Apenas transações de 2025
+        if (transactionYear === 2025) {
+          const currentAmount = monthlyRevenueMap.get(monthIndex) || 0;
+          const newAmount = currentAmount + Number(t.amount);
+          monthlyRevenueMap.set(monthIndex, newAmount);
+          
+          // Debug para abril e maio
+          if (monthIndex === 3) {
+            console.log('Abril transaction:', {
+              date: t.transaction_date,
+              amount: t.amount,
+              currentAmount,
+              newAmount
+            });
+          }
+          if (monthIndex === 4) {
+            console.log('Maio transaction:', {
+              date: t.transaction_date,
+              amount: t.amount,
+              currentAmount,
+              newAmount
+            });
+          }
         }
       });
       
+      // Criar array para o gráfico
       const monthNames = [
         'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
         'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
@@ -207,82 +151,27 @@ export default function Dashboard() {
       
       const monthlyRevenue = [];
       for (let month = 0; month < 12; month++) {
+        const revenue = monthlyRevenueMap.get(month) || 0;
         monthlyRevenue.push({
           month: monthNames[month],
-          revenue: monthlyRevenueMap.get(month) || 0
+          revenue: revenue
         });
+        
+        // Debug dos totais
+        if (month === 3) {
+          console.log('=== ABRIL FINAL ===');
+          console.log('Abril total:', revenue);
+          console.log('Abril expected:', 7624.88);
+          console.log('Difference:', revenue - 7624.88);
+        }
+        if (month === 4) {
+          console.log('=== MAIO FINAL ===');
+          console.log('Maio total:', revenue);
+        }
       }
-
-      // Debug logs
-      console.log('=== DEBUG DASHBOARD ===');
-      console.log('Total transactions loaded:', transactionsData?.length || 0);
-      console.log('All income transactions:', allIncomeTransactions.length);
-      console.log('Total income:', totalIncome);
-      console.log('Current month/year:', currentMonth + 1, currentYear);
-      console.log('Current month income transactions:', currentMonthIncome.length);
-      console.log('Current year income transactions:', currentYearIncome.length);
       
-      // Debug month comparison
-      console.log('=== MONTH COMPARISON DEBUG ===');
-      allIncomeTransactions.slice(0, 3).forEach((t, index) => {
-        const [year, month, day] = t.transaction_date.split('-').map(Number);
-        const transactionDate = new Date(year, month - 1, day);
-        const transactionMonth = transactionDate.getMonth();
-        const transactionYear = transactionDate.getFullYear();
-        console.log(`Transaction ${index + 1}:`, {
-          originalDate: t.transaction_date,
-          parsedDate: transactionDate,
-          transactionMonth,
-          transactionYear,
-          currentMonth,
-          currentYear,
-          monthMatch: transactionMonth === currentMonth,
-          yearMatch: transactionYear === currentYear,
-          bothMatch: transactionMonth === currentMonth && transactionYear === currentYear
-        });
-      });
-      
-      console.log('Daily revenue map:', Object.fromEntries(dailyRevenueMap));
       console.log('Monthly revenue map:', Object.fromEntries(monthlyRevenueMap));
-      console.log('Daily revenue data:', dailyRevenue);
       console.log('Monthly revenue data:', monthlyRevenue);
-      
-      // Debug específico para abril
-      const abrilRevenue = monthlyRevenueMap.get(3) || 0;
-      console.log('=== ABRIL DEBUG ===');
-      console.log('Abril revenue (mês 3):', abrilRevenue);
-      console.log('Abril revenue expected: 8485.55');
-      console.log('Difference:', abrilRevenue - 8485.55);
-      console.log('=======================');
-      
-      // Debug específico para maio - COMPARAÇÃO
-      const maioRevenue = monthlyRevenueMap.get(4) || 0;
-      console.log('=== MAIO DEBUG ===');
-      console.log('Maio revenue (mês 4):', maioRevenue);
-      console.log('Maio transactions count:', currentYearIncome.filter(t => {
-        const [year, month, day] = t.transaction_date.split('-').map(Number);
-        const transactionDate = new Date(year, month - 1, day);
-        return transactionDate.getMonth() === 4;
-      }).length);
-      console.log('=======================');
-      
-      // Debug para comparar filtros de abril vs maio
-      console.log('=== COMPARAÇÃO ABRIL VS MAIO ===');
-      const abrilTransactionsFiltered = currentYearIncome.filter(t => {
-        const [year, month, day] = t.transaction_date.split('-').map(Number);
-        const transactionDate = new Date(year, month - 1, day);
-        return transactionDate.getMonth() === 3;
-      });
-      const maioTransactions = currentYearIncome.filter(t => {
-        const [year, month, day] = t.transaction_date.split('-').map(Number);
-        const transactionDate = new Date(year, month - 1, day);
-        return transactionDate.getMonth() === 4;
-      });
-      console.log('Abril transactions count:', abrilTransactionsFiltered.length);
-      console.log('Maio transactions count:', maioTransactions.length);
-      console.log('Abril transactions sample:', abrilTransactionsFiltered.slice(0, 3));
-      console.log('Maio transactions sample:', maioTransactions.slice(0, 3));
-      console.log('=======================');
 
       setFinancialData({
         totalIncome,
@@ -291,7 +180,6 @@ export default function Dashboard() {
         balanceCheckout,
         clientsCount: clientsData?.length || 0,
         recentTransactions: recentData || [],
-        dailyRevenue,
         monthlyRevenue
       });
     } catch (error) {
@@ -416,46 +304,8 @@ export default function Dashboard() {
         </div>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
-          {/* Daily Revenue Chart */}
-          <Card className="shadow-finance-md">
-            <CardHeader>
-                                                        <CardTitle className="text-sm sm:text-base">Faturamento Diário - {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                Receitas por dia do mês atual
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={financialData.dailyRevenue}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fontSize: 10 }}
-                    interval={2}
-                  />
-                  <YAxis 
-                    tickFormatter={(value) => `R$ ${value}`}
-                    tick={{ fontSize: 10 }}
-                  />
-                  <Tooltip 
-                    formatter={(value: any) => [`R$ ${value}`, 'Receita']}
-                    labelFormatter={(label) => `Dia ${label}`}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    stroke="#10b981" 
-                    strokeWidth={2}
-                    dot={{ fill: '#10b981', strokeWidth: 2, r: 3 }}
-                    activeDot={{ r: 5, stroke: '#10b981', strokeWidth: 2 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Monthly Revenue Chart */}
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-8">
+          {/* Monthly Revenue Chart - REESCRITO */}
           <Card className="shadow-finance-md">
             <CardHeader>
               <CardTitle className="text-sm sm:text-base">Evolução Mensal - Ano Atual</CardTitle>
@@ -464,16 +314,16 @@ export default function Dashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={financialData.monthlyRevenue}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     dataKey="month" 
-                    tick={{ fontSize: 10 }}
+                    tick={{ fontSize: 12 }}
                   />
                   <YAxis 
                     tickFormatter={(value) => `R$ ${value}`}
-                    tick={{ fontSize: 10 }}
+                    tick={{ fontSize: 12 }}
                   />
                   <Tooltip 
                     formatter={(value: any) => [`R$ ${value}`, 'Receita']}
