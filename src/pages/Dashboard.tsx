@@ -186,6 +186,18 @@ export default function Dashboard() {
             newAmount: currentAmount + Number(t.amount)
           });
         }
+        
+        // Debug específico para maio (mês 4) - COMPARAÇÃO
+        if (monthIndex === 4) {
+          console.log('Maio transaction found:', {
+            originalDate: t.transaction_date,
+            parsedDate: transactionDate,
+            monthIndex,
+            amount: t.amount,
+            currentAmount,
+            newAmount: currentAmount + Number(t.amount)
+          });
+        }
       });
       
       const monthNames = [
@@ -241,6 +253,35 @@ export default function Dashboard() {
       console.log('Abril revenue (mês 3):', abrilRevenue);
       console.log('Abril revenue expected: 8485.55');
       console.log('Difference:', abrilRevenue - 8485.55);
+      console.log('=======================');
+      
+      // Debug específico para maio - COMPARAÇÃO
+      const maioRevenue = monthlyRevenueMap.get(4) || 0;
+      console.log('=== MAIO DEBUG ===');
+      console.log('Maio revenue (mês 4):', maioRevenue);
+      console.log('Maio transactions count:', currentYearIncome.filter(t => {
+        const [year, month, day] = t.transaction_date.split('-').map(Number);
+        const transactionDate = new Date(year, month - 1, day);
+        return transactionDate.getMonth() === 4;
+      }).length);
+      console.log('=======================');
+      
+      // Debug para comparar filtros de abril vs maio
+      console.log('=== COMPARAÇÃO ABRIL VS MAIO ===');
+      const abrilTransactionsFiltered = currentYearIncome.filter(t => {
+        const [year, month, day] = t.transaction_date.split('-').map(Number);
+        const transactionDate = new Date(year, month - 1, day);
+        return transactionDate.getMonth() === 3;
+      });
+      const maioTransactions = currentYearIncome.filter(t => {
+        const [year, month, day] = t.transaction_date.split('-').map(Number);
+        const transactionDate = new Date(year, month - 1, day);
+        return transactionDate.getMonth() === 4;
+      });
+      console.log('Abril transactions count:', abrilTransactionsFiltered.length);
+      console.log('Maio transactions count:', maioTransactions.length);
+      console.log('Abril transactions sample:', abrilTransactionsFiltered.slice(0, 3));
+      console.log('Maio transactions sample:', maioTransactions.slice(0, 3));
       console.log('=======================');
 
       setFinancialData({
