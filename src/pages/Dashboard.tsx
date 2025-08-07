@@ -56,7 +56,7 @@ export default function Dashboard() {
       // Get all transactions
       const { data: transactionsData } = await supabase
         .from('transactions')
-        .select('amount, transaction_type, account_name, transaction_date')
+        .select('amount, transaction_type, transaction_date')
         .eq('user_id', user.id);
 
       // Get clients count
@@ -83,26 +83,17 @@ export default function Dashboard() {
         ?.filter(t => t.transaction_type === 'expense')
         ?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
 
-      // Calculate balance by account
+      // Calculate balance by account (simplified since account_name doesn't exist)
       const balancePJ = transactionsData
-        ?.filter(t => t.account_name === 'Conta PJ')
-        ?.reduce((sum, t) => {
-          const amount = Number(t.amount);
-          return t.transaction_type === 'income' ? sum + amount : sum - amount;
-        }, 0) || 0;
+        ?.filter(t => t.transaction_type === 'income')
+        ?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
 
-      const balanceCheckout = transactionsData
-        ?.filter(t => t.account_name === 'Conta Checkout')
-        ?.reduce((sum, t) => {
-          const amount = Number(t.amount);
-          return t.transaction_type === 'income' ? sum + amount : sum - amount;
-        }, 0) || 0;
+      const balanceCheckout = 0; // Simplified since we don't have account separation
 
-      // Calculate daily revenue for current month - SIMPLIFIED
+      // Calculate daily revenue for current month
       const currentDate = new Date();
-      // FORCE APRIL 2025 FOR TESTING
-      const currentMonth = 3; // April is month 3 in JavaScript (0-based)
-      const currentYear = 2025; // Force 2025
+      const currentMonth = currentDate.getMonth(); // Current month (0-based)
+      const currentYear = currentDate.getFullYear(); // Current year
       
       // Get all income transactions (not just current month)
       const allIncomeTransactions = transactionsData?.filter(t => t.transaction_type === 'income') || [];
@@ -115,9 +106,9 @@ export default function Dashboard() {
         const transactionMonth = transactionDate.getMonth();
         const transactionYear = transactionDate.getFullYear();
         
-        // Debug log for april transactions
-        if (month === 4 && year === 2025) {
-          console.log('April 2025 transaction found:', {
+        // Debug log for current month transactions
+        if (transactionMonth === currentMonth && transactionYear === currentYear) {
+          console.log('Current month transaction found:', {
             originalDate: t.transaction_date,
             parsedDate: transactionDate,
             transactionMonth,
@@ -126,7 +117,8 @@ export default function Dashboard() {
             currentYear,
             monthMatch: transactionMonth === currentMonth,
             yearMatch: transactionYear === currentYear,
-            bothMatch: transactionMonth === currentMonth && transactionYear === currentYear
+            bothMatch: transactionMonth === currentMonth && transactionYear === currentYear,
+            amount: t.amount
           });
         }
         
@@ -352,10 +344,10 @@ export default function Dashboard() {
           {/* Daily Revenue Chart */}
           <Card className="shadow-finance-md">
             <CardHeader>
-                          <CardTitle className="text-sm sm:text-base">Faturamento Diário - Abril 2025</CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              Receitas por dia de abril de 2025
-            </CardDescription>
+                                          <CardTitle className="text-sm sm:text-base">Faturamento Diário - {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">
+                  Receitas por dia do mês atual
+                </CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
@@ -463,7 +455,7 @@ export default function Dashboard() {
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-sm sm:text-base truncate">{transaction.description}</p>
                         <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                          {transaction.client_name || 'Sem cliente'} • {transaction.account_name}
+                          {transaction.client_name || 'Sem cliente'} • {transaction.transaction_date}
                         </p>
                       </div>
                     </div>

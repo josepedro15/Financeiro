@@ -1,7 +1,24 @@
--- Script para copiar todos os dados do usuário 2dc520e3-5f19-4dfe-838b-1aca7238ae36 
--- para o usuário 76868410-a183-47b7-8173-7f3bcb4d90e0
+-- Script para verificar e copiar dados de forma segura
+-- Primeiro vamos verificar se o usuário 76868410-a183-47b7-8173-7f3bcb4d90e0 já tem dados
 
--- 1. Copiar contas (accounts)
+-- Verificar dados existentes do usuário destino
+SELECT '=== DADOS EXISTENTES DO USUÁRIO DESTINO ===' as info;
+SELECT 'Contas existentes:', COUNT(*) FROM public.accounts WHERE user_id = '76868410-a183-47b7-8173-7f3bcb4d90e0'
+UNION ALL
+SELECT 'Clientes existentes:', COUNT(*) FROM public.clients WHERE user_id = '76868410-a183-47b7-8173-7f3bcb4d90e0'
+UNION ALL
+SELECT 'Transações existentes:', COUNT(*) FROM public.transactions WHERE user_id = '76868410-a183-47b7-8173-7f3bcb4d90e0';
+
+-- Verificar dados do usuário origem
+SELECT '=== DADOS DO USUÁRIO ORIGEM ===' as info;
+SELECT 'Contas origem:', COUNT(*) FROM public.accounts WHERE user_id = '2dc520e3-5f19-4dfe-838b-1aca7238ae36'
+UNION ALL
+SELECT 'Clientes origem:', COUNT(*) FROM public.clients WHERE user_id = '2dc520e3-5f19-4dfe-838b-1aca7238ae36'
+UNION ALL
+SELECT 'Transações origem:', COUNT(*) FROM public.transactions WHERE user_id = '2dc520e3-5f19-4dfe-838b-1aca7238ae36';
+
+-- Se não houver dados no destino, copiar tudo
+-- Copiar contas (apenas se não existirem)
 INSERT INTO public.accounts (user_id, account_name, account_type, balance, created_at, updated_at)
 SELECT 
     '76868410-a183-47b7-8173-7f3bcb4d90e0' as user_id,
@@ -11,9 +28,13 @@ SELECT
     created_at,
     updated_at
 FROM public.accounts 
-WHERE user_id = '2dc520e3-5f19-4dfe-838b-1aca7238ae36';
+WHERE user_id = '2dc520e3-5f19-4dfe-838b-1aca7238ae36'
+AND NOT EXISTS (
+    SELECT 1 FROM public.accounts 
+    WHERE user_id = '76868410-a183-47b7-8173-7f3bcb4d90e0'
+);
 
--- 2. Copiar clientes (clients)
+-- Copiar clientes (apenas se não existirem)
 INSERT INTO public.clients (user_id, client_name, email, phone, address, created_at, updated_at)
 SELECT 
     '76868410-a183-47b7-8173-7f3bcb4d90e0' as user_id,
@@ -24,9 +45,13 @@ SELECT
     created_at,
     updated_at
 FROM public.clients 
-WHERE user_id = '2dc520e3-5f19-4dfe-838b-1aca7238ae36';
+WHERE user_id = '2dc520e3-5f19-4dfe-838b-1aca7238ae36'
+AND NOT EXISTS (
+    SELECT 1 FROM public.clients 
+    WHERE user_id = '76868410-a183-47b7-8173-7f3bcb4d90e0'
+);
 
--- 3. Copiar transações (transactions)
+-- Copiar transações (apenas se não existirem)
 INSERT INTO public.transactions (user_id, transaction_date, description, amount, transaction_type, client_id, account_id, created_at, updated_at)
 SELECT 
     '76868410-a183-47b7-8173-7f3bcb4d90e0' as user_id,
@@ -39,11 +64,16 @@ SELECT
     created_at,
     updated_at
 FROM public.transactions 
-WHERE user_id = '2dc520e3-5f19-4dfe-838b-1aca7238ae36';
+WHERE user_id = '2dc520e3-5f19-4dfe-838b-1aca7238ae36'
+AND NOT EXISTS (
+    SELECT 1 FROM public.transactions 
+    WHERE user_id = '76868410-a183-47b7-8173-7f3bcb4d90e0'
+);
 
--- 4. Verificar se os dados foram copiados
-SELECT 'Contas copiadas:' as info, COUNT(*) as total FROM public.accounts WHERE user_id = '76868410-a183-47b7-8173-7f3bcb4d90e0'
+-- Verificar resultado final
+SELECT '=== RESULTADO FINAL ===' as info;
+SELECT 'Contas totais:', COUNT(*) FROM public.accounts WHERE user_id = '76868410-a183-47b7-8173-7f3bcb4d90e0'
 UNION ALL
-SELECT 'Clientes copiados:', COUNT(*) FROM public.clients WHERE user_id = '76868410-a183-47b7-8173-7f3bcb4d90e0'
+SELECT 'Clientes totais:', COUNT(*) FROM public.clients WHERE user_id = '76868410-a183-47b7-8173-7f3bcb4d90e0'
 UNION ALL
-SELECT 'Transações copiadas:', COUNT(*) FROM public.transactions WHERE user_id = '76868410-a183-47b7-8173-7f3bcb4d90e0'; 
+SELECT 'Transações totais:', COUNT(*) FROM public.transactions WHERE user_id = '76868410-a183-47b7-8173-7f3bcb4d90e0'; 
