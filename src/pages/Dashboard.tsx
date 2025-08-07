@@ -56,7 +56,7 @@ export default function Dashboard() {
       // Get all transactions
       const { data: transactionsData } = await supabase
         .from('transactions')
-        .select('amount, transaction_type, transaction_date')
+        .select('amount, transaction_type, transaction_date, account_name')
         .eq('user_id', user.id);
 
       // Get clients count
@@ -83,12 +83,20 @@ export default function Dashboard() {
         ?.filter(t => t.transaction_type === 'expense')
         ?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
 
-      // Calculate balance by account (simplified since account_name doesn't exist)
+      // Calculate balance by account
       const balancePJ = transactionsData
-        ?.filter(t => t.transaction_type === 'income')
-        ?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+        ?.filter(t => t.account_name === 'Conta PJ')
+        ?.reduce((sum, t) => {
+          const amount = Number(t.amount);
+          return t.transaction_type === 'income' ? sum + amount : sum - amount;
+        }, 0) || 0;
 
-      const balanceCheckout = 0; // Simplified since we don't have account separation
+      const balanceCheckout = transactionsData
+        ?.filter(t => t.account_name === 'Conta Checkout')
+        ?.reduce((sum, t) => {
+          const amount = Number(t.amount);
+          return t.transaction_type === 'income' ? sum + amount : sum - amount;
+        }, 0) || 0;
 
       // Calculate daily revenue for current month
       const currentDate = new Date();
