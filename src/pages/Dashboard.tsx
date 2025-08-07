@@ -354,10 +354,10 @@ export default function Dashboard() {
           {/* Daily Revenue Chart */}
           <Card className="shadow-finance-md">
             <CardHeader>
-                                          <CardTitle className="text-sm sm:text-base">Faturamento Diário - {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">
-                  Receitas por dia do mês atual
-                </CardDescription>
+                                                        <CardTitle className="text-sm sm:text-base">Faturamento Diário - {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
+                Receitas por dia do mês atual
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
