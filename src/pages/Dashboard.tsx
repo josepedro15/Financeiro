@@ -336,12 +336,14 @@ export default function Dashboard() {
 
           <Card className="shadow-finance-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium">Clientes</CardTitle>
-              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-info" />
+              <CardTitle className="text-xs sm:text-sm font-medium">Saldo Checkout</CardTitle>
+              <CreditCard className="h-3 w-3 sm:h-4 sm:w-4 text-info" />
             </CardHeader>
             <CardContent>
-              <div className="text-lg sm:text-2xl font-bold text-info">
-                {financialData.clientsCount}
+              <div className={`text-lg sm:text-2xl font-bold ${
+                financialData.balanceCheckout >= 0 ? 'text-success' : 'text-destructive'
+              }`}>
+                {formatCurrency(financialData.balanceCheckout)}
               </div>
             </CardContent>
           </Card>
