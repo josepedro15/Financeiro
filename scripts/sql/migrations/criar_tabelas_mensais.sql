@@ -8,8 +8,8 @@ SELECT '=== CRIANDO TABELAS MENSAIS ===' as info;
 CREATE TABLE IF NOT EXISTS public.transactions_2025_01 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
-    client_id UUID,
-    account_id UUID,
+    client_name VARCHAR(255),
+    account_name VARCHAR(50) NOT NULL DEFAULT 'Conta PJ',
     description TEXT NOT NULL,
     amount DECIMAL(15,2) NOT NULL,
     transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('income', 'expense')),
@@ -23,8 +23,8 @@ CREATE TABLE IF NOT EXISTS public.transactions_2025_01 (
 CREATE TABLE IF NOT EXISTS public.transactions_2025_02 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
-    client_id UUID,
-    account_id UUID,
+    client_name VARCHAR(255),
+    account_name VARCHAR(50) NOT NULL DEFAULT 'Conta PJ',
     description TEXT NOT NULL,
     amount DECIMAL(15,2) NOT NULL,
     transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('income', 'expense')),
@@ -38,8 +38,8 @@ CREATE TABLE IF NOT EXISTS public.transactions_2025_02 (
 CREATE TABLE IF NOT EXISTS public.transactions_2025_03 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
-    client_id UUID,
-    account_id UUID,
+    client_name VARCHAR(255),
+    account_name VARCHAR(50) NOT NULL DEFAULT 'Conta PJ',
     description TEXT NOT NULL,
     amount DECIMAL(15,2) NOT NULL,
     transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('income', 'expense')),
@@ -53,8 +53,8 @@ CREATE TABLE IF NOT EXISTS public.transactions_2025_03 (
 CREATE TABLE IF NOT EXISTS public.transactions_2025_04 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
-    client_id UUID,
-    account_id UUID,
+    client_name VARCHAR(255),
+    account_name VARCHAR(50) NOT NULL DEFAULT 'Conta PJ',
     description TEXT NOT NULL,
     amount DECIMAL(15,2) NOT NULL,
     transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('income', 'expense')),
@@ -68,8 +68,8 @@ CREATE TABLE IF NOT EXISTS public.transactions_2025_04 (
 CREATE TABLE IF NOT EXISTS public.transactions_2025_05 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
-    client_id UUID,
-    account_id UUID,
+    client_name VARCHAR(255),
+    account_name VARCHAR(50) NOT NULL DEFAULT 'Conta PJ',
     description TEXT NOT NULL,
     amount DECIMAL(15,2) NOT NULL,
     transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('income', 'expense')),
@@ -83,8 +83,8 @@ CREATE TABLE IF NOT EXISTS public.transactions_2025_05 (
 CREATE TABLE IF NOT EXISTS public.transactions_2025_06 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
-    client_id UUID,
-    account_id UUID,
+    client_name VARCHAR(255),
+    account_name VARCHAR(50) NOT NULL DEFAULT 'Conta PJ',
     description TEXT NOT NULL,
     amount DECIMAL(15,2) NOT NULL,
     transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('income', 'expense')),
@@ -98,8 +98,8 @@ CREATE TABLE IF NOT EXISTS public.transactions_2025_06 (
 CREATE TABLE IF NOT EXISTS public.transactions_2025_07 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
-    client_id UUID,
-    account_id UUID,
+    client_name VARCHAR(255),
+    account_name VARCHAR(50) NOT NULL DEFAULT 'Conta PJ',
     description TEXT NOT NULL,
     amount DECIMAL(15,2) NOT NULL,
     transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('income', 'expense')),
@@ -113,8 +113,8 @@ CREATE TABLE IF NOT EXISTS public.transactions_2025_07 (
 CREATE TABLE IF NOT EXISTS public.transactions_2025_08 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
-    client_id UUID,
-    account_id UUID,
+    client_name VARCHAR(255),
+    account_name VARCHAR(50) NOT NULL DEFAULT 'Conta PJ',
     description TEXT NOT NULL,
     amount DECIMAL(15,2) NOT NULL,
     transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('income', 'expense')),
@@ -128,8 +128,8 @@ CREATE TABLE IF NOT EXISTS public.transactions_2025_08 (
 CREATE TABLE IF NOT EXISTS public.transactions_2025_09 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
-    client_id UUID,
-    account_id UUID,
+    client_name VARCHAR(255),
+    account_name VARCHAR(50) NOT NULL DEFAULT 'Conta PJ',
     description TEXT NOT NULL,
     amount DECIMAL(15,2) NOT NULL,
     transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('income', 'expense')),
@@ -143,8 +143,8 @@ CREATE TABLE IF NOT EXISTS public.transactions_2025_09 (
 CREATE TABLE IF NOT EXISTS public.transactions_2025_10 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
-    client_id UUID,
-    account_id UUID,
+    client_name VARCHAR(255),
+    account_name VARCHAR(50) NOT NULL DEFAULT 'Conta PJ',
     description TEXT NOT NULL,
     amount DECIMAL(15,2) NOT NULL,
     transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('income', 'expense')),
@@ -158,8 +158,8 @@ CREATE TABLE IF NOT EXISTS public.transactions_2025_10 (
 CREATE TABLE IF NOT EXISTS public.transactions_2025_11 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
-    client_id UUID,
-    account_id UUID,
+    client_name VARCHAR(255),
+    account_name VARCHAR(50) NOT NULL DEFAULT 'Conta PJ',
     description TEXT NOT NULL,
     amount DECIMAL(15,2) NOT NULL,
     transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('income', 'expense')),
@@ -173,8 +173,8 @@ CREATE TABLE IF NOT EXISTS public.transactions_2025_11 (
 CREATE TABLE IF NOT EXISTS public.transactions_2025_12 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
-    client_id UUID,
-    account_id UUID,
+    client_name VARCHAR(255),
+    account_name VARCHAR(50) NOT NULL DEFAULT 'Conta PJ',
     description TEXT NOT NULL,
     amount DECIMAL(15,2) NOT NULL,
     transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('income', 'expense')),
@@ -204,74 +204,74 @@ ALTER TABLE public.transactions_2025_12 DISABLE ROW LEVEL SECURITY;
 SELECT '=== MIGRANDO DADOS EXISTENTES ===' as info;
 
 -- Janeiro 2025
-INSERT INTO public.transactions_2025_01 (id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
-SELECT id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at
+INSERT INTO public.transactions_2025_01 (id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
+SELECT id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at
 FROM public.transactions
 WHERE EXTRACT(YEAR FROM transaction_date) = 2025 AND EXTRACT(MONTH FROM transaction_date) = 1;
 
 -- Fevereiro 2025
-INSERT INTO public.transactions_2025_02 (id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
-SELECT id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at
+INSERT INTO public.transactions_2025_02 (id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
+SELECT id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at
 FROM public.transactions
 WHERE EXTRACT(YEAR FROM transaction_date) = 2025 AND EXTRACT(MONTH FROM transaction_date) = 2;
 
 -- Março 2025
-INSERT INTO public.transactions_2025_03 (id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
-SELECT id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at
+INSERT INTO public.transactions_2025_03 (id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
+SELECT id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at
 FROM public.transactions
 WHERE EXTRACT(YEAR FROM transaction_date) = 2025 AND EXTRACT(MONTH FROM transaction_date) = 3;
 
 -- Abril 2025
-INSERT INTO public.transactions_2025_04 (id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
-SELECT id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at
+INSERT INTO public.transactions_2025_04 (id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
+SELECT id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at
 FROM public.transactions
 WHERE EXTRACT(YEAR FROM transaction_date) = 2025 AND EXTRACT(MONTH FROM transaction_date) = 4;
 
 -- Maio 2025
-INSERT INTO public.transactions_2025_05 (id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
-SELECT id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at
+INSERT INTO public.transactions_2025_05 (id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
+SELECT id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at
 FROM public.transactions
 WHERE EXTRACT(YEAR FROM transaction_date) = 2025 AND EXTRACT(MONTH FROM transaction_date) = 5;
 
 -- Junho 2025
-INSERT INTO public.transactions_2025_06 (id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
-SELECT id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at
+INSERT INTO public.transactions_2025_06 (id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
+SELECT id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at
 FROM public.transactions
 WHERE EXTRACT(YEAR FROM transaction_date) = 2025 AND EXTRACT(MONTH FROM transaction_date) = 6;
 
 -- Julho 2025
-INSERT INTO public.transactions_2025_07 (id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
-SELECT id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at
+INSERT INTO public.transactions_2025_07 (id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
+SELECT id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at
 FROM public.transactions
 WHERE EXTRACT(YEAR FROM transaction_date) = 2025 AND EXTRACT(MONTH FROM transaction_date) = 7;
 
 -- Agosto 2025
-INSERT INTO public.transactions_2025_08 (id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
-SELECT id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at
+INSERT INTO public.transactions_2025_08 (id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
+SELECT id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at
 FROM public.transactions
 WHERE EXTRACT(YEAR FROM transaction_date) = 2025 AND EXTRACT(MONTH FROM transaction_date) = 8;
 
 -- Setembro 2025
-INSERT INTO public.transactions_2025_09 (id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
-SELECT id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at
+INSERT INTO public.transactions_2025_09 (id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
+SELECT id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at
 FROM public.transactions
 WHERE EXTRACT(YEAR FROM transaction_date) = 2025 AND EXTRACT(MONTH FROM transaction_date) = 9;
 
 -- Outubro 2025
-INSERT INTO public.transactions_2025_10 (id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
-SELECT id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at
+INSERT INTO public.transactions_2025_10 (id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
+SELECT id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at
 FROM public.transactions
 WHERE EXTRACT(YEAR FROM transaction_date) = 2025 AND EXTRACT(MONTH FROM transaction_date) = 10;
 
 -- Novembro 2025
-INSERT INTO public.transactions_2025_11 (id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
-SELECT id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at
+INSERT INTO public.transactions_2025_11 (id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
+SELECT id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at
 FROM public.transactions
 WHERE EXTRACT(YEAR FROM transaction_date) = 2025 AND EXTRACT(MONTH FROM transaction_date) = 11;
 
 -- Dezembro 2025
-INSERT INTO public.transactions_2025_12 (id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
-SELECT id, user_id, client_id, account_id, description, amount, transaction_type, category, transaction_date, created_at, updated_at
+INSERT INTO public.transactions_2025_12 (id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at)
+SELECT id, user_id, client_name, account_name, description, amount, transaction_type, category, transaction_date, created_at, updated_at
 FROM public.transactions
 WHERE EXTRACT(YEAR FROM transaction_date) = 2025 AND EXTRACT(MONTH FROM transaction_date) = 12;
 
