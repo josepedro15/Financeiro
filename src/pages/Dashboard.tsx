@@ -44,8 +44,22 @@ export default function Dashboard() {
       navigate('/auth');
       return;
     }
+    console.log('=== DASHBOARD MOUNTED ===');
+    console.log('User:', user.email);
     loadFinancialData();
   }, [user, navigate]);
+
+  // Forçar atualização a cada 30 segundos
+  useEffect(() => {
+    if (!user) return;
+    
+    const interval = setInterval(() => {
+      console.log('=== ATUALIZAÇÃO AUTOMÁTICA ===');
+      loadFinancialData();
+    }, 30000); // 30 segundos
+    
+    return () => clearInterval(interval);
+  }, [user]);
 
   const loadFinancialData = async () => {
     if (!user) return;
@@ -53,11 +67,14 @@ export default function Dashboard() {
     try {
       console.log('=== CARREGANDO DADOS FINANCEIROS ===');
       console.log('User ID:', user.id);
-      // Get all transactions
+      console.log('Timestamp:', new Date().toISOString());
+      
+      // Get all transactions with cache busting
       const { data: transactionsData, error } = await supabase
         .from('transactions')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false }); // Adicionar ordenação para garantir dados mais recentes
 
       // DEBUG: Verificar dados carregados
       console.log('=== SUPABASE DEBUG ===');
@@ -87,14 +104,20 @@ export default function Dashboard() {
         .order('created_at', { ascending: false })
         .limit(20);
 
-      // Calculate totals
-      const totalIncome = transactionsData
-        ?.filter(t => t.transaction_type === 'income')
-        ?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
-
-      const totalExpenses = transactionsData
-        ?.filter(t => t.transaction_type === 'expense')
-        ?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+      // Calculate totals with detailed logging
+      console.log('=== CALCULANDO TOTAIS ===');
+      
+      const incomeTransactions = transactionsData?.filter(t => t.transaction_type === 'income') || [];
+      const expenseTransactions = transactionsData?.filter(t => t.transaction_type === 'expense') || [];
+      
+      console.log('Income transactions count:', incomeTransactions.length);
+      console.log('Expense transactions count:', expenseTransactions.length);
+      
+      const totalIncome = incomeTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
+      const totalExpenses = expenseTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
+      
+      console.log('Total income calculated:', totalIncome);
+      console.log('Total expenses calculated:', totalExpenses);
 
       // Calculate balance by account
       const balancePJ = transactionsData
@@ -169,7 +192,7 @@ export default function Dashboard() {
       console.log('Todos os meses:', monthlyData);
       console.log('Array para gráfico:', monthlyRevenue);
 
-      setFinancialData({
+      const newFinancialData = {
         totalIncome,
         totalExpenses,
         balancePJ,
@@ -177,7 +200,14 @@ export default function Dashboard() {
         clientsCount: clientsData?.length || 0,
         recentTransactions: recentData || [],
         monthlyRevenue
-      });
+      };
+      
+      console.log('=== ATUALIZANDO ESTADO ===');
+      console.log('New financial data:', newFinancialData);
+      console.log('Total income in state:', newFinancialData.totalIncome);
+      console.log('Recent transactions count:', newFinancialData.recentTransactions.length);
+      
+      setFinancialData(newFinancialData);
     } catch (error) {
       console.error('Error loading financial data:', error);
     } finally {
@@ -218,8 +248,18 @@ export default function Dashboard() {
             <Button variant="outline" size="sm" onClick={signOut}>
               Sair
             </Button>
-            <Button variant="outline" size="sm" onClick={loadFinancialData} className="ml-2">
-              Atualizar
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                console.log('=== BOTÃO ATUALIZAR CLICADO ===');
+                setLoading(true);
+                loadFinancialData();
+              }} 
+              className="ml-2"
+              disabled={loading}
+            >
+              {loading ? 'Atualizando...' : 'Atualizar'}
             </Button>
           </div>
         </div>
