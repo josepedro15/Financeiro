@@ -23,6 +23,7 @@ interface FinancialData {
   clientsCount: number;
   recentTransactions: any[];
   monthlyRevenue: Array<{ month: string; revenue: number }>;
+  dailyRevenue: Array<{ date: string; revenue: number }>;
 }
 
 export default function Dashboard() {
@@ -35,7 +36,8 @@ export default function Dashboard() {
     balanceCheckout: 0,
     clientsCount: 0,
     recentTransactions: [],
-    monthlyRevenue: []
+    monthlyRevenue: [],
+    dailyRevenue: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -109,6 +111,13 @@ export default function Dashboard() {
         11: 0  // Dezembro
       };
 
+      // Process daily data for current month
+      const dailyData: { [key: string]: number } = {};
+      
+      // Get current month transactions
+      const currentMonth = new Date().getMonth() + 1;
+      const currentYear = new Date().getFullYear();
+      
       transactionsData?.forEach(t => {
         if (t.transaction_type === 'income') {
           const [year, month, day] = t.transaction_date.split('-').map(Number);
@@ -117,6 +126,12 @@ export default function Dashboard() {
           if (year === 2025) {
             const monthIndex = month - 1;
             monthlyData[monthIndex] += Number(t.amount);
+          }
+          
+          // Daily data for current month
+          if (year === currentYear && month === currentMonth) {
+            const dateKey = `${day.toString().padStart(2, '0')}`;
+            dailyData[dateKey] = (dailyData[dateKey] || 0) + Number(t.amount);
           }
         }
       });
@@ -132,6 +147,18 @@ export default function Dashboard() {
         revenue: monthlyData[index]
       }));
 
+      // Create daily revenue array for current month
+      const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+      const dailyRevenue = [];
+      
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateKey = day.toString().padStart(2, '0');
+        dailyRevenue.push({
+          date: dateKey,
+          revenue: dailyData[dateKey] || 0
+        });
+      }
+
       setFinancialData({
         totalIncome,
         totalExpenses,
@@ -139,7 +166,8 @@ export default function Dashboard() {
         balanceCheckout,
         clientsCount: clientsData?.length || 0,
         recentTransactions: recentData || [],
-        monthlyRevenue
+        monthlyRevenue,
+        dailyRevenue
       });
     } catch (error) {
       console.error('Error loading financial data:', error);
@@ -263,7 +291,71 @@ export default function Dashboard() {
         </div>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
+          {/* Gráfico de Evolução Diária */}
+          <Card className="shadow-finance-md">
+            <CardHeader>
+              <CardTitle className="text-sm sm:text-base">Evolução Diária</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
+                Receitas diárias do mês atual
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={financialData.dailyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    axisLine={{ stroke: '#d1d5db' }}
+                    tickLine={{ stroke: '#d1d5db' }}
+                  />
+                  <YAxis 
+                    tickFormatter={(value) => `R$ ${value.toLocaleString()}`}
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    axisLine={{ stroke: '#d1d5db' }}
+                    tickLine={{ stroke: '#d1d5db' }}
+                  />
+                  <Tooltip 
+                    formatter={(value: any) => [`R$ ${Number(value).toLocaleString()}`, 'Receita']}
+                    labelFormatter={(label) => `Dia ${label}`}
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="#10b981" 
+                    strokeWidth={3}
+                    dot={{ 
+                      fill: '#10b981', 
+                      strokeWidth: 2, 
+                      r: 6,
+                      stroke: '#ffffff'
+                    }}
+                    activeDot={{ 
+                      r: 8, 
+                      stroke: '#10b981', 
+                      strokeWidth: 3,
+                      fill: '#ffffff'
+                    }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    fill="#10b981" 
+                    fillOpacity={0.1}
+                    stroke="none"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
           {/* Gráfico de Evolução Mensal */}
           <Card className="shadow-finance-md">
             <CardHeader>
