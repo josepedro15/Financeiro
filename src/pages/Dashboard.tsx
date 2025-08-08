@@ -51,6 +51,8 @@ export default function Dashboard() {
     if (!user) return;
 
     try {
+      console.log('=== CARREGANDO DADOS FINANCEIROS ===');
+      console.log('User ID:', user.id);
       // Get all transactions
       const { data: transactionsData, error } = await supabase
         .from('transactions')
@@ -77,13 +79,13 @@ export default function Dashboard() {
         .eq('user_id', user.id)
         .eq('is_active', true);
 
-      // Get recent transactions
+      // Get recent transactions (aumentado o limite para 20)
       const { data: recentData } = await supabase
         .from('transactions')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(20);
 
       // Calculate totals
       const totalIncome = transactionsData
@@ -215,6 +217,9 @@ export default function Dashboard() {
             </span>
             <Button variant="outline" size="sm" onClick={signOut}>
               Sair
+            </Button>
+            <Button variant="outline" size="sm" onClick={loadFinancialData} className="ml-2">
+              Atualizar
             </Button>
           </div>
         </div>
