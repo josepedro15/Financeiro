@@ -302,7 +302,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={financialData.dailyRevenue}>
+                <LineChart data={financialData.dailyRevenue}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis 
                     dataKey="date" 
@@ -319,50 +319,6 @@ export default function Dashboard() {
                   <Tooltip 
                     formatter={(value: any) => [`R$ ${Number(value).toLocaleString()}`, 'Receita']}
                     labelFormatter={(label) => `Dia ${label}`}
-                    contentStyle={{
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                    }}
-                  />
-                  <Bar 
-                    dataKey="revenue" 
-                    fill="#10b981" 
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Gráfico de Evolução Mensal */}
-          <Card className="shadow-finance-md">
-            <CardHeader>
-              <CardTitle className="text-sm sm:text-base">Evolução Mensal 2025</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                Receitas mensais do ano atual
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={financialData.monthlyRevenue}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis 
-                    dataKey="month" 
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    axisLine={{ stroke: '#d1d5db' }}
-                    tickLine={{ stroke: '#d1d5db' }}
-                  />
-                  <YAxis 
-                    tickFormatter={(value) => `R$ ${value.toLocaleString()}`}
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    axisLine={{ stroke: '#d1d5db' }}
-                    tickLine={{ stroke: '#d1d5db' }}
-                  />
-                  <Tooltip 
-                    formatter={(value: any) => [`R$ ${Number(value).toLocaleString()}`, 'Receita']}
-                    labelFormatter={(label) => `${label} 2025`}
                     contentStyle={{
                       backgroundColor: '#ffffff',
                       border: '1px solid #e5e7eb',
@@ -396,6 +352,50 @@ export default function Dashboard() {
                     stroke="none"
                   />
                 </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Gráfico de Evolução Mensal */}
+          <Card className="shadow-finance-md">
+            <CardHeader>
+              <CardTitle className="text-sm sm:text-base">Evolução Mensal 2025</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
+                Receitas mensais do ano atual
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={financialData.monthlyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="month" 
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    axisLine={{ stroke: '#d1d5db' }}
+                    tickLine={{ stroke: '#d1d5db' }}
+                  />
+                  <YAxis 
+                    tickFormatter={(value) => `R$ ${value.toLocaleString()}`}
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    axisLine={{ stroke: '#d1d5db' }}
+                    tickLine={{ stroke: '#d1d5db' }}
+                  />
+                  <Tooltip 
+                    formatter={(value: any) => [`R$ ${Number(value).toLocaleString()}`, 'Receita']}
+                    labelFormatter={(label) => `${label} 2025`}
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                  />
+                  <Bar 
+                    dataKey="revenue" 
+                    fill="#10b981" 
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
