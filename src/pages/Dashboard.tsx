@@ -23,6 +23,7 @@ interface FinancialData {
   clientsCount: number;
   recentTransactions: any[];
   monthlyRevenue: Array<{ month: string; revenue: number }>;
+  dailyRevenue: Array<{ date: string; revenue: number }>;
 }
 
 export default function Dashboard() {
@@ -35,7 +36,8 @@ export default function Dashboard() {
     balanceCheckout: 0,
     clientsCount: 0,
     recentTransactions: [],
-    monthlyRevenue: []
+    monthlyRevenue: [],
+    dailyRevenue: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -57,18 +59,10 @@ export default function Dashboard() {
         .select('*')
         .eq('user_id', user.id);
 
-      // DEBUG: Verificar dados carregados
-      console.log('=== SUPABASE DEBUG ===');
-      console.log('Error:', error);
-      console.log('Total transactions loaded:', transactionsData?.length || 0);
-      console.log('Sample transactions:', transactionsData?.slice(0, 5));
-      
-      // Verificar transações de abril especificamente
-      const abrilTransactions = transactionsData?.filter(t => 
-        t.transaction_date?.startsWith('2025-04')
-      ) || [];
-      console.log('Abril transactions found:', abrilTransactions.length);
-      console.log('Abril transactions sample:', abrilTransactions.slice(0, 3));
+      if (error) {
+        console.error('Error loading transactions:', error);
+        return;
+      }
 
       // Get clients count
       const { data: clientsData } = await supabase
@@ -101,20 +95,7 @@ export default function Dashboard() {
 
       const balanceCheckout = 0; // Simplified since we don't have account separation
 
-      // NOVA LÓGICA COMPLETAMENTE REESCRITA PARA GRÁFICO MENSAL
-      console.log('=== NOVA LÓGICA MENSAL ===');
-      
-      // 1. Pegar todas as transações de receita de 2025
-      const transactions2025 = transactionsData?.filter(t => {
-        if (t.transaction_type !== 'income') return false;
-        
-        const [year, month, day] = t.transaction_date.split('-').map(Number);
-        return year === 2025;
-      }) || [];
-      
-      console.log('Transações de 2025 encontradas:', transactions2025.length);
-      
-      // 2. Criar mapa simples por mês
+      // Process monthly data for 2025
       const monthlyData = {
         0: 0, // Janeiro
         1: 0, // Fevereiro  
@@ -129,27 +110,33 @@ export default function Dashboard() {
         10: 0, // Novembro
         11: 0  // Dezembro
       };
+
+      // Process daily data for current month
+      const dailyData: { [key: string]: number } = {};
       
-      // 3. Processar cada transação
-      transactions2025.forEach(t => {
-        const [year, month, day] = t.transaction_date.split('-').map(Number);
-        const monthIndex = month - 1; // Converter para 0-based
-        const amount = Number(t.amount);
-        
-        monthlyData[monthIndex] += amount;
-        
-        // Debug para abril
-        if (monthIndex === 3) {
-          console.log('Abril transaction:', {
-            date: t.transaction_date,
-            amount: amount,
-            monthIndex: monthIndex,
-            runningTotal: monthlyData[monthIndex]
-          });
+      // Get current month transactions
+      const currentMonth = new Date().getMonth() + 1;
+      const currentYear = new Date().getFullYear();
+      
+      transactionsData?.forEach(t => {
+        if (t.transaction_type === 'income') {
+          const [year, month, day] = t.transaction_date.split('-').map(Number);
+          
+          // Monthly data for 2025
+          if (year === 2025) {
+            const monthIndex = month - 1;
+            monthlyData[monthIndex] += Number(t.amount);
+          }
+          
+          // Daily data for current month
+          if (year === currentYear && month === currentMonth) {
+            const dateKey = `${day.toString().padStart(2, '0')}`;
+            dailyData[dateKey] = (dailyData[dateKey] || 0) + Number(t.amount);
+          }
         }
       });
-      
-      // 4. Criar array para o gráfico
+
+      // Create monthly revenue array
       const monthNames = [
         'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
         'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
@@ -159,13 +146,18 @@ export default function Dashboard() {
         month: name,
         revenue: monthlyData[index]
       }));
+
+      // Create daily revenue array for current month
+      const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+      const dailyRevenue = [];
       
-      // 5. Debug final
-      console.log('=== RESULTADO FINAL ===');
-      console.log('Abril total:', monthlyData[3]);
-      console.log('Maio total:', monthlyData[4]);
-      console.log('Todos os meses:', monthlyData);
-      console.log('Array para gráfico:', monthlyRevenue);
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateKey = day.toString().padStart(2, '0');
+        dailyRevenue.push({
+          date: dateKey,
+          revenue: dailyData[dateKey] || 0
+        });
+      }
 
       setFinancialData({
         totalIncome,
@@ -174,7 +166,8 @@ export default function Dashboard() {
         balanceCheckout,
         clientsCount: clientsData?.length || 0,
         recentTransactions: recentData || [],
-        monthlyRevenue
+        monthlyRevenue,
+        dailyRevenue
       });
     } catch (error) {
       console.error('Error loading financial data:', error);
@@ -298,17 +291,61 @@ export default function Dashboard() {
         </div>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-8">
-          {/* NOVO GRÁFICO DE EVOLUÇÃO MENSAL */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
+          {/* Gráfico de Evolução Diária */}
           <Card className="shadow-finance-md">
             <CardHeader>
-              <CardTitle className="text-sm sm:text-base">Evolução Financeira 2025</CardTitle>
+              <CardTitle className="text-sm sm:text-base">Evolução Diária</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
+                Receitas diárias do mês atual
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={financialData.dailyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    axisLine={{ stroke: '#d1d5db' }}
+                    tickLine={{ stroke: '#d1d5db' }}
+                  />
+                  <YAxis 
+                    tickFormatter={(value) => `R$ ${value.toLocaleString()}`}
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    axisLine={{ stroke: '#d1d5db' }}
+                    tickLine={{ stroke: '#d1d5db' }}
+                  />
+                  <Tooltip 
+                    formatter={(value: any) => [`R$ ${Number(value).toLocaleString()}`, 'Receita']}
+                    labelFormatter={(label) => `Dia ${label}`}
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                  />
+                  <Bar 
+                    dataKey="revenue" 
+                    fill="#10b981" 
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Gráfico de Evolução Mensal */}
+          <Card className="shadow-finance-md">
+            <CardHeader>
+              <CardTitle className="text-sm sm:text-base">Evolução Mensal 2025</CardTitle>
               <CardDescription className="text-xs sm:text-sm">
                 Receitas mensais do ano atual
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
+              <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={financialData.monthlyRevenue}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis 
