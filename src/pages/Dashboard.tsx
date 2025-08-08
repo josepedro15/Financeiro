@@ -39,6 +39,7 @@ export default function Dashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [debugInfo, setDebugInfo] = useState<string>('');
 
   useEffect(() => {
     if (!user) {
@@ -66,34 +67,76 @@ export default function Dashboard() {
     if (!user) return;
 
     try {
-      console.log('=== CARREGANDO DADOS FINANCEIROS ===');
+      console.log('=== CARREGANDO DADOS FINANCEIROS (VERSÃO AGRESSIVA) ===');
       console.log('User ID:', user.id);
       console.log('Timestamp:', new Date().toISOString());
       
-      // CORREÇÃO: Carregar TODAS as transações sem limitações
-      console.log('=== CARREGANDO TODAS AS TRANSAÇÕES ===');
+      let debugLog = '=== DEBUG LOG ===\n';
       
-      // 1. Carregar TODAS as transações do usuário (sem limite)
+      // FORÇAR CARREGAMENTO COMPLETO - MÚLTIPLAS CONSULTAS
+      console.log('=== FORÇANDO CARREGAMENTO COMPLETO ===');
+      
+      // 1. Consulta AGGRESSIVA - TODAS as transações sem filtros
       const { data: allTransactionsData, error: allTransactionsError } = await supabase
         .from('transactions')
         .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .eq('user_id', user.id);
 
-      // 2. Carregar transações para cálculos mensais (sem filtro de data)
-      const { data: monthlyTransactionsData, error: monthlyError } = await supabase
+      debugLog += `Consulta 1 - Todas as transações: ${allTransactionsData?.length || 0} registros\n`;
+      debugLog += `Erro consulta 1: ${allTransactionsError?.message || 'Nenhum'}\n`;
+
+      // 2. Consulta AGGRESSIVA - Apenas receitas sem filtros
+      const { data: incomeOnlyData, error: incomeError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('transaction_type', 'income');
+
+      debugLog += `Consulta 2 - Apenas receitas: ${incomeOnlyData?.length || 0} registros\n`;
+      debugLog += `Erro consulta 2: ${incomeError?.message || 'Nenhum'}\n`;
+
+      // 3. Consulta AGGRESSIVA - Transações recentes (aumentado para 200)
+      const { data: recentData, error: recentError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(200); // Aumentado para 200
+
+      debugLog += `Consulta 3 - Transações recentes: ${recentData?.length || 0} registros\n`;
+      debugLog += `Erro consulta 3: ${recentError?.message || 'Nenhum'}\n`;
+
+      // 4. Consulta AGGRESSIVA - Para cálculos mensais (sem filtro de ano)
+      const { data: monthlyData, error: monthlyError } = await supabase
         .from('transactions')
         .select('*')
         .eq('user_id', user.id)
         .eq('transaction_type', 'income')
         .order('transaction_date', { ascending: false });
 
+      debugLog += `Consulta 4 - Para cálculos mensais: ${monthlyData?.length || 0} registros\n`;
+      debugLog += `Erro consulta 4: ${monthlyError?.message || 'Nenhum'}\n`;
+
+      // 5. Consulta AGGRESSIVA - Verificar se há problemas de RLS
+      const { data: testData, error: testError } = await supabase
+        .from('transactions')
+        .select('count')
+        .eq('user_id', user.id);
+
+      debugLog += `Consulta 5 - Teste de acesso: ${testData?.length || 0} registros\n`;
+      debugLog += `Erro consulta 5: ${testError?.message || 'Nenhum'}\n`;
+
       // DEBUG: Verificar dados carregados
-      console.log('=== SUPABASE DEBUG ===');
+      console.log('=== SUPABASE DEBUG AGRESSIVO ===');
       console.log('All transactions error:', allTransactionsError);
-      console.log('Monthly transactions error:', monthlyError);
+      console.log('Income error:', incomeError);
+      console.log('Recent error:', recentError);
+      console.log('Monthly error:', monthlyError);
+      console.log('Test error:', testError);
       console.log('Total all transactions loaded:', allTransactionsData?.length || 0);
-      console.log('Total monthly transactions loaded:', monthlyTransactionsData?.length || 0);
+      console.log('Total income transactions loaded:', incomeOnlyData?.length || 0);
+      console.log('Total recent transactions loaded:', recentData?.length || 0);
+      console.log('Total monthly transactions loaded:', monthlyData?.length || 0);
       console.log('Sample transactions:', allTransactionsData?.slice(0, 5));
       
       // Verificar transações de abril especificamente
@@ -110,18 +153,11 @@ export default function Dashboard() {
         .eq('user_id', user.id)
         .eq('is_active', true);
 
-      // Get recent transactions (aumentado o limite para 100 para grandes volumes)
-      const { data: recentData } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(100); // Aumentado de 50 para 100
-
       // Calculate totals with detailed logging
-      console.log('=== CALCULANDO TOTAIS ===');
+      console.log('=== CALCULANDO TOTAIS AGRESSIVO ===');
       
-      const incomeTransactions = allTransactionsData?.filter(t => t.transaction_type === 'income') || [];
+      // USAR TODOS OS DADOS POSSÍVEIS
+      const incomeTransactions = incomeOnlyData || allTransactionsData?.filter(t => t.transaction_type === 'income') || [];
       const expenseTransactions = allTransactionsData?.filter(t => t.transaction_type === 'expense') || [];
       
       console.log('Income transactions count:', incomeTransactions.length);
@@ -138,15 +174,15 @@ export default function Dashboard() {
       const balanceCheckout = 0; // Simplified since we don't have account separation
 
       // NOVA LÓGICA COMPLETAMENTE REESCRITA PARA GRÁFICO MENSAL
-      console.log('=== NOVA LÓGICA MENSAL ===');
+      console.log('=== NOVA LÓGICA MENSAL AGRESSIVA ===');
       
       // 1. Usar TODAS as transações de receita (sem filtro de ano)
-      const allIncomeTransactions = monthlyTransactionsData || [];
+      const allIncomeTransactions = monthlyData || incomeOnlyData || [];
       
       console.log('Todas as transações de receita encontradas:', allIncomeTransactions.length);
       
       // 2. Criar mapa simples por mês
-      const monthlyData = {
+      const monthlyDataMap = {
         0: 0, // Janeiro
         1: 0, // Fevereiro  
         2: 0, // Março
@@ -167,7 +203,7 @@ export default function Dashboard() {
         const monthIndex = month - 1; // Converter para 0-based
         const amount = Number(t.amount);
         
-        monthlyData[monthIndex] += amount;
+        monthlyDataMap[monthIndex] += amount;
         
         // Debug para abril
         if (monthIndex === 3) {
@@ -175,7 +211,7 @@ export default function Dashboard() {
             date: t.transaction_date,
             amount: amount,
             monthIndex: monthIndex,
-            runningTotal: monthlyData[monthIndex]
+            runningTotal: monthlyDataMap[monthIndex]
           });
         }
       });
@@ -188,14 +224,14 @@ export default function Dashboard() {
       
       const monthlyRevenue = monthNames.map((name, index) => ({
         month: name,
-        revenue: monthlyData[index]
+        revenue: monthlyDataMap[index]
       }));
       
       // 5. Debug final
-      console.log('=== RESULTADO FINAL ===');
-      console.log('Abril total:', monthlyData[3]);
-      console.log('Maio total:', monthlyData[4]);
-      console.log('Todos os meses:', monthlyData);
+      console.log('=== RESULTADO FINAL AGRESSIVO ===');
+      console.log('Abril total:', monthlyDataMap[3]);
+      console.log('Maio total:', monthlyDataMap[4]);
+      console.log('Todos os meses:', monthlyDataMap);
       console.log('Array para gráfico:', monthlyRevenue);
 
       const newFinancialData = {
@@ -208,15 +244,17 @@ export default function Dashboard() {
         monthlyRevenue
       };
       
-      console.log('=== ATUALIZANDO ESTADO ===');
+      console.log('=== ATUALIZANDO ESTADO AGRESSIVO ===');
       console.log('New financial data:', newFinancialData);
       console.log('Total income in state:', newFinancialData.totalIncome);
       console.log('Recent transactions count:', newFinancialData.recentTransactions.length);
       
       setFinancialData(newFinancialData);
       setLastUpdate(new Date());
+      setDebugInfo(debugLog);
     } catch (error) {
       console.error('Error loading financial data:', error);
+      setDebugInfo(`ERRO: ${error}`);
     } finally {
       setLoading(false);
     }
@@ -272,6 +310,20 @@ export default function Dashboard() {
             Última atualização: {lastUpdate.toLocaleTimeString('pt-BR')}
           </p>
         </div>
+
+        {/* Debug Info (temporário) */}
+        {debugInfo && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Debug Info</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto max-h-40">
+                {debugInfo}
+              </pre>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
