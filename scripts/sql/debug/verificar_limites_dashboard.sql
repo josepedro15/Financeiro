@@ -24,8 +24,8 @@ FROM public.transactions
 GROUP BY user_id
 ORDER BY total_transacoes DESC;
 
--- 3. Verificar transações mais recentes (simular o limite do dashboard)
-SELECT '=== TRANSAÇÕES MAIS RECENTES (LIMITE 5) ===' as info;
+-- 3. Verificar transações mais recentes (simular o limite do dashboard - 20)
+SELECT '=== TRANSAÇÕES MAIS RECENTES (LIMITE 20) ===' as info;
 
 SELECT 
   transaction_date,
@@ -37,7 +37,7 @@ SELECT
   user_id
 FROM public.transactions 
 ORDER BY created_at DESC
-LIMIT 5;
+LIMIT 20;
 
 -- 4. Verificar transações mais recentes do usuário específico
 SELECT '=== TRANSAÇÕES MAIS RECENTES DO USUÁRIO ESPECÍFICO ===' as info;
@@ -52,7 +52,7 @@ SELECT
 FROM public.transactions 
 WHERE user_id = '2dc520e3-5f19-4dfe-838b-1aca7238ae36'
 ORDER BY created_at DESC
-LIMIT 10;
+LIMIT 20;
 
 -- 5. Verificar se há transações não processadas
 SELECT '=== VERIFICAÇÃO DE TRANSAÇÕES NÃO PROCESSADAS ===' as info;
@@ -66,108 +66,117 @@ WHERE transaction_date IS NULL
    OR amount IS NULL 
    OR transaction_type IS NULL;
 
--- 6. Verificar transações por data de criação
-SELECT '=== TRANSAÇÕES POR DATA DE CRIAÇÃO ===' as info;
-
-SELECT 
-  DATE(created_at) as data_criacao,
-  COUNT(*) as transacoes_criadas,
-  SUM(amount) as total_criado
-FROM public.transactions 
-GROUP BY DATE(created_at)
-ORDER BY data_criacao DESC
-LIMIT 10;
-
--- 7. Verificar se há problemas de cache ou sincronização
+-- 6. Verificar se há problemas de sincronização
 SELECT '=== VERIFICAÇÃO DE SINCRONIZAÇÃO ===' as info;
 
-SELECT 
-  'Última transação criada' as info,
-  MAX(created_at) as ultima_criacao
+SELECT
+  'Transações sem user_id' as tipo,
+  COUNT(*) as quantidade
 FROM public.transactions
+WHERE user_id IS NULL
 
 UNION ALL
 
-SELECT 
-  'Última transação atualizada' as info,
-  MAX(updated_at) as ultima_atualizacao
+SELECT
+  'Transações com user_id vazio' as tipo,
+  COUNT(*) as quantidade
 FROM public.transactions
+WHERE user_id = ''
 
 UNION ALL
 
-SELECT 
-  'Total de transações hoje' as info,
-  COUNT(*) as total_hoje
-FROM public.transactions 
-WHERE DATE(created_at) = CURRENT_DATE;
+SELECT
+  'Transações com amount NULL' as tipo,
+  COUNT(*) as quantidade
+FROM public.transactions
+WHERE amount IS NULL
 
--- 8. Verificar transações de abril especificamente
-SELECT '=== VERIFICAÇÃO ESPECÍFICA DE ABRIL ===' as info;
+UNION ALL
 
-SELECT 
-  COUNT(*) as total_abril,
-  SUM(amount) as faturamento_abril,
-  ROUND(SUM(amount), 2) as faturamento_arredondado,
-  COUNT(DISTINCT user_id) as usuarios_abril
-FROM public.transactions 
-WHERE transaction_date >= '2025-04-01' 
-  AND transaction_date <= '2025-04-30'
-  AND transaction_type = 'income';
+SELECT
+  'Transações com transaction_type NULL' as tipo,
+  COUNT(*) as quantidade
+FROM public.transactions
+WHERE transaction_type IS NULL;
 
--- 9. Verificar se há transações duplicadas que podem estar causando problemas
+-- 7. Verificar se há duplicatas
 SELECT '=== VERIFICAÇÃO DE DUPLICATAS ===' as info;
 
 SELECT 
   transaction_date,
   description,
   amount,
-  account_name,
-  user_id,
   COUNT(*) as quantidade
 FROM public.transactions 
-GROUP BY transaction_date, description, amount, account_name, user_id
+WHERE user_id = '2dc520e3-5f19-4dfe-838b-1aca7238ae36'
+GROUP BY transaction_date, description, amount
 HAVING COUNT(*) > 1
-ORDER BY quantidade DESC
-LIMIT 10;
+ORDER BY quantidade DESC;
 
--- 10. Resumo final para debug
-SELECT '=== RESUMO PARA DEBUG ===' as info;
+-- 8. Verificar transações de abril especificamente
+SELECT '=== VERIFICAÇÃO ABRIL 2025 ===' as info;
+
+SELECT
+  COUNT(*) as total_abril,
+  SUM(amount) as faturamento_abril,
+  COUNT(DISTINCT transaction_date) as dias_com_transacoes
+FROM public.transactions
+WHERE user_id = '2dc520e3-5f19-4dfe-838b-1aca7238ae36'
+  AND transaction_date >= '2025-04-01'
+  AND transaction_date <= '2025-04-30'
+  AND transaction_type = 'income';
+
+-- 9. Verificar por dia em abril
+SELECT '=== ABRIL POR DIA ===' as info;
+
+SELECT
+  transaction_date,
+  COUNT(*) as transacoes,
+  SUM(amount) as total_dia,
+  ROUND(SUM(amount), 2) as total_arredondado
+FROM public.transactions
+WHERE user_id = '2dc520e3-5f19-4dfe-838b-1aca7238ae36'
+  AND transaction_date >= '2025-04-01'
+  AND transaction_date <= '2025-04-30'
+  AND transaction_type = 'income'
+GROUP BY transaction_date
+ORDER BY transaction_date;
+
+-- 10. Teste de limite do Supabase (1.000 registros)
+SELECT '=== TESTE DE LIMITE DO SUPABASE ===' as info;
 
 SELECT 
-  'Total geral' as metric,
-  COUNT(*) as value
+  'Total de transações' as info,
+  COUNT(*) as quantidade
 FROM public.transactions
 
 UNION ALL
 
 SELECT 
-  'Transações do usuário específico' as metric,
-  COUNT(*) as value
-FROM public.transactions 
+  'Transações do usuário específico' as info,
+  COUNT(*) as quantidade
+FROM public.transactions
 WHERE user_id = '2dc520e3-5f19-4dfe-838b-1aca7238ae36'
 
 UNION ALL
 
 SELECT 
-  'Transações de abril' as metric,
-  COUNT(*) as value
-FROM public.transactions 
-WHERE transaction_date >= '2025-04-01' 
-  AND transaction_date <= '2025-04-30'
+  'Transações de abril do usuário' as info,
+  COUNT(*) as quantidade
+FROM public.transactions
+WHERE user_id = '2dc520e3-5f19-4dfe-838b-1aca7238ae36'
+  AND transaction_date >= '2025-04-01'
+  AND transaction_date <= '2025-04-30';
 
-UNION ALL
-
-SELECT 
-  'Transações de 2025' as metric,
-  COUNT(*) as value
-FROM public.transactions 
-WHERE transaction_date >= '2025-01-01' 
-  AND transaction_date <= '2025-12-31'
-
-UNION ALL
+-- 11. Verificar se há problemas de performance
+SELECT '=== VERIFICAÇÃO DE PERFORMANCE ===' as info;
 
 SELECT 
-  'Transações de hoje' as metric,
-  COUNT(*) as value
-FROM public.transactions 
-WHERE DATE(created_at) = CURRENT_DATE;
+  'Transações por mês' as tipo,
+  EXTRACT(YEAR FROM transaction_date::date) as ano,
+  EXTRACT(MONTH FROM transaction_date::date) as mes,
+  COUNT(*) as quantidade
+FROM public.transactions
+WHERE user_id = '2dc520e3-5f19-4dfe-838b-1aca7238ae36'
+GROUP BY ano, mes
+ORDER BY ano DESC, mes DESC;

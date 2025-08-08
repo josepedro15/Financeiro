@@ -38,6 +38,7 @@ export default function Dashboard() {
     monthlyRevenue: []
   });
   const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   useEffect(() => {
     if (!user) {
@@ -69,12 +70,36 @@ export default function Dashboard() {
       console.log('User ID:', user.id);
       console.log('Timestamp:', new Date().toISOString());
       
-      // Get all transactions with cache busting
-      const { data: transactionsData, error } = await supabase
-        .from('transactions')
+      // OTIMIZAÇÃO: Usar view materializada se disponível, senão usar consulta otimizada
+      let transactionsData;
+      let error;
+      
+      // Tentar usar view materializada primeiro
+      const { data: materializedData, error: materializedError } = await supabase
+        .from('monthly_revenue_summary')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false }); // Adicionar ordenação para garantir dados mais recentes
+        .gte('year', 2025)
+        .order('year', { ascending: false })
+        .order('month', { ascending: false });
+      
+      if (materializedData && materializedData.length > 0) {
+        console.log('=== USANDO VIEW MATERIALIZADA ===');
+        transactionsData = materializedData;
+      } else {
+        console.log('=== USANDO CONSULTA OTIMIZADA ===');
+        // Consulta otimizada com índices compostos
+        const { data: optimizedData, error: optimizedError } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('transaction_date', '2025-01-01')
+          .order('transaction_date', { ascending: false })
+          .limit(1000); // Limite para performance
+        
+        transactionsData = optimizedData;
+        error = optimizedError;
+      }
 
       // DEBUG: Verificar dados carregados
       console.log('=== SUPABASE DEBUG ===');
@@ -89,20 +114,20 @@ export default function Dashboard() {
       console.log('Abril transactions found:', abrilTransactions.length);
       console.log('Abril transactions sample:', abrilTransactions.slice(0, 3));
 
-      // Get clients count
+      // Get clients count (otimizado)
       const { data: clientsData } = await supabase
         .from('clients')
         .select('id')
         .eq('user_id', user.id)
         .eq('is_active', true);
 
-      // Get recent transactions (aumentado o limite para 20)
+      // Get recent transactions (aumentado o limite para 50 para grandes volumes)
       const { data: recentData } = await supabase
         .from('transactions')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(50); // Aumentado de 20 para 50
 
       // Calculate totals with detailed logging
       console.log('=== CALCULANDO TOTAIS ===');
@@ -208,6 +233,7 @@ export default function Dashboard() {
       console.log('Recent transactions count:', newFinancialData.recentTransactions.length);
       
       setFinancialData(newFinancialData);
+      setLastUpdate(new Date());
     } catch (error) {
       console.error('Error loading financial data:', error);
     } finally {
@@ -245,220 +271,156 @@ export default function Dashboard() {
             <span className="text-xs sm:text-sm text-muted-foreground text-center">
               Bem-vindo, {user?.email}
             </span>
-            <Button variant="outline" size="sm" onClick={signOut}>
-              Sair
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => {
-                console.log('=== BOTÃO ATUALIZAR CLICADO ===');
-                setLoading(true);
-                loadFinancialData();
-              }} 
-              className="ml-2"
-              disabled={loading}
-            >
-              {loading ? 'Atualizando...' : 'Atualizar'}
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={loadFinancialData}>
+                Atualizar
+              </Button>
+              <Button variant="outline" size="sm" onClick={signOut}>
+                Sair
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        {/* Saldo Total Card */}
-        <div className="mb-6 sm:mb-8">
-          <Card className="shadow-finance-md">
+      <main className="container mx-auto px-4 py-8">
+        {/* Status de atualização */}
+        <div className="mb-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            Última atualização: {lastUpdate.toLocaleTimeString('pt-BR')}
+          </p>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm sm:text-lg font-semibold">Saldo Total</CardTitle>
-              <DollarSign className="h-4 w-4 sm:h-6 sm:w-6 text-primary" />
+              <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl sm:text-4xl font-bold ${
-                (financialData.balancePJ + financialData.balanceCheckout) >= 0 ? 'text-success' : 'text-destructive'
-              }`}>
-                {formatCurrency(financialData.balancePJ + financialData.balanceCheckout)}
-              </div>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-2">
-                Soma dos saldos: Conta PJ + Conta Checkout
+              <div className="text-2xl font-bold">{formatCurrency(financialData.totalIncome)}</div>
+              <p className="text-xs text-muted-foreground">
+                +{formatCurrency(financialData.totalIncome - financialData.totalExpenses)} vs despesas
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Despesas</CardTitle>
+              <TrendingDown className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(financialData.totalExpenses)}</div>
+              <p className="text-xs text-muted-foreground">
+                Total de despesas registradas
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Saldo PJ</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(financialData.balancePJ)}</div>
+              <p className="text-xs text-muted-foreground">
+                Conta Pessoa Jurídica
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Clientes Ativos</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{financialData.clientsCount}</div>
+              <p className="text-xs text-muted-foreground">
+                Clientes cadastrados
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-          <Card className="shadow-finance-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium">Receitas</CardTitle>
-              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg sm:text-2xl font-bold text-success">
-                {formatCurrency(financialData.totalIncome)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-finance-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium">Despesas</CardTitle>
-              <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-destructive" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg sm:text-2xl font-bold text-destructive">
-                {formatCurrency(financialData.totalExpenses)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-finance-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium">Saldo PJ</CardTitle>
-              <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className={`text-lg sm:text-2xl font-bold ${
-                financialData.balancePJ >= 0 ? 'text-success' : 'text-destructive'
-              }`}>
-                {formatCurrency(financialData.balancePJ)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-finance-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium">Saldo Checkout</CardTitle>
-              <CreditCard className="h-3 w-3 sm:h-4 sm:w-4 text-info" />
-            </CardHeader>
-            <CardContent>
-              <div className={`text-lg sm:text-2xl font-bold ${
-                financialData.balanceCheckout >= 0 ? 'text-success' : 'text-destructive'
-              }`}>
-                {formatCurrency(financialData.balanceCheckout)}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Charts */}
-        <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-8">
-          {/* NOVO GRÁFICO DE EVOLUÇÃO MENSAL */}
-          <Card className="shadow-finance-md">
+        <div className="grid grid-cols-1 gap-6 mb-8">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-sm sm:text-base">Evolução Financeira 2025</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                Receitas mensais do ano atual
+              <CardTitle>Evolução Mensal</CardTitle>
+              <CardDescription>
+                Receita mensal de 2025
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
-                <LineChart data={financialData.monthlyRevenue}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis 
-                    dataKey="month" 
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    axisLine={{ stroke: '#d1d5db' }}
-                    tickLine={{ stroke: '#d1d5db' }}
-                  />
-                  <YAxis 
-                    tickFormatter={(value) => `R$ ${value.toLocaleString()}`}
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    axisLine={{ stroke: '#d1d5db' }}
-                    tickLine={{ stroke: '#d1d5db' }}
-                  />
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={financialData.monthlyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
                   <Tooltip 
-                    formatter={(value: any) => [`R$ ${Number(value).toLocaleString()}`, 'Receita']}
-                    labelFormatter={(label) => `${label} 2025`}
-                    contentStyle={{
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                    }}
+                    formatter={(value: number) => formatCurrency(value)}
+                    labelStyle={{ color: 'black' }}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    stroke="#10b981" 
-                    strokeWidth={3}
-                    dot={{ 
-                      fill: '#10b981', 
-                      strokeWidth: 2, 
-                      r: 6,
-                      stroke: '#ffffff'
-                    }}
-                    activeDot={{ 
-                      r: 8, 
-                      stroke: '#10b981', 
-                      strokeWidth: 3,
-                      fill: '#ffffff'
-                    }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    fill="#10b981" 
-                    fillOpacity={0.1}
-                    stroke="none"
-                  />
-                </LineChart>
+                  <Bar dataKey="revenue" fill="#3b82f6" />
+                </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>
 
         {/* Recent Transactions */}
-        <Card className="shadow-finance-md">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-sm sm:text-base">Transações Recentes</CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              Últimas movimentações financeiras
+            <CardTitle>Transações Recentes</CardTitle>
+            <CardDescription>
+              Últimas {financialData.recentTransactions.length} transações
             </CardDescription>
           </CardHeader>
           <CardContent>
             {financialData.recentTransactions.length === 0 ? (
-              <div className="text-center py-8">
-                <CreditCard className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  Nenhuma transação encontrada. Comece adicionando suas primeiras movimentações.
-                </p>
-                <Button className="mt-4" size="sm" onClick={() => navigate('/transactions')}>
-                  Adicionar Transação
-                </Button>
-              </div>
+              <p className="text-center text-muted-foreground py-8">
+                Nenhuma transação encontrada
+              </p>
             ) : (
-              <div className="space-y-3 sm:space-y-4">
+              <div className="space-y-4">
                 {financialData.recentTransactions.map((transaction) => (
-                  <div 
-                    key={transaction.id} 
-                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-lg border gap-2 sm:gap-0"
-                  >
-                    <div className="flex items-center space-x-3 sm:space-x-4">
-                      <div className={`p-1.5 sm:p-2 rounded-full ${
+                  <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-4">
+                      <div className={`p-2 rounded-full ${
                         transaction.transaction_type === 'income' 
-                          ? 'bg-success/10' 
-                          : 'bg-destructive/10'
+                          ? 'bg-green-100 text-green-600' 
+                          : 'bg-red-100 text-red-600'
                       }`}>
                         {transaction.transaction_type === 'income' ? (
-                          <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
+                          <ArrowUpRight className="h-4 w-4" />
                         ) : (
-                          <ArrowDownRight className="h-3 w-3 sm:h-4 sm:w-4 text-destructive" />
+                          <ArrowDownRight className="h-4 w-4" />
                         )}
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-sm sm:text-base truncate">{transaction.description}</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                          {transaction.client_name || 'Sem cliente'} • {transaction.transaction_date}
+                      <div>
+                        <p className="font-medium">{transaction.description}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(transaction.transaction_date).toLocaleDateString('pt-BR')}
                         </p>
                       </div>
                     </div>
-                    <div className={`font-semibold text-sm sm:text-base ${
-                      transaction.transaction_type === 'income' ? 'text-success' : 'text-destructive'
-                    }`}>
-                      {transaction.transaction_type === 'income' ? '+' : '-'}
-                      {formatCurrency(Number(transaction.amount))}
+                    <div className="text-right">
+                      <p className={`font-medium ${
+                        transaction.transaction_type === 'income' 
+                          ? 'text-green-600' 
+                          : 'text-red-600'
+                      }`}>
+                        {transaction.transaction_type === 'income' ? '+' : '-'}
+                        {formatCurrency(transaction.amount)}
+                      </p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {transaction.transaction_type}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -466,30 +428,6 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
-
-        {/* Quick Actions */}
-        <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          <Button 
-            className="h-16 sm:h-20 text-sm sm:text-lg"
-            onClick={() => navigate('/transactions')}
-          >
-            Gerenciar Transações
-          </Button>
-          <Button 
-            className="h-16 sm:h-20 text-sm sm:text-lg" 
-            variant="outline"
-            onClick={() => navigate('/clients')}
-          >
-            Gerenciar Clientes
-          </Button>
-          <Button 
-            className="h-16 sm:h-20 text-sm sm:text-lg col-span-1 sm:col-span-2 lg:col-span-1" 
-            variant="secondary"
-            onClick={() => navigate('/reports')}
-          >
-            Ver Relatórios
-          </Button>
-        </div>
       </main>
     </div>
   );
