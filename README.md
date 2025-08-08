@@ -1,73 +1,94 @@
-# Welcome to your Lovable project
+# Projeto Financeiro
 
-## Project info
+Sistema de gestão financeira desenvolvido com React, TypeScript e Supabase.
 
-**URL**: https://lovable.dev/projects/00c261d9-565e-4048-93c2-50fa595c99c5
+## 📁 Estrutura do Projeto
 
-## How can I edit this code?
+### 📂 `src/`
+- **Componentes React**: Interface do usuário
+- **Páginas**: Telas principais do sistema
+- **Hooks**: Lógica reutilizável
+- **Integrações**: Configurações do Supabase
 
-There are several ways of editing your application.
+### 📂 `scripts/`
+Scripts organizados por categoria:
 
-**Use Lovable**
+#### `scripts/sql/`
+- **`inserts/`**: Scripts para inserção de dados
+  - Transações por mês (abril, maio, junho, julho, agosto)
+  - Dados de contas e clientes
+  
+- **`verifications/`**: Scripts de verificação
+  - Verificação de dados no dashboard
+  - Verificação de estrutura de tabelas
+  - Verificação de transações por período
+  
+- **`debug/`**: Scripts de debug e investigação
+  - Testes de conexão
+  - Investigação de discrepâncias
+  - Debug de carregamento
+  
+- **`migrations/`**: Scripts de migração
+  - Migração de dados existentes
+  - Criação de triggers
+  - Alterações de estrutura
+  
+- **`cleanup/`**: Scripts de limpeza
+  - Remoção de dados duplicados
+  - Limpeza de transações antigas
+  - Apagar dados específicos
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/00c261d9-565e-4048-93c2-50fa595c99c5) and start prompting.
+#### `scripts/js/`
+- Scripts JavaScript para automação
+- Debug de dashboard
+- Forçar atualizações
 
-Changes made via Lovable will be committed automatically to this repo.
+### 📂 `docs/`
+- Documentação do projeto
+- Relatórios de dados
+- Instruções de migração
 
-**Use your preferred IDE**
+### 📂 `supabase/`
+- Configurações do Supabase
+- Migrações do banco de dados
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🚀 Como Usar
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### Desenvolvimento
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Scripts SQL
+Os scripts estão organizados por função. Para usar:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. **Inserir dados**: Use scripts da pasta `inserts/`
+2. **Verificar dados**: Use scripts da pasta `verifications/`
+3. **Debug**: Use scripts da pasta `debug/`
+4. **Migração**: Use scripts da pasta `migrations/`
+5. **Limpeza**: Use scripts da pasta `cleanup/`
 
-**Use GitHub Codespaces**
+### Exemplo de uso:
+```bash
+# Executar script de inserção
+psql -d your_database -f scripts/sql/inserts/insert_abril_2025_dias_1_2_3.sql
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Verificar dados
+psql -d your_database -f scripts/sql/verifications/verificar_abril_completo.sql
+```
 
-## What technologies are used for this project?
+## 📊 Funcionalidades
 
-This project is built with:
+- Dashboard financeiro
+- Gestão de transações
+- Relatórios por período
+- Autenticação de usuários
+- Integração com Supabase
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
+## 🛠️ Tecnologias
+
+- React + TypeScript
+- Supabase (PostgreSQL)
 - Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/00c261d9-565e-4048-93c2-50fa595c99c5) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- Vite
