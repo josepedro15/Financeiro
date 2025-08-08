@@ -70,45 +70,34 @@ export default function Dashboard() {
       console.log('User ID:', user.id);
       console.log('Timestamp:', new Date().toISOString());
       
-      // OTIMIZAÇÃO: Usar view materializada se disponível, senão usar consulta otimizada
-      let transactionsData;
-      let error;
+      // CORREÇÃO: Carregar TODAS as transações sem limitações
+      console.log('=== CARREGANDO TODAS AS TRANSAÇÕES ===');
       
-      // Tentar usar view materializada primeiro
-      const { data: materializedData, error: materializedError } = await supabase
-        .from('monthly_revenue_summary')
+      // 1. Carregar TODAS as transações do usuário (sem limite)
+      const { data: allTransactionsData, error: allTransactionsError } = await supabase
+        .from('transactions')
         .select('*')
         .eq('user_id', user.id)
-        .gte('year', 2025)
-        .order('year', { ascending: false })
-        .order('month', { ascending: false });
-      
-      if (materializedData && materializedData.length > 0) {
-        console.log('=== USANDO VIEW MATERIALIZADA ===');
-        transactionsData = materializedData;
-      } else {
-        console.log('=== USANDO CONSULTA OTIMIZADA ===');
-        // Consulta otimizada com índices compostos
-        const { data: optimizedData, error: optimizedError } = await supabase
-          .from('transactions')
-          .select('*')
-          .eq('user_id', user.id)
-          .gte('transaction_date', '2025-01-01')
-          .order('transaction_date', { ascending: false })
-          .limit(1000); // Limite para performance
-        
-        transactionsData = optimizedData;
-        error = optimizedError;
-      }
+        .order('created_at', { ascending: false });
+
+      // 2. Carregar transações para cálculos mensais (sem filtro de data)
+      const { data: monthlyTransactionsData, error: monthlyError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('transaction_type', 'income')
+        .order('transaction_date', { ascending: false });
 
       // DEBUG: Verificar dados carregados
       console.log('=== SUPABASE DEBUG ===');
-      console.log('Error:', error);
-      console.log('Total transactions loaded:', transactionsData?.length || 0);
-      console.log('Sample transactions:', transactionsData?.slice(0, 5));
+      console.log('All transactions error:', allTransactionsError);
+      console.log('Monthly transactions error:', monthlyError);
+      console.log('Total all transactions loaded:', allTransactionsData?.length || 0);
+      console.log('Total monthly transactions loaded:', monthlyTransactionsData?.length || 0);
+      console.log('Sample transactions:', allTransactionsData?.slice(0, 5));
       
       // Verificar transações de abril especificamente
-      const abrilTransactions = transactionsData?.filter(t => 
+      const abrilTransactions = allTransactionsData?.filter(t => 
         t.transaction_date?.startsWith('2025-04')
       ) || [];
       console.log('Abril transactions found:', abrilTransactions.length);
@@ -121,19 +110,19 @@ export default function Dashboard() {
         .eq('user_id', user.id)
         .eq('is_active', true);
 
-      // Get recent transactions (aumentado o limite para 50 para grandes volumes)
+      // Get recent transactions (aumentado o limite para 100 para grandes volumes)
       const { data: recentData } = await supabase
         .from('transactions')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(50); // Aumentado de 20 para 50
+        .limit(100); // Aumentado de 50 para 100
 
       // Calculate totals with detailed logging
       console.log('=== CALCULANDO TOTAIS ===');
       
-      const incomeTransactions = transactionsData?.filter(t => t.transaction_type === 'income') || [];
-      const expenseTransactions = transactionsData?.filter(t => t.transaction_type === 'expense') || [];
+      const incomeTransactions = allTransactionsData?.filter(t => t.transaction_type === 'income') || [];
+      const expenseTransactions = allTransactionsData?.filter(t => t.transaction_type === 'expense') || [];
       
       console.log('Income transactions count:', incomeTransactions.length);
       console.log('Expense transactions count:', expenseTransactions.length);
@@ -145,24 +134,16 @@ export default function Dashboard() {
       console.log('Total expenses calculated:', totalExpenses);
 
       // Calculate balance by account
-      const balancePJ = transactionsData
-        ?.filter(t => t.transaction_type === 'income')
-        ?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
-
+      const balancePJ = incomeTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
       const balanceCheckout = 0; // Simplified since we don't have account separation
 
       // NOVA LÓGICA COMPLETAMENTE REESCRITA PARA GRÁFICO MENSAL
       console.log('=== NOVA LÓGICA MENSAL ===');
       
-      // 1. Pegar todas as transações de receita de 2025
-      const transactions2025 = transactionsData?.filter(t => {
-        if (t.transaction_type !== 'income') return false;
-        
-        const [year, month, day] = t.transaction_date.split('-').map(Number);
-        return year === 2025;
-      }) || [];
+      // 1. Usar TODAS as transações de receita (sem filtro de ano)
+      const allIncomeTransactions = monthlyTransactionsData || [];
       
-      console.log('Transações de 2025 encontradas:', transactions2025.length);
+      console.log('Todas as transações de receita encontradas:', allIncomeTransactions.length);
       
       // 2. Criar mapa simples por mês
       const monthlyData = {
@@ -180,8 +161,8 @@ export default function Dashboard() {
         11: 0  // Dezembro
       };
       
-      // 3. Processar cada transação
-      transactions2025.forEach(t => {
+      // 3. Processar cada transação (sem filtro de ano)
+      allIncomeTransactions.forEach(t => {
         const [year, month, day] = t.transaction_date.split('-').map(Number);
         const monthIndex = month - 1; // Converter para 0-based
         const amount = Number(t.amount);
