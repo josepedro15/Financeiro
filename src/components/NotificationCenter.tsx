@@ -33,6 +33,8 @@ export default function NotificationCenter() {
     if (!user) return;
 
     try {
+      console.log('🔍 Carregando notificações para usuário:', user.id);
+      
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
@@ -40,13 +42,22 @@ export default function NotificationCenter() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Erro ao carregar notificações:', error);
+        console.error('❌ Erro ao carregar notificações:', error);
+        console.error('❌ Detalhes do erro:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        toast.error(`Erro ao carregar notificações: ${error.message}`);
         return;
       }
 
+      console.log('✅ Notificações carregadas:', data);
       setNotifications(data || []);
     } catch (error) {
-      console.error('Erro ao carregar notificações:', error);
+      console.error('❌ Erro inesperado ao carregar notificações:', error);
+      toast.error('Erro inesperado ao carregar notificações');
     } finally {
       setLoading(false);
     }
@@ -54,7 +65,10 @@ export default function NotificationCenter() {
 
   const handleInviteResponse = async (notificationId: string, organizationMemberId: string, response: 'accepted' | 'rejected') => {
     try {
+      console.log('🔄 Processando resposta:', { notificationId, organizationMemberId, response });
+
       // Atualizar status na organization_members
+      console.log('📝 Atualizando organization_members...');
       const { error: orgError } = await supabase
         .from('organization_members')
         .update({ 
@@ -64,12 +78,21 @@ export default function NotificationCenter() {
         .eq('id', organizationMemberId);
 
       if (orgError) {
-        console.error('Erro ao atualizar organization_members:', orgError);
-        toast.error('Erro ao processar resposta');
+        console.error('❌ Erro ao atualizar organization_members:', orgError);
+        console.error('❌ Detalhes:', {
+          message: orgError.message,
+          details: orgError.details,
+          hint: orgError.hint,
+          code: orgError.code
+        });
+        toast.error(`Erro ao processar resposta: ${orgError.message}`);
         return;
       }
 
+      console.log('✅ organization_members atualizado com sucesso');
+
       // Atualizar notificação
+      console.log('📝 Atualizando notificação...');
       const { error: notifError } = await supabase
         .from('notifications')
         .update({ 
@@ -80,7 +103,15 @@ export default function NotificationCenter() {
         .eq('id', notificationId);
 
       if (notifError) {
-        console.error('Erro ao atualizar notificação:', notifError);
+        console.error('❌ Erro ao atualizar notificação:', notifError);
+        console.error('❌ Detalhes:', {
+          message: notifError.message,
+          details: notifError.details,
+          hint: notifError.hint,
+          code: notifError.code
+        });
+      } else {
+        console.log('✅ Notificação atualizada com sucesso');
       }
 
       // Atualizar estado local
@@ -100,12 +131,13 @@ export default function NotificationCenter() {
 
       // Recarregar página para atualizar seletor de dados
       if (response === 'accepted') {
+        console.log('🔄 Recarregando página em 1.5s...');
         setTimeout(() => window.location.reload(), 1500);
       }
 
     } catch (error) {
-      console.error('Erro ao processar resposta:', error);
-      toast.error('Erro ao processar resposta');
+      console.error('❌ Erro inesperado ao processar resposta:', error);
+      toast.error('Erro inesperado ao processar resposta');
     }
   };
 
