@@ -315,14 +315,68 @@ export default function Dashboard() {
       const lucroLiquidoSemProlabore = totalIncome - totalExpensesSemProlabore;
       const margemLucro = totalIncome > 0 ? (lucroLiquidoSemProlabore / totalIncome) * 100 : 0;
       
-      // 4. Crescimento Mensal (%) = comparação mês atual vs anterior
+      // 4. Crescimento Mensal (%) = acumulado até hoje vs mesmo dia mês anterior
       let crescimentoMensal = 0;
-      if (monthlyRevenue.length >= 2) {
-        const currentMonthData = monthlyRevenue[monthlyRevenue.length - 1];
-        const previousMonthData = monthlyRevenue[monthlyRevenue.length - 2];
-        if (previousMonthData.revenue > 0) {
-          crescimentoMensal = ((currentMonthData.revenue - previousMonthData.revenue) / previousMonthData.revenue) * 100;
+      
+      // Obter data atual
+      const today = new Date();
+      const currentDay = today.getDate();
+      const todayMonth = today.getMonth() + 1; // 1-based
+      const todayYear = today.getFullYear();
+      
+      console.log('=== CALCULANDO CRESCIMENTO MENSAL ===');
+      console.log('Data atual:', today.toLocaleDateString('pt-BR'));
+      console.log('Dia atual:', currentDay);
+      console.log('Mês atual:', todayMonth);
+      
+      // Determinar mês anterior
+      let previousMonth = todayMonth - 1;
+      let previousYear = todayYear;
+      if (previousMonth === 0) {
+        previousMonth = 12;
+        previousYear = todayYear - 1;
+      }
+      
+      console.log('Mês anterior para comparação:', previousMonth, '/', previousYear);
+      
+      try {
+        // Buscar dados acumulados até hoje no mês atual
+        const currentMonthTableGrowth = `transactions_${todayYear}_${String(todayMonth).padStart(2, '0')}`;
+        const { data: currentMonthData, error: currentError } = await supabase
+          .from(currentMonthTableGrowth)
+          .select('transaction_date, amount')
+          .eq('user_id', user.id)
+          .eq('transaction_type', 'income')
+          .eq('account_name', 'Conta PJ')
+          .lte('transaction_date', `${todayYear}-${String(todayMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`);
+
+        // Buscar dados acumulados até o mesmo dia no mês anterior
+        const previousMonthTable = `transactions_${previousYear}_${String(previousMonth).padStart(2, '0')}`;
+        const { data: previousMonthData, error: previousError } = await supabase
+          .from(previousMonthTable)
+          .select('transaction_date, amount')
+          .eq('user_id', user.id)
+          .eq('transaction_type', 'income')
+          .eq('account_name', 'Conta PJ')
+          .lte('transaction_date', `${previousYear}-${String(previousMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`);
+
+        if (!currentError && !previousError && currentMonthData && previousMonthData) {
+          const currentAccumulated = currentMonthData.reduce((sum, t) => sum + Number(t.amount), 0);
+          const previousAccumulated = previousMonthData.reduce((sum, t) => sum + Number(t.amount), 0);
+          
+          console.log(`Acumulado até ${currentDay}/${todayMonth}:`, currentAccumulated);
+          console.log(`Acumulado até ${currentDay}/${previousMonth}:`, previousAccumulated);
+          
+          if (previousAccumulated > 0) {
+            crescimentoMensal = ((currentAccumulated - previousAccumulated) / previousAccumulated) * 100;
+          }
+          
+          console.log('Crescimento calculado:', crescimentoMensal + '%');
+        } else {
+          console.warn('Erro ao buscar dados para crescimento mensal:', currentError || previousError);
         }
+      } catch (error) {
+        console.error('Erro no cálculo de crescimento mensal:', error);
       }
       
       console.log('Ticket Médio:', ticketMedio);
@@ -538,7 +592,7 @@ export default function Dashboard() {
                 {Math.abs(financialData.crescimentoMensal).toFixed(1)}%
               </div>
               <p className="text-xs text-muted-foreground">
-                vs mês anterior
+                acumulado até hoje vs mês anterior
               </p>
             </CardContent>
           </Card>
