@@ -6,7 +6,7 @@ export interface Subscription {
   id: string;
   user_id: string;
   plan_type: 'starter' | 'business' | 'unlimited';
-  status: 'active' | 'inactive' | 'cancelled' | 'expired';
+  status: 'trial' | 'active' | 'inactive' | 'cancelled' | 'expired';
   started_at: string;
   expires_at?: string;
   trial_ends_at?: string;
