@@ -130,39 +130,35 @@ export default function Dashboard() {
       console.log('Buscando organizações onde sou membro...');
       console.log('Meu user.id:', user.id);
       
-      // Versão simplificada sem foreign key automática
-      console.log('📝 Executando consulta SQL...');
+      // Versão com consulta SQL direta (bypass do ORM)
+      console.log('📝 Executando consulta SQL direta...');
       console.log('Query: SELECT owner_id FROM organization_members WHERE member_id =', user.id, 'AND status = active');
       
       const { data: memberOf, error: memberError } = await supabase
-        .from('organization_members')
-        .select('owner_id')
-        .eq('member_id', user.id)
-        .eq('status', 'active');
+        .rpc('get_organization_members', { 
+          user_member_id: user.id 
+        });
       
       console.log('Resultado memberOf:', memberOf);
       console.log('Erro memberError:', memberError);
       
-      if (!memberError && memberOf) {
+      if (!memberError && memberOf && Array.isArray(memberOf)) {
         console.log('Processando memberOf, length:', memberOf.length);
         for (const org of memberOf) {
           console.log('Org item:', org);
           
-          // Buscar email do owner separadamente
+          // Buscar email do owner separadamente usando RPC também
           const { data: ownerProfile, error: ownerError } = await supabase
-            .from('profiles')
-            .select('email')
-            .eq('id', org.owner_id)
-            .single();
+            .rpc('get_profile_email', { user_profile_id: org.owner_id });
           
           console.log('Owner profile:', ownerProfile, 'error:', ownerError);
           
-          if (!ownerError && ownerProfile?.email) {
-            console.log('Adicionando fonte:', ownerProfile.email);
+          if (!ownerError && ownerProfile) {
+            console.log('Adicionando fonte:', ownerProfile);
             sources.push({
               id: org.owner_id,
-              email: ownerProfile.email,
-              name: `Dados de ${ownerProfile.email}`,
+              email: ownerProfile,
+              name: `Dados de ${ownerProfile}`,
               isOwner: false
             });
           } else {
@@ -597,6 +593,7 @@ export default function Dashboard() {
                 size="sm" 
                 variant="outline"
                 onClick={() => {
+                  alert('🔥 BOTÃO TESTE CLICADO!');
                   console.log('🔥 BOTÃO TESTE CLICADO');
                   loadDataSources();
                 }}
