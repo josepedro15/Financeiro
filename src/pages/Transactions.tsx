@@ -75,6 +75,15 @@ export default function Transactions() {
 
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
 
+  // Debug logs
+  console.log('=== TRANSACTIONS PAGE DEBUG ===');
+  console.log('User:', user);
+  console.log('Loading:', loading);
+  console.log('Transactions count:', transactions.length);
+  console.log('Filtered transactions count:', filteredTransactions.length);
+  console.log('Dialog open:', dialogOpen);
+  console.log('Current filters:', filters);
+
   // Contas fixas
   const accounts: Account[] = [
     { id: 'pj', name: 'Conta PJ' },
@@ -132,19 +141,22 @@ export default function Transactions() {
 
   const loadData = async () => {
     if (!user) {
-      console.log('No user found, skipping data load');
+      console.log('❌ No user found, skipping data load');
       return;
     }
 
-    console.log('=== LOADING TRANSACTIONS FROM ALL TABLES ===');
-    console.log('User ID:', user.id);
+    console.log('🔄 === LOADING TRANSACTIONS FROM ALL TABLES ===');
+    console.log('👤 User ID:', user.id);
+    console.log('⏰ Starting data load at:', new Date().toISOString());
 
     try {
       setLoading(true);
       let allTransactions: Transaction[] = [];
+      console.log('🏁 Set loading to true, starting fetch...');
 
       // Carregar dados das tabelas mensais de 2025
       const monthlyTables = getAllMonthlyTables(2025);
+      console.log('📅 Monthly tables to check:', monthlyTables.map(t => t.table));
       
       for (const tableInfo of monthlyTables) {
         try {
@@ -197,13 +209,15 @@ export default function Transactions() {
       setFilteredTransactions(sortedTransactions);
 
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('❌ Error loading data:', error);
+      console.error('❌ Error stack:', error);
       toast({
         title: "Erro",
         description: "Erro inesperado ao carregar dados",
         variant: "destructive"
       });
     } finally {
+      console.log('✅ Setting loading to false');
       setLoading(false);
     }
   };
@@ -402,13 +416,21 @@ export default function Transactions() {
     }
   };
 
+  // Debug da renderização
+  console.log('🎨 About to render Transactions page');
+  console.log('🎨 Current state - loading:', loading, 'user:', !!user, 'transactions:', transactions.length);
+
   if (loading) {
+    console.log('⏳ Still loading - showing spinner');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <p className="ml-4 text-muted-foreground">Carregando transações...</p>
       </div>
     );
   }
+
+  console.log('✅ Not loading, proceeding with normal render');
 
   return (
     <div className="min-h-screen bg-background">
