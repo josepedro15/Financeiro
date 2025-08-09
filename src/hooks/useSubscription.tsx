@@ -164,12 +164,32 @@ export const useSubscription = () => {
   };
 
   const isTrialActive = () => {
+    console.log('🔍 isTrialActive Debug:', {
+      subscription,
+      hasSubscription: !!subscription,
+      trialEndsAt: subscription?.trial_ends_at,
+      status: subscription?.status,
+      isTrialStatus: subscription?.status === 'trial',
+      trialEndDate: subscription?.trial_ends_at ? new Date(subscription.trial_ends_at) : null,
+      now: new Date(),
+      isFuture: subscription?.trial_ends_at ? new Date(subscription.trial_ends_at) > new Date() : false
+    });
+    
     if (!subscription || !subscription.trial_ends_at) return false;
     if (subscription.status !== 'trial') return false;
     return new Date(subscription.trial_ends_at) > new Date();
   };
 
   const getTrialDaysLeft = () => {
+    console.log('📅 getTrialDaysLeft Debug:', {
+      subscription,
+      trialEndsAt: subscription?.trial_ends_at,
+      trialEnd: subscription?.trial_ends_at ? new Date(subscription.trial_ends_at) : null,
+      now: new Date(),
+      diffTime: subscription?.trial_ends_at ? new Date(subscription.trial_ends_at).getTime() - new Date().getTime() : 0,
+      diffDays: subscription?.trial_ends_at ? Math.ceil((new Date(subscription.trial_ends_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0
+    });
+    
     if (!subscription || !subscription.trial_ends_at) return 0;
     const trialEnd = new Date(subscription.trial_ends_at);
     const now = new Date();
