@@ -2,6 +2,26 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  useDroppable,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,12 +71,185 @@ interface Stage {
   description: string;
 }
 
+// Droppable Stage Column Component
+function DroppableStageColumn({ 
+  stageKey, 
+  stage, 
+  clients, 
+  onEdit, 
+  onDelete 
+}: {
+  stageKey: string;
+  stage: Stage;
+  clients: Client[];
+  onEdit: (client: Client) => void;
+  onDelete: (id: string) => void;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: stageKey,
+  });
+
+  const StageIcon = stage.icon;
+
+  return (
+    <div className="flex-shrink-0 w-80 space-y-4">
+      {/* Stage Header */}
+      <Card className="bg-gradient-to-r from-background to-muted/30">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <StageIcon className="w-5 h-5" />
+              <CardTitle className="text-lg">{stage.name}</CardTitle>
+            </div>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${stage.color}`}>
+              {clients.length}
+            </span>
+          </div>
+          <CardDescription>{stage.description}</CardDescription>
+        </CardHeader>
+      </Card>
+
+      {/* Droppable area for this stage */}
+      <div 
+        ref={setNodeRef}
+        className={`space-y-3 min-h-[400px] border-2 border-dashed rounded-lg p-2 transition-all ${
+          isOver ? 'border-primary bg-primary/5' : 'border-transparent hover:border-muted'
+        }`}
+        style={{ 
+          backgroundColor: clients.length === 0 && !isOver ? 'rgba(0,0,0,0.02)' : undefined
+        }}
+      >
+        {clients.map((client) => (
+          <DraggableClientCard
+            key={client.id}
+            client={client}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        ))}
+
+        {clients.length === 0 && (
+          <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center mt-4">
+            <StageIcon className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">
+              Nenhum cliente em {stage.name.toLowerCase()}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Arraste clientes para cá
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Draggable Client Card Component
+function DraggableClientCard({ client, onEdit, onDelete }: {
+  client: Client;
+  onEdit: (client: Client) => void;
+  onDelete: (id: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: client.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <Card 
+      ref={setNodeRef} 
+      style={style} 
+      {...attributes} 
+      {...listeners}
+      className={`hover:shadow-lg transition-all duration-200 cursor-grab active:cursor-grabbing group ${
+        isDragging ? 'shadow-2xl z-50 rotate-3' : ''
+      }`}
+    >
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base group-hover:text-primary transition-colors">
+            {client.name}
+          </CardTitle>
+          <div className="flex space-x-1">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(client);
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Edit className="w-3 h-3" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(client.id);
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Trash2 className="w-3 h-3" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {client.email && (
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <Mail className="w-3 h-3" />
+            <span className="truncate">{client.email}</span>
+          </div>
+        )}
+        {client.phone && (
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <Phone className="w-3 h-3" />
+            <span>{client.phone}</span>
+          </div>
+        )}
+        {client.notes && (
+          <div className="text-sm text-muted-foreground">
+            <p className="line-clamp-2">{client.notes}</p>
+          </div>
+        )}
+        
+        <div className="pt-2 text-xs text-muted-foreground">
+          <div className="flex items-center space-x-2">
+            <Calendar className="w-3 h-3" />
+            <span>{new Date(client.created_at).toLocaleDateString('pt-BR')}</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 
 
 export default function Clients() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Drag and Drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
   
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -356,6 +549,26 @@ export default function Clients() {
     });
   };
 
+  // Handle drag end for moving clients between stages
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over) return;
+
+    const clientId = active.id as string;
+    const newStage = over.id as string;
+
+    // Find the client being dragged
+    const client = clients.find(c => c.id === clientId);
+    if (!client) return;
+
+    // If dropped on same stage, do nothing
+    if (client.stage === newStage) return;
+
+    // Update client stage
+    handleStageChange(clientId, newStage);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -629,117 +842,28 @@ export default function Clients() {
 
       {/* Kanban Board */}
       <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {Object.entries(stages).map(([stageKey, stage]) => {
-            const stageClients = getClientsByStage(stageKey);
-            const StageIcon = stage.icon;
-            
-            return (
-              <div key={stageKey} className="space-y-4">
-                {/* Stage Header */}
-                <Card className="bg-gradient-to-r from-background to-muted/30">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <StageIcon className="w-5 h-5" />
-                        <CardTitle className="text-lg">{stage.name}</CardTitle>
-                      </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${stage.color}`}>
-                        {stageClients.length}
-                      </span>
-                    </div>
-                    <CardDescription>{stage.description}</CardDescription>
-                  </CardHeader>
-                </Card>
-
-                {/* Clients in this stage */}
-                <div className="space-y-3 min-h-[200px]">
-                  {stageClients.map((client) => (
-                    <Card key={client.id} className="hover:shadow-lg transition-all duration-200 cursor-pointer group">
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-base group-hover:text-primary transition-colors">
-                            {client.name}
-                          </CardTitle>
-                          <div className="flex space-x-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleEdit(client)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleDelete(client.id)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        {client.email && (
-                          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                            <Mail className="w-3 h-3" />
-                            <span className="truncate">{client.email}</span>
-                          </div>
-                        )}
-                        {client.phone && (
-                          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                            <Phone className="w-3 h-3" />
-                            <span>{client.phone}</span>
-                          </div>
-                        )}
-                        {client.notes && (
-                          <div className="text-sm text-muted-foreground">
-                            <p className="line-clamp-2">{client.notes}</p>
-                          </div>
-                        )}
-                        
-                        {/* Stage Movement */}
-                        <div className="pt-2 space-y-2">
-                          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                            <Calendar className="w-3 h-3" />
-                            <span>{new Date(client.created_at).toLocaleDateString('pt-BR')}</span>
-                          </div>
-                          
-                          <Select value={client.stage} onValueChange={(newStage: string) => handleStageChange(client.id, newStage)}>
-                            <SelectTrigger className="h-7 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Object.entries(stages).map(([key, stageOption]) => (
-                                <SelectItem key={key} value={key}>
-                                  <div className="flex items-center space-x-2">
-                                    <stageOption.icon className="w-3 h-3" />
-                                    <span>{stageOption.name}</span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-
-                  {stageClients.length === 0 && (
-                    <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center">
-                      <StageIcon className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">
-                        Nenhum cliente em {stage.name.toLowerCase()}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex gap-4 overflow-x-auto pb-4" style={{ minWidth: 'fit-content' }}>
+            {Object.entries(stages).map(([stageKey, stage]) => {
+              const stageClients = getClientsByStage(stageKey);
+              
+              return (
+                <DroppableStageColumn
+                  key={stageKey}
+                  stageKey={stageKey}
+                  stage={stage}
+                  clients={stageClients}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              );
+            })}
+          </div>
+        </DndContext>
 
         {/* Empty State */}
         {clients.length === 0 && (
