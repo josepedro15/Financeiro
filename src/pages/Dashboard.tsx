@@ -11,7 +11,8 @@ import {
   Users, 
   CreditCard,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Plus
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Area } from 'recharts';
 
@@ -95,13 +96,13 @@ export default function Dashboard() {
       debugLog += `Consulta 2 - Apenas receitas: ${incomeOnlyData?.length || 0} registros\n`;
       debugLog += `Erro consulta 2: ${incomeError?.message || 'Nenhum'}\n`;
 
-      // 3. Consulta AGGRESSIVA - Transações recentes (aumentado para 200)
+      // 3. Consulta AGGRESSIVA - Transações recentes (limitado a 5 para interface)
       const { data: recentData, error: recentError } = await supabase
         .from('transactions')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(200); // Aumentado para 200
+        .limit(5); // Limitado a 5 para interface limpa
 
       debugLog += `Consulta 3 - Transações recentes: ${recentData?.length || 0} registros\n`;
       debugLog += `Erro consulta 3: ${recentError?.message || 'Nenhum'}\n`;
@@ -409,16 +410,46 @@ export default function Dashboard() {
         {/* Recent Transactions */}
         <Card>
           <CardHeader>
-            <CardTitle>Transações Recentes</CardTitle>
-            <CardDescription>
-              Últimas {financialData.recentTransactions.length} transações
-            </CardDescription>
+            <div className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Transações Recentes</CardTitle>
+                <CardDescription>
+                  Últimas {financialData.recentTransactions.length} transações
+                </CardDescription>
+              </div>
+              <div className="flex space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate('/transactions')}
+                >
+                  Ver Todas
+                </Button>
+                <Button 
+                  size="sm"
+                  onClick={() => navigate('/transactions')}
+                  className="flex items-center gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  Nova Transação
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {financialData.recentTransactions.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                Nenhuma transação encontrada
-              </p>
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">
+                  Nenhuma transação encontrada
+                </p>
+                <Button 
+                  onClick={() => navigate('/transactions')}
+                  className="flex items-center gap-2 mx-auto"
+                >
+                  <Plus className="h-4 w-4" />
+                  Criar Primeira Transação
+                </Button>
+              </div>
             ) : (
               <div className="space-y-4">
                 {financialData.recentTransactions.map((transaction) => (
