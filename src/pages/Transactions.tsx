@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { testDatabasePermissions, testClientIdNull } from '@/utils/testAuth';
 import { insertTransactionInCorrectTable, updateTransactionInCorrectTable, deleteTransactionFromCorrectTable } from '@/utils/transactionInsertion';
 import TableIndicator from '@/components/TableIndicator';
+import { getAllMonthlyTables } from '@/utils/monthlyTableUtils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +21,9 @@ import {
   ArrowDownRight,
   Edit,
   Trash2,
-  Calendar
+  Calendar,
+  Filter,
+  X
 } from 'lucide-react';
 
 interface Transaction {
@@ -62,6 +65,16 @@ export default function Transactions() {
     account_name: ''
   });
 
+  // Filter state
+  const [filters, setFilters] = useState({
+    month: '',
+    day: '',
+    type: '',
+    account: ''
+  });
+
+  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
+
   // Contas fixas
   const accounts: Account[] = [
     { id: 'pj', name: 'Conta PJ' },
@@ -76,45 +89,123 @@ export default function Transactions() {
     loadData();
   }, [user, navigate]);
 
+  // Function to apply filters
+  const applyFilters = () => {
+    let filtered = [...transactions];
+
+    // Filter by month
+    if (filters.month) {
+      filtered = filtered.filter(transaction => {
+        const date = new Date(transaction.transaction_date);
+        const month = date.getMonth() + 1; // Convert to 1-based
+        return month.toString() === filters.month;
+      });
+    }
+
+    // Filter by day
+    if (filters.day) {
+      filtered = filtered.filter(transaction => {
+        const date = new Date(transaction.transaction_date);
+        const day = date.getDate();
+        return day.toString() === filters.day;
+      });
+    }
+
+    // Filter by type
+    if (filters.type) {
+      filtered = filtered.filter(transaction => transaction.transaction_type === filters.type);
+    }
+
+    // Filter by account
+    if (filters.account) {
+      filtered = filtered.filter(transaction => transaction.account_name === filters.account);
+    }
+
+    setFilteredTransactions(filtered);
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setFilters({ month: '', day: '', type: '', account: '' });
+    setFilteredTransactions(transactions);
+  };
+
+  // Apply filters when filters change
+  useEffect(() => {
+    applyFilters();
+  }, [filters, transactions]);
+
   const loadData = async () => {
     if (!user) {
       console.log('No user found, skipping data load');
       return;
     }
 
-    console.log('Loading data for user:', user.id);
+    console.log('=== LOADING TRANSACTIONS FROM ALL TABLES ===');
+    console.log('User ID:', user.id);
 
     try {
-      // Load transactions
-      const { data: transactionsData, error: transactionsError } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('transaction_date', { ascending: false });
+      setLoading(true);
+      let allTransactions: Transaction[] = [];
 
-      if (transactionsError) {
-        console.error('Error loading transactions:', transactionsError);
-        toast({
-          title: "Erro",
-          description: `Erro ao carregar transações: ${transactionsError.message}`,
-          variant: "destructive"
-        });
+      // Carregar dados das tabelas mensais de 2025
+      const monthlyTables = getAllMonthlyTables(2025);
+      
+      for (const tableInfo of monthlyTables) {
+        try {
+          const { data: monthData, error: monthError } = await supabase
+            .from(tableInfo.table)
+            .select('*')
+            .eq('user_id', user.id);
+
+          if (monthError) {
+            console.warn(`Erro ao carregar ${tableInfo.month}:`, monthError);
+          } else {
+            const monthTransactions = monthData || [];
+            allTransactions = [...allTransactions, ...monthTransactions];
+            console.log(`${tableInfo.month}: ${monthTransactions.length} transações`);
+          }
+        } catch (error) {
+          console.warn(`Erro na consulta ${tableInfo.month}:`, error);
+        }
       }
 
+      // Carregar também da tabela principal (fallback e outras datas)
+      try {
+        const { data: mainTableData, error: mainTableError } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('user_id', user.id);
 
+        if (mainTableError) {
+          console.warn('Erro ao carregar tabela principal:', mainTableError);
+        } else {
+          const mainTransactions = mainTableData || [];
+          allTransactions = [...allTransactions, ...mainTransactions];
+          console.log(`Tabela principal: ${mainTransactions.length} transações`);
+        }
+      } catch (error) {
+        console.warn('Erro na consulta tabela principal:', error);
+      }
 
+      // Remover duplicatas (caso existam) e ordenar
+      const uniqueTransactions = allTransactions.filter((transaction, index, self) =>
+        index === self.findIndex(t => t.id === transaction.id)
+      );
 
+      const sortedTransactions = uniqueTransactions.sort((a, b) => 
+        new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
+      );
 
-      console.log('Loaded data:', {
-        transactions: transactionsData?.length || 0
-      });
+      console.log('Total transações carregadas:', sortedTransactions.length);
+      setTransactions(sortedTransactions);
+      setFilteredTransactions(sortedTransactions);
 
-      setTransactions((transactionsData as Transaction[]) || []);
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
         title: "Erro",
-        description: "Erro ao carregar dados",
+        description: "Erro inesperado ao carregar dados",
         variant: "destructive"
       });
     } finally {
@@ -494,6 +585,106 @@ export default function Transactions() {
               Gerencie todas as suas movimentações financeiras
             </CardDescription>
           </CardHeader>
+          
+          {/* Filtros */}
+          <div className="px-6 pb-4 border-b">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Filtros:</span>
+              </div>
+              
+              {/* Filtro por Mês */}
+              <div className="flex items-center gap-2">
+                <Label htmlFor="month-filter" className="text-xs">Mês:</Label>
+                <Select value={filters.month} onValueChange={(value) => setFilters({ ...filters, month: value })}>
+                  <SelectTrigger className="w-32 h-8">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="1">Janeiro</SelectItem>
+                    <SelectItem value="2">Fevereiro</SelectItem>
+                    <SelectItem value="3">Março</SelectItem>
+                    <SelectItem value="4">Abril</SelectItem>
+                    <SelectItem value="5">Maio</SelectItem>
+                    <SelectItem value="6">Junho</SelectItem>
+                    <SelectItem value="7">Julho</SelectItem>
+                    <SelectItem value="8">Agosto</SelectItem>
+                    <SelectItem value="9">Setembro</SelectItem>
+                    <SelectItem value="10">Outubro</SelectItem>
+                    <SelectItem value="11">Novembro</SelectItem>
+                    <SelectItem value="12">Dezembro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Filtro por Dia */}
+              <div className="flex items-center gap-2">
+                <Label htmlFor="day-filter" className="text-xs">Dia:</Label>
+                <Select value={filters.day} onValueChange={(value) => setFilters({ ...filters, day: value })}>
+                  <SelectTrigger className="w-20 h-8">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos</SelectItem>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                      <SelectItem key={day} value={day.toString()}>{day}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Filtro por Tipo */}
+              <div className="flex items-center gap-2">
+                <Label htmlFor="type-filter" className="text-xs">Tipo:</Label>
+                <Select value={filters.type} onValueChange={(value) => setFilters({ ...filters, type: value })}>
+                  <SelectTrigger className="w-28 h-8">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="income">Receita</SelectItem>
+                    <SelectItem value="expense">Despesa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Filtro por Conta */}
+              <div className="flex items-center gap-2">
+                <Label htmlFor="account-filter" className="text-xs">Conta:</Label>
+                <Select value={filters.account} onValueChange={(value) => setFilters({ ...filters, account: value })}>
+                  <SelectTrigger className="w-32 h-8">
+                    <SelectValue placeholder="Todas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todas</SelectItem>
+                    <SelectItem value="Conta PJ">Conta PJ</SelectItem>
+                    <SelectItem value="Conta Checkout">Conta Checkout</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Botão Limpar Filtros */}
+              {(filters.month || filters.day || filters.type || filters.account) && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={clearFilters}
+                  className="h-8"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Limpar
+                </Button>
+              )}
+
+              {/* Contador de resultados */}
+              <div className="ml-auto text-xs text-muted-foreground">
+                {filteredTransactions.length} de {transactions.length} transações
+              </div>
+            </div>
+          </div>
+
           <CardContent>
             {transactions.length === 0 ? (
               <div className="text-center py-8">
@@ -504,7 +695,7 @@ export default function Transactions() {
               </div>
             ) : (
               <div className="space-y-4">
-                {transactions.map((transaction) => (
+                {filteredTransactions.map((transaction) => (
                   <div 
                     key={transaction.id} 
                     className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors"
