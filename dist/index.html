@@ -1,22 +1,57 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>azul-fluxo</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+    <meta name="theme-color" content="#0f172a" />
+    <title>Sistema Financeiro - Gestão e CRM</title>
+    <meta name="description" content="Sistema completo de gestão financeira com CRM integrado, dashboards interativos e relatórios detalhados" />
+    <meta name="author" content="Sistema Financeiro" />
+    <meta name="robots" content="noindex, nofollow" />
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
+    <!-- Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://knbldcvwdpavelmbmdre.supabase.co" />
+    <link rel="dns-prefetch" href="https://knbldcvwdpavelmbmdre.supabase.co" />
+    
+    <!-- Security -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    
+    <!-- Critical CSS inline hint -->
+    <style>
+      /* Prevent layout shift during load */
+      #root { min-height: 100vh; }
+      .loading-skeleton { 
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+      }
+      @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+    </style>
 
-    <meta property="og:title" content="azul-fluxo" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    <meta property="og:title" content="Sistema Financeiro - Gestão e CRM" />
+    <meta property="og:description" content="Sistema completo de gestão financeira com CRM integrado" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:locale" content="pt_BR" />
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-    <script type="module" crossorigin src="/assets/index-DMRXqgdq.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DMDXPSKf.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <script type="module" crossorigin src="/assets/index-DMPpfWZc.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-CZTyH7vC.js">
+    <link rel="modulepreload" crossorigin href="/assets/ui-Cnk5WNzt.js">
+    <link rel="modulepreload" crossorigin href="/assets/supabase-DfbQpoin.js">
+    <link rel="modulepreload" crossorigin href="/assets/charts-DE-LwN1H.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-CUFpL_Hy.css">
   </head>
 
   <body>

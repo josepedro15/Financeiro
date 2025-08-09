@@ -1,0 +1,21 @@
+{
+  "name": "Sistema Financeiro",
+  "short_name": "Financeiro",
+  "description": "Sistema de gestão financeira e CRM",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["finance", "business", "productivity"],
+  "lang": "pt-BR",
+  "scope": "/",
+  "prefer_related_applications": false
+}

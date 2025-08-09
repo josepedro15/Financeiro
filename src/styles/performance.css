@@ -1,0 +1,69 @@
+/* Performance optimizations */
+
+/* Improve repaints */
+* {
+  box-sizing: border-box;
+}
+
+/* GPU acceleration for animations */
+.animate-spin,
+.transition-all,
+.hover\:shadow-lg:hover,
+.group:hover {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Optimize images */
+img {
+  max-width: 100%;
+  height: auto;
+  loading: lazy;
+}
+
+/* Optimize scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Reduce layout shifts */
+.min-h-screen {
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height */
+}
+
+/* Optimize transitions */
+.transition-all {
+  transition-property: transform, opacity, box-shadow;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-in-out;
+}
+
+/* Improve font rendering */
+body {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reduce CLS for buttons and cards */
+.card-skeleton {
+  min-height: 120px;
+}
+
+/* Optimize drag and drop */
+[data-radix-popper-content-wrapper] {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Critical CSS inlining hint */
+.above-fold {
+  contain: layout style paint;
+}
+
+/* Lazy loading optimization */
+.lazy-load {
+  content-visibility: auto;
+  contain-intrinsic-size: 200px;
+}
