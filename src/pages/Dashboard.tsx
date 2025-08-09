@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   DollarSign, 
@@ -21,7 +23,9 @@ import {
   Settings,
   Database,
   ChevronDown,
-  Crown
+  Crown,
+  Clock,
+  AlertTriangle
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Area } from 'recharts';
 import NotificationCenter from '@/components/NotificationCenter';
@@ -53,6 +57,13 @@ interface FinancialData {
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
+  const { 
+    isTrialActive, 
+    getTrialDaysLeft, 
+    isMasterUser, 
+    getPlanName, 
+    currentPlan 
+  } = useSubscription();
   const navigate = useNavigate();
   const [dataSources, setDataSources] = useState<DataSource[]>([]);
   const [selectedDataSource, setSelectedDataSource] = useState<string>('');
@@ -577,14 +588,63 @@ export default function Dashboard() {
               </div>
             )}
             
+            {/* Trial Counter */}
+            {!isMasterUser && isTrialActive() && (
+              <div className="flex items-center px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+                <Clock className="w-4 h-4 text-blue-600 mr-2" />
+                <span className="text-sm font-medium text-blue-800">
+                  Trial: {getTrialDaysLeft()} dias restantes
+                </span>
+                <Button 
+                  variant="link" 
+                  size="sm" 
+                  className="ml-2 h-auto p-0 text-blue-600 hover:text-blue-800"
+                  onClick={() => navigate('/subscription')}
+                >
+                  Ver planos
+                </Button>
+              </div>
+            )}
+
+            {/* Aviso trial próximo do fim */}
+            {!isMasterUser && isTrialActive() && getTrialDaysLeft() <= 3 && (
+              <div className="flex items-center px-3 py-2 bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-lg">
+                <AlertTriangle className="w-4 h-4 text-orange-600 mr-2" />
+                <span className="text-sm font-medium text-orange-800">
+                  Trial expira em {getTrialDaysLeft()} dias!
+                </span>
+                <Button 
+                  variant="link" 
+                  size="sm" 
+                  className="ml-2 h-auto p-0 text-orange-600 hover:text-orange-800"
+                  onClick={() => navigate('/subscription')}
+                >
+                  Upgrade agora
+                </Button>
+              </div>
+            )}
+
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" onClick={() => navigate('/clients')}>
                 <Users className="w-4 h-4 mr-1" />
                 CRM
               </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate('/subscription')}>
+              <Button variant="outline" size="sm" onClick={() => navigate('/subscription')} className="relative">
                 <Crown className="w-4 h-4 mr-1" />
                 Assinatura
+                {!isMasterUser && (
+                  <Badge 
+                    variant={isTrialActive() ? "default" : "secondary"} 
+                    className="ml-2 text-xs"
+                  >
+                    {isTrialActive() ? `Trial ${getTrialDaysLeft()}d` : getPlanName(currentPlan)}
+                  </Badge>
+                )}
+                {isMasterUser && (
+                  <Badge variant="outline" className="ml-2 text-xs border-primary text-primary">
+                    Master
+                  </Badge>
+                )}
               </Button>
               <Button variant="outline" size="sm" onClick={() => navigate('/settings')}>
                 <Settings className="w-4 h-4 mr-1" />
