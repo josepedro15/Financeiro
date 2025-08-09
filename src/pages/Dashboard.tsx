@@ -83,6 +83,7 @@ export default function Dashboard() {
     }
     console.log('=== DASHBOARD MOUNTED ===');
     console.log('User:', user.email);
+    console.log('Executando loadDataSources...');
     loadDataSources();
   }, [user, navigate]);
 
@@ -105,7 +106,11 @@ export default function Dashboard() {
   }, [user]);
 
   const loadDataSources = async () => {
-    if (!user) return;
+    console.log('🔍 INÍCIO loadDataSources - user:', user?.email);
+    if (!user) {
+      console.log('❌ Sem user, retornando...');
+      return;
+    }
     
     setLoadingDataSources(true);
     console.log('=== CARREGANDO FONTES DE DADOS ===');
@@ -577,6 +582,25 @@ export default function Dashboard() {
             
             {/* DEBUG: Informações do seletor */}
             {console.log('RENDER - dataSources:', dataSources, 'length:', dataSources.length)}
+            
+            {/* DEBUG VISUAL TEMPORÁRIO */}
+            <div className="text-xs text-red-600 bg-red-50 p-2 rounded flex items-center space-x-2">
+              <span>
+                DEBUG: dataSources.length = {dataSources.length} | 
+                selectedDataSource = {selectedDataSource} | 
+                loadingDataSources = {loadingDataSources ? 'true' : 'false'}
+              </span>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => {
+                  console.log('🔥 BOTÃO TESTE CLICADO');
+                  loadDataSources();
+                }}
+              >
+                Testar Load
+              </Button>
+            </div>
             
             {/* Seletor de Fonte de Dados - TESTE: Sempre mostrar se tiver pelo menos 1 fonte */}
             {dataSources.length >= 1 && (
