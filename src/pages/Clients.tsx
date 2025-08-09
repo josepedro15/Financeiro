@@ -62,11 +62,14 @@ interface Client {
 }
 
 interface Stage {
+  id?: string;
   key: string;
   name: string;
   icon: any;
   color: string;
   description: string;
+  order_index?: number;
+  is_default?: boolean;
 }
 
 // Droppable Stage Column Component
@@ -258,12 +261,7 @@ export default function Clients() {
   
   // Stage management state
   const [stagesDialogOpen, setStagesDialogOpen] = useState(false);
-  const [stages, setStages] = useState<Record<string, Stage>>({
-    lead: { key: 'lead', name: 'Lead', icon: Target, color: 'bg-yellow-100 text-yellow-800', description: 'Interessados' },
-    prospect: { key: 'prospect', name: 'Prospect', icon: User, color: 'bg-blue-100 text-blue-800', description: 'Em negociação' },
-    client: { key: 'client', name: 'Cliente', icon: UserCheck, color: 'bg-green-100 text-green-800', description: 'Compraram' },
-    vip: { key: 'vip', name: 'VIP', icon: Crown, color: 'bg-purple-100 text-purple-800', description: 'Clientes premium' }
-  });
+  const [stages, setStages] = useState<Record<string, Stage>>({});
   const [editingStage, setEditingStage] = useState<Stage | null>(null);
   const [stageFormData, setStageFormData] = useState({
     key: '',
@@ -288,8 +286,67 @@ export default function Clients() {
       navigate('/auth');
       return;
     }
+    loadStages();
     loadClients();
   }, [user, navigate]);
+
+  // Mapeamento de ícones
+  const iconMap: Record<string, any> = {
+    Target,
+    User,
+    UserCheck,
+    Crown,
+    Users,
+    Mail,
+    Phone,
+    DollarSign
+  };
+
+  const loadStages = async () => {
+    if (!user) return;
+
+    try {
+      console.log('🔍 Carregando estágios do banco...');
+      const { data: stagesData, error } = await supabase
+        .from('stages')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('order_index', { ascending: true });
+
+      if (error) {
+        console.error('Erro ao carregar estágios:', error);
+        // Se não conseguir carregar, usar estágios padrão
+        setStages({
+          lead: { key: 'lead', name: 'Lead', icon: Target, color: 'bg-yellow-100 text-yellow-800', description: 'Interessados' },
+          prospect: { key: 'prospect', name: 'Prospect', icon: User, color: 'bg-blue-100 text-blue-800', description: 'Em negociação' },
+          client: { key: 'client', name: 'Cliente', icon: UserCheck, color: 'bg-green-100 text-green-800', description: 'Compraram' },
+          vip: { key: 'vip', name: 'VIP', icon: Crown, color: 'bg-purple-100 text-purple-800', description: 'Clientes premium' }
+        });
+        return;
+      }
+
+      console.log('✅ Estágios carregados:', stagesData);
+
+      // Converter array de estágios para objeto
+      const stagesObject: Record<string, Stage> = {};
+      stagesData?.forEach(stage => {
+        stagesObject[stage.key] = {
+          id: stage.id,
+          key: stage.key,
+          name: stage.name,
+          description: stage.description || '',
+          icon: iconMap[stage.icon] || Target,
+          color: stage.color,
+          order_index: stage.order_index,
+          is_default: stage.is_default
+        };
+      });
+
+      setStages(stagesObject);
+    } catch (error) {
+      console.error('Erro ao carregar estágios:', error);
+    }
+  };
 
   const loadClients = async () => {
     if (!user) return;
@@ -461,7 +518,7 @@ export default function Clients() {
     });
   };
 
-  const handleSaveStage = () => {
+  const handleSaveStage = async () => {
     if (!stageFormData.key || !stageFormData.name) {
       toast({
         title: "Erro",
@@ -471,52 +528,88 @@ export default function Clients() {
       return;
     }
 
-    const updatedStages = { ...stages };
-    
-    if (editingStage) {
-      // Editing existing stage
-      updatedStages[editingStage.key] = {
-        ...editingStage,
-        name: stageFormData.name,
-        description: stageFormData.description,
-        color: stageFormData.color
-      };
-    } else {
-      // Creating new stage
-      if (stages[stageFormData.key]) {
-        toast({
-          title: "Erro",
-          description: "Já existe um estágio com essa chave",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      updatedStages[stageFormData.key] = {
-        key: stageFormData.key,
-        name: stageFormData.name,
-        icon: Target, // Default icon
-        color: stageFormData.color,
-        description: stageFormData.description
-      };
-    }
-
-    setStages(updatedStages);
-    setEditingStage(null);
-    setStageFormData({
-      key: '',
-      name: '',
-      description: '',
-      color: 'bg-gray-100 text-gray-800'
-    });
-
-    toast({
-      title: "Sucesso",
-      description: editingStage ? "Estágio atualizado" : "Estágio criado"
-    });
+    // Salvar no banco de dados
+    await saveStageToDatabase();
   };
 
-  const handleDeleteStage = (stageKey: string) => {
+  const saveStageToDatabase = async () => {
+    if (!user) return;
+
+    try {
+      if (editingStage?.id) {
+        // Updating existing stage
+        console.log('🔄 Atualizando estágio:', editingStage.id);
+        const { error } = await supabase
+          .from('stages')
+          .update({
+            name: stageFormData.name,
+            description: stageFormData.description,
+            color: stageFormData.color,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingStage.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Sucesso",
+          description: "Estágio atualizado com sucesso"
+        });
+      } else {
+        // Creating new stage
+        if (stages[stageFormData.key]) {
+          toast({
+            title: "Erro",
+            description: "Já existe um estágio com essa chave",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Calcular próximo order_index
+        const maxOrder = Math.max(...Object.values(stages).map(s => s.order_index || 0));
+        
+        console.log('✨ Criando novo estágio:', stageFormData.key);
+        const { error } = await supabase
+          .from('stages')
+          .insert([{
+            user_id: user.id,
+            key: stageFormData.key,
+            name: stageFormData.name,
+            description: stageFormData.description,
+            icon: 'Target', // Default icon
+            color: stageFormData.color,
+            order_index: maxOrder + 1,
+            is_default: false
+          }]);
+
+        if (error) throw error;
+
+        toast({
+          title: "Sucesso",
+          description: "Estágio criado com sucesso"
+        });
+      }
+
+      // Recarregar estágios
+      console.log('🔄 Recarregando estágios...');
+      await loadStages();
+      
+      setEditingStage(null);
+      resetStageForm();
+      setStagesDialogOpen(false);
+
+    } catch (error: any) {
+      console.error('❌ Erro ao salvar estágio:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao salvar estágio",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteStage = async (stageKey: string) => {
     const clientsInStage = getClientsByStage(stageKey);
     if (clientsInStage.length > 0) {
       toast({
@@ -529,14 +622,40 @@ export default function Clients() {
 
     if (!confirm(`Tem certeza que deseja excluir o estágio "${stages[stageKey].name}"?`)) return;
 
-    const updatedStages = { ...stages };
-    delete updatedStages[stageKey];
-    setStages(updatedStages);
+    const stage = stages[stageKey];
+    if (!stage?.id) {
+      toast({
+        title: "Erro",
+        description: "Estágio não encontrado",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    toast({
-      title: "Sucesso",
-      description: "Estágio excluído com sucesso"
-    });
+    try {
+      console.log('🗑️ Deletando estágio:', stage.id);
+      const { error } = await supabase
+        .from('stages')
+        .delete()
+        .eq('id', stage.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Estágio excluído com sucesso"
+      });
+
+      // Recarregar estágios
+      await loadStages();
+    } catch (error: any) {
+      console.error('❌ Erro ao deletar estágio:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao excluir estágio",
+        variant: "destructive"
+      });
+    }
   };
 
   const resetStageForm = () => {
