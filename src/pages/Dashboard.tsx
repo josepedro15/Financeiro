@@ -74,76 +74,116 @@ export default function Dashboard() {
       
       let debugLog = '=== DEBUG LOG ===\n';
       
-      // FORÇAR CARREGAMENTO COMPLETO - MÚLTIPLAS CONSULTAS
-      console.log('=== FORÇANDO CARREGAMENTO COMPLETO ===');
+      // CARREGAR DADOS DAS TABELAS MENSAIS ESPECÍFICAS
+      console.log('=== CARREGANDO DAS TABELAS MENSAIS ===');
       
-      // 1. Consulta AGGRESSIVA - TODAS as transações sem filtros
-      const { data: allTransactionsData, error: allTransactionsError } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', user.id);
+      // Definir tabelas mensais e seus nomes
+      const monthlyTables = [
+        { table: 'transactions_2025_01', month: 'Jan', monthNum: 1 },
+        { table: 'transactions_2025_02', month: 'Fev', monthNum: 2 },
+        { table: 'transactions_2025_03', month: 'Mar', monthNum: 3 },
+        { table: 'transactions_2025_04', month: 'Abr', monthNum: 4 },
+        { table: 'transactions_2025_05', month: 'Mai', monthNum: 5 },
+        { table: 'transactions_2025_06', month: 'Jun', monthNum: 6 },
+        { table: 'transactions_2025_07', month: 'Jul', monthNum: 7 },
+        { table: 'transactions_2025_08', month: 'Ago', monthNum: 8 },
+        { table: 'transactions_2025_09', month: 'Set', monthNum: 9 },
+        { table: 'transactions_2025_10', month: 'Out', monthNum: 10 },
+        { table: 'transactions_2025_11', month: 'Nov', monthNum: 11 },
+        { table: 'transactions_2025_12', month: 'Dez', monthNum: 12 }
+      ];
 
-      debugLog += `Consulta 1 - Todas as transações: ${allTransactionsData?.length || 0} registros\n`;
-      debugLog += `Erro consulta 1: ${allTransactionsError?.message || 'Nenhum'}\n`;
+      let allTransactionsData: any[] = [];
+      let incomeOnlyData: any[] = [];
+      let monthlyRevenue: Array<{ month: string; revenue: number }> = [];
+      let totalIncome = 0;
+      let totalExpenses = 0;
 
-      // 2. Consulta AGGRESSIVA - Apenas receitas sem filtros
-      const { data: incomeOnlyData, error: incomeError } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('transaction_type', 'income');
+      // Carregar dados de cada tabela mensal
+      for (const monthInfo of monthlyTables) {
+        try {
+          console.log(`Carregando dados de ${monthInfo.month} (${monthInfo.table})...`);
+          
+          // Buscar todos os dados do mês
+          const { data: monthData, error: monthError } = await supabase
+            .from(monthInfo.table)
+            .select('*')
+            .eq('user_id', user.id);
 
-      debugLog += `Consulta 2 - Apenas receitas: ${incomeOnlyData?.length || 0} registros\n`;
-      debugLog += `Erro consulta 2: ${incomeError?.message || 'Nenhum'}\n`;
+          if (monthError) {
+            console.warn(`Erro ao carregar ${monthInfo.month}:`, monthError);
+            debugLog += `${monthInfo.month}: ERRO - ${monthError.message}\n`;
+            
+            // Adicionar mês com valor zero se houve erro
+            monthlyRevenue.push({
+              month: monthInfo.month,
+              revenue: 0
+            });
+            continue;
+          }
 
-      // 3. Consulta AGGRESSIVA - Transações recentes (limitado a 5 para interface)
+          const monthTransactions = monthData || [];
+          
+          // Separar receitas e despesas
+          const monthIncome = monthTransactions.filter(t => t.transaction_type === 'income');
+          const monthExpenses = monthTransactions.filter(t => t.transaction_type === 'expense');
+          
+          // Calcular totais do mês
+          const monthIncomeTotal = monthIncome.reduce((sum, t) => sum + Number(t.amount), 0);
+          const monthExpensesTotal = monthExpenses.reduce((sum, t) => sum + Number(t.amount), 0);
+          
+          // Acumular totais gerais
+          totalIncome += monthIncomeTotal;
+          totalExpenses += monthExpensesTotal;
+          
+          // Adicionar transações aos arrays gerais
+          allTransactionsData = [...allTransactionsData, ...monthTransactions];
+          incomeOnlyData = [...incomeOnlyData, ...monthIncome];
+          
+          // Adicionar dados mensais para gráfico
+          monthlyRevenue.push({
+            month: monthInfo.month,
+            revenue: monthIncomeTotal
+          });
+          
+          debugLog += `${monthInfo.month}: ${monthTransactions.length} transações, R$ ${monthIncomeTotal.toFixed(2)}\n`;
+          
+        } catch (error) {
+          console.error(`Erro ao carregar ${monthInfo.month}:`, error);
+          debugLog += `${monthInfo.month}: ERRO DE CONSULTA - ${error}\n`;
+          
+          // Adicionar mês com valor zero em caso de erro
+          monthlyRevenue.push({
+            month: monthInfo.month,
+            revenue: 0
+          });
+        }
+      }
+
+      // Buscar transações recentes da tabela principal (fallback para novas transações)
       const { data: recentData, error: recentError } = await supabase
         .from('transactions')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(5); // Limitado a 5 para interface limpa
+        .limit(5);
 
-      debugLog += `Consulta 3 - Transações recentes: ${recentData?.length || 0} registros\n`;
-      debugLog += `Erro consulta 3: ${recentError?.message || 'Nenhum'}\n`;
+      debugLog += `Transações recentes (tabela principal): ${recentData?.length || 0} registros\n`;
+      debugLog += `Erro transações recentes: ${recentError?.message || 'Nenhum'}\n`;
 
-      // 4. Consulta AGGRESSIVA - Para cálculos mensais (sem filtro de ano)
-      const { data: monthlyData, error: monthlyError } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('transaction_type', 'income')
-        .order('transaction_date', { ascending: false });
-
-      debugLog += `Consulta 4 - Para cálculos mensais: ${monthlyData?.length || 0} registros\n`;
-      debugLog += `Erro consulta 4: ${monthlyError?.message || 'Nenhum'}\n`;
-
-      // 5. Consulta AGGRESSIVA - Verificar se há problemas de RLS
-      const { data: testData, error: testError } = await supabase
-        .from('transactions')
-        .select('count')
-        .eq('user_id', user.id);
-
-      debugLog += `Consulta 5 - Teste de acesso: ${testData?.length || 0} registros\n`;
-      debugLog += `Erro consulta 5: ${testError?.message || 'Nenhum'}\n`;
-
-      // DEBUG: Verificar dados carregados
-      console.log('=== SUPABASE DEBUG AGRESSIVO ===');
-      console.log('All transactions error:', allTransactionsError);
-      console.log('Income error:', incomeError);
+      // DEBUG: Verificar dados carregados das tabelas mensais
+      console.log('=== DEBUG TABELAS MENSAIS ===');
       console.log('Recent error:', recentError);
-      console.log('Monthly error:', monthlyError);
-      console.log('Test error:', testError);
-      console.log('Total all transactions loaded:', allTransactionsData?.length || 0);
-      console.log('Total income transactions loaded:', incomeOnlyData?.length || 0);
+      console.log('Total all transactions loaded:', allTransactionsData.length);
+      console.log('Total income transactions loaded:', incomeOnlyData.length);
       console.log('Total recent transactions loaded:', recentData?.length || 0);
-      console.log('Total monthly transactions loaded:', monthlyData?.length || 0);
-      console.log('Sample transactions:', allTransactionsData?.slice(0, 5));
+      console.log('Monthly revenue data:', monthlyRevenue);
+      console.log('Sample transactions:', allTransactionsData.slice(0, 5));
       
       // Verificar transações de abril especificamente
-      const abrilTransactions = allTransactionsData?.filter(t => 
+      const abrilTransactions = allTransactionsData.filter(t => 
         t.transaction_date?.startsWith('2025-04')
-      ) || [];
+      );
       console.log('Abril transactions found:', abrilTransactions.length);
       console.log('Abril transactions sample:', abrilTransactions.slice(0, 3));
 
@@ -154,86 +194,30 @@ export default function Dashboard() {
         .eq('user_id', user.id)
         .eq('is_active', true);
 
-      // Calculate totals with detailed logging
-      console.log('=== CALCULANDO TOTAIS AGRESSIVO ===');
-      
-      // USAR TODOS OS DADOS POSSÍVEIS
-      const incomeTransactions = incomeOnlyData || allTransactionsData?.filter(t => t.transaction_type === 'income') || [];
-      const expenseTransactions = allTransactionsData?.filter(t => t.transaction_type === 'expense') || [];
-      
-      console.log('Income transactions count:', incomeTransactions.length);
-      console.log('Expense transactions count:', expenseTransactions.length);
-      
-      const totalIncome = incomeTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
-      const totalExpenses = expenseTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
-      
+      // Usar totais já calculados das tabelas mensais
+      console.log('=== TOTAIS DAS TABELAS MENSAIS ===');
+      console.log('Income transactions count:', incomeOnlyData.length);
+      console.log('All transactions count:', allTransactionsData.length);
       console.log('Total income calculated:', totalIncome);
       console.log('Total expenses calculated:', totalExpenses);
 
       // Calculate balance by account
-      const balancePJ = incomeTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
+      const balancePJ = totalIncome;
       const balanceCheckout = 0; // Simplified since we don't have account separation
 
-      // NOVA LÓGICA COMPLETAMENTE REESCRITA PARA GRÁFICO MENSAL
-      console.log('=== NOVA LÓGICA MENSAL AGRESSIVA ===');
+      // Usar dados mensais já calculados das tabelas específicas
+      console.log('=== DADOS MENSAIS FINAIS ===');
+      console.log('Monthly revenue final:', monthlyRevenue);
       
-      // 1. Usar TODAS as transações de receita (sem filtro de ano)
-      const allIncomeTransactions = monthlyData || incomeOnlyData || [];
-      
-      console.log('Todas as transações de receita encontradas:', allIncomeTransactions.length);
-      
-      // 2. Criar mapa simples por mês
-      const monthlyDataMap = {
-        0: 0, // Janeiro
-        1: 0, // Fevereiro  
-        2: 0, // Março
-        3: 0, // Abril
-        4: 0, // Maio
-        5: 0, // Junho
-        6: 0, // Julho
-        7: 0, // Agosto
-        8: 0, // Setembro
-        9: 0, // Outubro
-        10: 0, // Novembro
-        11: 0  // Dezembro
-      };
-      
-      // 3. Processar cada transação (sem filtro de ano)
-      allIncomeTransactions.forEach(t => {
-        const [year, month, day] = t.transaction_date.split('-').map(Number);
-        const monthIndex = month - 1; // Converter para 0-based
-        const amount = Number(t.amount);
-        
-        monthlyDataMap[monthIndex] += amount;
-        
-        // Debug para abril
-        if (monthIndex === 3) {
-          console.log('Abril transaction:', {
-            date: t.transaction_date,
-            amount: amount,
-            monthIndex: monthIndex,
-            runningTotal: monthlyDataMap[monthIndex]
-          });
-        }
+      // Adicionar log dos totais finais
+      debugLog += `\nTOTAIS FINAIS:\n`;
+      debugLog += `Receitas: R$ ${totalIncome.toFixed(2)}\n`;
+      debugLog += `Despesas: R$ ${totalExpenses.toFixed(2)}\n`;
+      debugLog += `Transações totais: ${allTransactionsData.length}\n`;
+      debugLog += `Receitas por mês:\n`;
+      monthlyRevenue.forEach(month => {
+        debugLog += `  ${month.month}: R$ ${month.revenue.toFixed(2)}\n`;
       });
-      
-      // 4. Criar array para o gráfico
-      const monthNames = [
-        'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-        'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
-      ];
-      
-      const monthlyRevenue = monthNames.map((name, index) => ({
-        month: name,
-        revenue: monthlyDataMap[index]
-      }));
-      
-      // 5. Debug final
-      console.log('=== RESULTADO FINAL AGRESSIVO ===');
-      console.log('Abril total:', monthlyDataMap[3]);
-      console.log('Maio total:', monthlyDataMap[4]);
-      console.log('Todos os meses:', monthlyDataMap);
-      console.log('Array para gráfico:', monthlyRevenue);
 
       const newFinancialData = {
         totalIncome,
