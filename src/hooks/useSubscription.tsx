@@ -138,6 +138,9 @@ export const useSubscription = () => {
     // Usuário master sempre pode
     if (isMasterUser) return true;
 
+    // Se está em trial, sempre pode
+    if (isTrialActive()) return true;
+
     const limits = await checkPlanLimits(actionType);
     return limits?.allowed || false;
   };

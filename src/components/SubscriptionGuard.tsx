@@ -56,6 +56,13 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
         return;
       }
 
+      // Se está em trial ativo, sempre pode
+      if (isTrialActive()) {
+        setCanAccess(true);
+        setLoading(false);
+        return;
+      }
+
       // Verificar limites
       const limitsData = await checkPlanLimits(feature);
       setLimits(limitsData);
@@ -64,7 +71,7 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
     };
 
     checkAccess();
-  }, [feature, isMasterUser, isUnlimited, subscription, usage]);
+  }, [feature, isMasterUser, isUnlimited, isTrialActive, subscription, usage]);
 
   const getFeatureIcon = () => {
     switch (feature) {
