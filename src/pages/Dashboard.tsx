@@ -245,8 +245,8 @@ export default function Dashboard() {
           const monthTransactions = monthData || [];
           
           // Separar receitas e despesas
-          const monthIncome = monthTransactions.filter(t => t.transaction_type === 'income');
-          const monthExpenses = monthTransactions.filter(t => t.transaction_type === 'expense');
+          const monthIncome = monthTransactions.filter(t => t.type === 'income');
+          const monthExpenses = monthTransactions.filter(t => t.type === 'expense');
           const monthExpensesSemProlabore = monthExpenses.filter(t => t.category !== 'Prolabore');
           
           // Separar por conta
