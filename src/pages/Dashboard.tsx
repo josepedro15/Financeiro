@@ -180,12 +180,15 @@ export default function Dashboard() {
   };
 
   const loadFinancialData = async () => {
-    if (!user || !selectedDataSource) return;
+    if (!user) return;
+    
+    const dataSourceToUse = selectedDataSource || user.id;
 
     try {
       console.log('=== CARREGANDO DADOS FINANCEIROS (VERSÃO AGRESSIVA) ===');
       console.log('User ID:', user.id);
-      console.log('Data Source ID:', selectedDataSource);
+      console.log('Selected Data Source:', selectedDataSource);
+      console.log('Data Source to Use:', dataSourceToUse);
       console.log('Timestamp:', new Date().toISOString());
       
 
@@ -228,7 +231,7 @@ export default function Dashboard() {
           const { data: monthData, error: monthError } = await supabase
             .from(monthInfo.table)
             .select('*')
-            .eq('user_id', selectedDataSource);
+            .eq('user_id', dataSourceToUse);
 
           if (monthError) {
             console.warn(`Erro ao carregar ${monthInfo.month}:`, monthError);
@@ -245,8 +248,8 @@ export default function Dashboard() {
           const monthTransactions = monthData || [];
           
           // Separar receitas e despesas
-          const monthIncome = monthTransactions.filter(t => t.type === 'income');
-          const monthExpenses = monthTransactions.filter(t => t.type === 'expense');
+          const monthIncome = monthTransactions.filter(t => t.transaction_type === 'income');
+          const monthExpenses = monthTransactions.filter(t => t.transaction_type === 'expense');
           const monthExpensesSemProlabore = monthExpenses.filter(t => t.category !== 'Prolabore');
           
           // Separar por conta
@@ -368,7 +371,7 @@ export default function Dashboard() {
         const { data: dailyData, error: dailyError } = await supabase
           .from(currentMonthTable)
           .select('transaction_date, amount, account_name')
-          .eq('user_id', selectedDataSource)
+          .eq('user_id', dataSourceToUse)
           .eq('transaction_type', 'income');
 
         if (dailyError) {
@@ -440,7 +443,7 @@ export default function Dashboard() {
         const { data: currentMonthData, error: currentError } = await supabase
           .from(currentMonthTableGrowth)
           .select('transaction_date, amount')
-          .eq('user_id', selectedDataSource)
+          .eq('user_id', dataSourceToUse)
           .eq('transaction_type', 'income')
           .lte('transaction_date', `${todayYear}-${String(todayMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`);
 
@@ -449,7 +452,7 @@ export default function Dashboard() {
         const { data: previousMonthData, error: previousError } = await supabase
           .from(previousMonthTable)
           .select('transaction_date, amount')
-          .eq('user_id', selectedDataSource)
+          .eq('user_id', dataSourceToUse)
           .eq('transaction_type', 'income')
           .lte('transaction_date', `${previousYear}-${String(previousMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`);
 
