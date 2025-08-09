@@ -660,8 +660,6 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-          </div>
-        </div>
       </header>
 
       {/* Main Content */}
