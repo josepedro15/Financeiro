@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -17,9 +18,18 @@ import {
   PiggyBank,
   Percent,
   BarChart3,
-  Settings
+  Settings,
+  Database,
+  ChevronDown
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Area } from 'recharts';
+
+interface DataSource {
+  id: string;
+  email: string;
+  name: string;
+  isOwner: boolean;
+}
 
 interface FinancialData {
   totalIncome: number;
@@ -42,6 +52,9 @@ interface FinancialData {
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const [dataSources, setDataSources] = useState<DataSource[]>([]);
+  const [selectedDataSource, setSelectedDataSource] = useState<string>('');
+  const [loadingDataSources, setLoadingDataSources] = useState(true);
   const [financialData, setFinancialData] = useState<FinancialData>({
     totalIncome: 0,
     totalExpenses: 0,
@@ -70,8 +83,14 @@ export default function Dashboard() {
     }
     console.log('=== DASHBOARD MOUNTED ===');
     console.log('User:', user.email);
-    loadFinancialData();
+    loadDataSources();
   }, [user, navigate]);
+
+  useEffect(() => {
+    if (selectedDataSource) {
+      loadFinancialData();
+    }
+  }, [selectedDataSource]);
 
   // Forçar atualização a cada 30 segundos
   useEffect(() => {
@@ -85,12 +104,91 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [user]);
 
-  const loadFinancialData = async () => {
+  const loadDataSources = async () => {
     if (!user) return;
+    
+    setLoadingDataSources(true);
+    console.log('=== CARREGANDO FONTES DE DADOS ===');
+    
+    try {
+      const sources: DataSource[] = [];
+      
+      // Adicionar fonte própria
+      sources.push({
+        id: user.id,
+        email: user.email || '',
+        name: 'Meus dados',
+        isOwner: true
+      });
+      
+      // Buscar organizações onde sou membro (posso ver dados de outros)
+      const { data: memberOf, error: memberError } = await supabase
+        .from('organization_members')
+        .select(`
+          owner_id,
+          profiles!organization_members_owner_id_fkey(email)
+        `)
+        .eq('member_id', user.id)
+        .eq('status', 'active');
+      
+      if (!memberError && memberOf) {
+        for (const org of memberOf) {
+          if (org.profiles && org.profiles.email) {
+            sources.push({
+              id: org.owner_id,
+              email: org.profiles.email,
+              name: `Dados de ${org.profiles.email}`,
+              isOwner: false
+            });
+          }
+        }
+      }
+      
+      // Buscar organizações onde sou owner (outros podem ver meus dados)
+      const { data: ownerOf, error: ownerError } = await supabase
+        .from('organization_members')
+        .select(`
+          member_id,
+          profiles!organization_members_member_id_fkey(email)
+        `)
+        .eq('owner_id', user.id)
+        .eq('status', 'active');
+      
+      if (!ownerError && ownerOf) {
+        for (const member of ownerOf) {
+          if (member.profiles && member.profiles.email) {
+            sources.push({
+              id: member.member_id,
+              email: member.profiles.email,
+              name: `Dados compartilhados com ${member.profiles.email}`,
+              isOwner: true
+            });
+          }
+        }
+      }
+      
+      console.log('Fontes de dados encontradas:', sources);
+      setDataSources(sources);
+      
+      // Selecionar a primeira fonte (próprios dados) por padrão
+      if (sources.length > 0 && !selectedDataSource) {
+        setSelectedDataSource(sources[0].id);
+      }
+      
+    } catch (error) {
+      console.error('Erro ao carregar fontes de dados:', error);
+    } finally {
+      setLoadingDataSources(false);
+    }
+  };
+
+  const loadFinancialData = async () => {
+    if (!user || !selectedDataSource) return;
 
     try {
       console.log('=== CARREGANDO DADOS FINANCEIROS (VERSÃO AGRESSIVA) ===');
       console.log('User ID:', user.id);
+      console.log('Data Source ID:', selectedDataSource);
       console.log('Timestamp:', new Date().toISOString());
       
 
@@ -133,7 +231,7 @@ export default function Dashboard() {
           const { data: monthData, error: monthError } = await supabase
             .from(monthInfo.table)
             .select('*')
-            .eq('user_id', user.id);
+            .eq('user_id', selectedDataSource);
 
           if (monthError) {
             console.warn(`Erro ao carregar ${monthInfo.month}:`, monthError);
@@ -216,7 +314,7 @@ export default function Dashboard() {
       const { data: recentData, error: recentError } = await supabase
         .from('transactions')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', selectedDataSource)
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -273,7 +371,7 @@ export default function Dashboard() {
         const { data: dailyData, error: dailyError } = await supabase
           .from(currentMonthTable)
           .select('transaction_date, amount, account_name')
-          .eq('user_id', user.id)
+          .eq('user_id', selectedDataSource)
           .eq('transaction_type', 'income');
 
         if (dailyError) {
@@ -345,7 +443,7 @@ export default function Dashboard() {
         const { data: currentMonthData, error: currentError } = await supabase
           .from(currentMonthTableGrowth)
           .select('transaction_date, amount')
-          .eq('user_id', user.id)
+          .eq('user_id', selectedDataSource)
           .eq('transaction_type', 'income')
           .lte('transaction_date', `${todayYear}-${String(todayMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`);
 
@@ -354,7 +452,7 @@ export default function Dashboard() {
         const { data: previousMonthData, error: previousError } = await supabase
           .from(previousMonthTable)
           .select('transaction_date, amount')
-          .eq('user_id', user.id)
+          .eq('user_id', selectedDataSource)
           .eq('transaction_type', 'income')
           .lte('transaction_date', `${previousYear}-${String(previousMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`);
 
@@ -450,6 +548,34 @@ export default function Dashboard() {
             <span className="text-xs sm:text-sm text-muted-foreground text-center">
               Bem-vindo, {user?.email}
             </span>
+            
+            {/* Seletor de Fonte de Dados */}
+            {dataSources.length > 1 && (
+              <div className="flex items-center space-x-2">
+                <Database className="h-4 w-4 text-gray-600" />
+                <Select value={selectedDataSource} onValueChange={setSelectedDataSource}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Selecionar fonte de dados" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dataSources.map((source) => (
+                      <SelectItem key={source.id} value={source.id}>
+                        <div className="flex items-center space-x-2">
+                          <span>{source.name}</span>
+                          {source.isOwner && source.id !== user.id && (
+                            <span className="text-xs text-blue-600">(Compartilhado)</span>
+                          )}
+                          {!source.isOwner && (
+                            <span className="text-xs text-green-600">(Organização)</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" onClick={() => navigate('/clients')}>
                 <Users className="w-4 h-4 mr-1" />
