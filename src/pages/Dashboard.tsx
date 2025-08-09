@@ -308,11 +308,11 @@ export default function Dashboard() {
       // 1. Ticket Médio = receita ÷ número de vendas
       const ticketMedio = totalIncomeTransactions > 0 ? totalIncome / totalIncomeTransactions : 0;
       
-      // 2. Lucro Líquido = receita - despesas (com todas as despesas para o card)
-      const lucroLiquido = totalIncome - totalExpenses;
+      // 2. Lucro Líquido = receita - despesas sem prolabore (para o card)
+      const lucroLiquido = totalIncome - totalExpensesSemProlabore;
       
       // 3. Margem de Lucro (%) = (receita - despesas sem prolabore) ÷ receita × 100
-      const lucroLiquidoSemProlabore = totalIncome - totalExpensesSemProlabore;
+      const lucroLiquidoSemProlabore = lucroLiquido; // Mesmo valor agora
       const margemLucro = totalIncome > 0 ? (lucroLiquidoSemProlabore / totalIncome) * 100 : 0;
       
       // 4. Crescimento Mensal (%) = acumulado até hoje vs mesmo dia mês anterior
@@ -380,10 +380,10 @@ export default function Dashboard() {
       }
       
       console.log('Ticket Médio:', ticketMedio);
-      console.log('Lucro Líquido (com todas despesas):', lucroLiquido);
-      console.log('Lucro Líquido sem Prolabore:', lucroLiquidoSemProlabore);
-      console.log('Total Despesas:', totalExpenses);
-      console.log('Total Despesas sem Prolabore:', totalExpensesSemProlabore);
+      console.log('Lucro Líquido (sem prolabore):', lucroLiquido);
+      console.log('Total Receitas:', totalIncome);
+      console.log('Total Despesas (com prolabore):', totalExpenses);
+      console.log('Total Despesas (sem prolabore):', totalExpensesSemProlabore);
       console.log('Margem de Lucro (sem prolabore):', margemLucro);
       console.log('Crescimento Mensal:', crescimentoMensal);
       console.log('Total de transações de receita:', totalIncomeTransactions);
@@ -555,7 +555,7 @@ export default function Dashboard() {
                 {formatCurrency(financialData.lucroLiquido)}
               </div>
               <p className="text-xs text-muted-foreground">
-                Receita - Despesas
+                Receita - Despesas (sem prolabore)
               </p>
             </CardContent>
           </Card>
