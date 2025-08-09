@@ -23,6 +23,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Area } from 'recharts';
+import NotificationCenter from '@/components/NotificationCenter';
 
 interface DataSource {
   id: string;
@@ -545,10 +546,8 @@ export default function Dashboard() {
               Bem-vindo, {user?.email}
             </span>
             
-
-            
             {/* Seletor de Fonte de Dados */}
-            {dataSources.length > 1 && (
+            {dataSources.length >= 1 && (
               <div className="flex items-center space-x-2">
                 <Database className="h-4 w-4 text-gray-600" />
                 <Select value={selectedDataSource} onValueChange={setSelectedDataSource}>
@@ -596,6 +595,11 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
+        
+        {/* Centro de Notificações */}
+        <div className="mb-6">
+          <NotificationCenter />
+        </div>
         {/* Status de atualização */}
         <div className="mb-6 text-center">
           <p className="text-sm text-muted-foreground">
