@@ -453,6 +453,10 @@ export default function Dashboard() {
               Bem-vindo, {user?.email}
             </span>
             <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => navigate('/clients')}>
+                <Users className="w-4 h-4 mr-1" />
+                CRM
+              </Button>
               <Button variant="outline" size="sm" onClick={loadFinancialData}>
                 Atualizar
               </Button>
