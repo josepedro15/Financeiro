@@ -87,7 +87,7 @@ SELECT '=== VERIFICAÇÃO DE VALORES ESPECÍFICOS ===' as info;
 SELECT 
   amount,
   COUNT(*) as quantidade,
-  STRING_AGG(description, ', ') as exemplos
+  GROUP_CONCAT(description, ', ') as exemplos
 FROM public.transactions 
 WHERE transaction_date >= '2025-04-01' 
   AND transaction_date <= '2025-04-30'

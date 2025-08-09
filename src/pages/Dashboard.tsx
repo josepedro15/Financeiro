@@ -20,7 +20,8 @@ import {
   BarChart3,
   Settings,
   Database,
-  ChevronDown
+  ChevronDown,
+  Crown
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Area } from 'recharts';
 import NotificationCenter from '@/components/NotificationCenter';
@@ -580,6 +581,10 @@ export default function Dashboard() {
               <Button variant="outline" size="sm" onClick={() => navigate('/clients')}>
                 <Users className="w-4 h-4 mr-1" />
                 CRM
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate('/subscription')}>
+                <Crown className="w-4 h-4 mr-1" />
+                Assinatura
               </Button>
               <Button variant="outline" size="sm" onClick={() => navigate('/settings')}>
                 <Settings className="w-4 h-4 mr-1" />

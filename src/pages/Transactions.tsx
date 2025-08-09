@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { testDatabasePermissions, testClientIdNull } from '@/utils/testAuth';
@@ -14,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import SubscriptionGuard from '@/components/SubscriptionGuard';
 import { 
   DollarSign, 
   Plus, 
@@ -46,6 +48,7 @@ interface Account {
 
 export default function Transactions() {
   const { user } = useAuth();
+  const { canPerformAction, incrementUsage, isMasterUser } = useSubscription();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -266,11 +269,29 @@ export default function Transactions() {
           description: `Transação atualizada com sucesso na tabela ${result.tableName}`
         });
       } else {
+        // Verificar limites de plano antes de criar nova transação
+        if (!isMasterUser) {
+          const canCreate = await canPerformAction('transaction');
+          if (!canCreate) {
+            toast({
+              title: "Limite Atingido",
+              description: "Você atingiu o limite de transações do seu plano. Faça upgrade para continuar.",
+              variant: "destructive"
+            });
+            return;
+          }
+        }
+
         // Usar inserção inteligente na tabela correta
         const result = await insertTransactionInCorrectTable(transactionData);
 
         if (!result.success) {
           throw new Error(result.error || 'Erro ao criar transação');
+        }
+
+        // Incrementar contador de uso após sucesso
+        if (!isMasterUser) {
+          await incrementUsage('transaction', 1);
         }
 
         toast({
@@ -436,7 +457,8 @@ export default function Transactions() {
               🧪 Testar Auth
             </Button>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <SubscriptionGuard feature="transaction">
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => {
                 console.log('Button clicked - opening dialog');
@@ -575,6 +597,7 @@ export default function Transactions() {
               </form>
             </DialogContent>
           </Dialog>
+          </SubscriptionGuard>
         </div>
       </header>
 
