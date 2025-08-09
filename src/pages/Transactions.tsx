@@ -67,22 +67,20 @@ export default function Transactions() {
 
   // Filter state
   const [filters, setFilters] = useState({
-    month: '',
-    day: '',
-    type: '',
-    account: ''
+    month: 'all',
+    day: 'all',
+    type: 'all',
+    account: 'all'
   });
 
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
 
-  // Debug logs
-  console.log('=== TRANSACTIONS PAGE DEBUG ===');
-  console.log('User:', user);
-  console.log('Loading:', loading);
-  console.log('Transactions count:', transactions.length);
-  console.log('Filtered transactions count:', filteredTransactions.length);
-  console.log('Dialog open:', dialogOpen);
-  console.log('Current filters:', filters);
+  // Debug logs (commented out for production)
+  // console.log('=== TRANSACTIONS PAGE DEBUG ===');
+  // console.log('User:', user);
+  // console.log('Loading:', loading);
+  // console.log('Transactions count:', transactions.length);
+  // console.log('Filtered transactions count:', filteredTransactions.length);
 
   // Contas fixas
   const accounts: Account[] = [
@@ -100,7 +98,7 @@ export default function Transactions() {
 
   // Clear all filters
   const clearFilters = () => {
-    setFilters({ month: '', day: '', type: '', account: '' });
+    setFilters({ month: 'all', day: 'all', type: 'all', account: 'all' });
     setFilteredTransactions(transactions);
   };
 
@@ -109,7 +107,7 @@ export default function Transactions() {
     let filtered = [...transactions];
 
     // Filter by month
-    if (filters.month) {
+    if (filters.month && filters.month !== 'all') {
       filtered = filtered.filter(transaction => {
         const date = new Date(transaction.transaction_date);
         const month = date.getMonth() + 1; // Convert to 1-based
@@ -118,7 +116,7 @@ export default function Transactions() {
     }
 
     // Filter by day
-    if (filters.day) {
+    if (filters.day && filters.day !== 'all') {
       filtered = filtered.filter(transaction => {
         const date = new Date(transaction.transaction_date);
         const day = date.getDate();
@@ -127,12 +125,12 @@ export default function Transactions() {
     }
 
     // Filter by type
-    if (filters.type) {
+    if (filters.type && filters.type !== 'all') {
       filtered = filtered.filter(transaction => transaction.transaction_type === filters.type);
     }
 
     // Filter by account
-    if (filters.account) {
+    if (filters.account && filters.account !== 'all') {
       filtered = filtered.filter(transaction => transaction.account_name === filters.account);
     }
 
@@ -145,18 +143,12 @@ export default function Transactions() {
       return;
     }
 
-    console.log('🔄 === LOADING TRANSACTIONS FROM ALL TABLES ===');
-    console.log('👤 User ID:', user.id);
-    console.log('⏰ Starting data load at:', new Date().toISOString());
-
     try {
       setLoading(true);
       let allTransactions: Transaction[] = [];
-      console.log('🏁 Set loading to true, starting fetch...');
 
       // Carregar dados das tabelas mensais de 2025
       const monthlyTables = getAllMonthlyTables(2025);
-      console.log('📅 Monthly tables to check:', monthlyTables.map(t => t.table));
       
       for (const tableInfo of monthlyTables) {
         try {
@@ -209,15 +201,13 @@ export default function Transactions() {
       setFilteredTransactions(sortedTransactions);
 
     } catch (error) {
-      console.error('❌ Error loading data:', error);
-      console.error('❌ Error stack:', error);
+      console.error('Error loading data:', error);
       toast({
         title: "Erro",
         description: "Erro inesperado ao carregar dados",
         variant: "destructive"
       });
     } finally {
-      console.log('✅ Setting loading to false');
       setLoading(false);
     }
   };
@@ -416,12 +406,7 @@ export default function Transactions() {
     }
   };
 
-  // Debug da renderização
-  console.log('🎨 About to render Transactions page');
-  console.log('🎨 Current state - loading:', loading, 'user:', !!user, 'transactions:', transactions.length);
-
   if (loading) {
-    console.log('⏳ Still loading - showing spinner');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -430,7 +415,7 @@ export default function Transactions() {
     );
   }
 
-  console.log('✅ Not loading, proceeding with normal render');
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -619,7 +604,7 @@ export default function Transactions() {
                     <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="1">Janeiro</SelectItem>
                     <SelectItem value="2">Fevereiro</SelectItem>
                     <SelectItem value="3">Março</SelectItem>
@@ -644,7 +629,7 @@ export default function Transactions() {
                     <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
                       <SelectItem key={day} value={day.toString()}>{day}</SelectItem>
                     ))}
@@ -660,7 +645,7 @@ export default function Transactions() {
                     <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="income">Receita</SelectItem>
                     <SelectItem value="expense">Despesa</SelectItem>
                   </SelectContent>
@@ -683,7 +668,7 @@ export default function Transactions() {
               </div>
 
               {/* Botão Limpar Filtros */}
-              {(filters.month || filters.day || filters.type || filters.account) && (
+              {(filters.month !== 'all' || filters.day !== 'all' || filters.type !== 'all' || filters.account !== 'all') && (
                 <Button 
                   variant="outline" 
                   size="sm" 
