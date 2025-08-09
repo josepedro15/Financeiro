@@ -191,10 +191,10 @@ export default function Dashboard() {
           allTransactionsData = [...allTransactionsData, ...monthTransactions];
           incomeOnlyData = [...incomeOnlyData, ...monthIncome];
           
-          // Adicionar dados mensais para gráfico (apenas Conta PJ)
+          // Adicionar dados mensais para gráfico (todas as contas)
           monthlyRevenue.push({
             month: monthInfo.month,
-            revenue: monthIncomePJTotal
+            revenue: monthIncomeTotal
           });
           
 
@@ -273,8 +273,7 @@ export default function Dashboard() {
           .from(currentMonthTable)
           .select('transaction_date, amount, account_name')
           .eq('user_id', user.id)
-          .eq('transaction_type', 'income')
-          .eq('account_name', 'Conta PJ');
+          .eq('transaction_type', 'income');
 
         if (dailyError) {
           console.warn('Erro ao carregar dados diários:', dailyError);
@@ -347,7 +346,6 @@ export default function Dashboard() {
           .select('transaction_date, amount')
           .eq('user_id', user.id)
           .eq('transaction_type', 'income')
-          .eq('account_name', 'Conta PJ')
           .lte('transaction_date', `${todayYear}-${String(todayMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`);
 
         // Buscar dados acumulados até o mesmo dia no mês anterior
@@ -357,7 +355,6 @@ export default function Dashboard() {
           .select('transaction_date, amount')
           .eq('user_id', user.id)
           .eq('transaction_type', 'income')
-          .eq('account_name', 'Conta PJ')
           .lte('transaction_date', `${previousYear}-${String(previousMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`);
 
         if (!currentError && !previousError && currentMonthData && previousMonthData) {
@@ -607,9 +604,9 @@ export default function Dashboard() {
           {/* Gráfico Mensal */}
           <Card>
             <CardHeader>
-              <CardTitle>Evolução Mensal - Conta PJ</CardTitle>
+              <CardTitle>Evolução Mensal - Todas as Contas</CardTitle>
               <CardDescription>
-                Receita mensal da Conta PJ em 2025
+                Receita mensal total em 2025 (todas as contas)
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -632,14 +629,14 @@ export default function Dashboard() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                Faturamento Diário Conta PJ - {financialData.currentMonth}
+                Faturamento Diário - {financialData.currentMonth}
                 <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
                   Mês Atual
                 </span>
               </CardTitle>
               <CardDescription>
                 {financialData.currentMonth ? 
-                  `Receita diária da Conta PJ em ${financialData.currentMonth.toLowerCase()} 2025 - Total: ${formatCurrency(financialData.currentMonthRevenue)}` 
+                  `Receita diária total em ${financialData.currentMonth.toLowerCase()} 2025 - Total: ${formatCurrency(financialData.currentMonthRevenue)}` 
                   : 'Carregando dados do mês atual...'
                 }
               </CardDescription>
