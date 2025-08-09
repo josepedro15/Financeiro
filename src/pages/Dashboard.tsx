@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -20,7 +22,10 @@ import {
   BarChart3,
   Settings,
   Database,
-  ChevronDown
+  ChevronDown,
+  Crown,
+  Clock,
+  AlertTriangle
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Area } from 'recharts';
 import NotificationCenter from '@/components/NotificationCenter';
@@ -52,6 +57,16 @@ interface FinancialData {
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
+  const { 
+    isMasterUser, 
+    isTrialActive, 
+    getTrialDaysLeft, 
+    getPlanName, 
+    currentPlan,
+    currentTransactions,
+    transactionLimit,
+    loading: subscriptionLoading 
+  } = useSubscription();
   const navigate = useNavigate();
   const [dataSources, setDataSources] = useState<DataSource[]>([]);
   const [selectedDataSource, setSelectedDataSource] = useState<string>('');
@@ -592,6 +607,59 @@ export default function Dashboard() {
                 Sair
               </Button>
             </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Subscription Status Banner */}
+      {!isMasterUser && !subscriptionLoading && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                {isTrialActive() ? (
+                  <>
+                    <Clock className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-900">
+                        Trial Gratuito - {getTrialDaysLeft()} dias restantes
+                      </p>
+                      <p className="text-xs text-blue-700">
+                        Aproveite o período de teste para conhecer todas as funcionalidades
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Crown className="w-5 h-5 text-green-600" />
+                    <div>
+                      <p className="text-sm font-medium text-green-900">
+                        Plano {getPlanName(currentPlan)} Ativo
+                      </p>
+                      <p className="text-xs text-green-700">
+                        {currentTransactions} / {transactionLimit} transações utilizadas
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline" className="text-xs">
+                  {isTrialActive() ? 'Trial' : getPlanName(currentPlan)}
+                </Badge>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate('/subscription')}
+                >
+                  <Crown className="w-4 h-4 mr-1" />
+                  Assinatura
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
           </div>
         </div>
       </header>

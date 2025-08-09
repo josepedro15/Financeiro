@@ -14,6 +14,9 @@ const Transactions = lazy(() => import("./pages/Transactions"));
 const Clients = lazy(() => import("./pages/Clients"));
 const Reports = lazy(() => import("./pages/Reports"));
 const Settings = lazy(() => import("./pages/Settings"));
+const SubscriptionStatus = lazy(() => import("./pages/SubscriptionStatus"));
+const PlanSelection = lazy(() => import("./pages/PlanSelection"));
+const Checkout = lazy(() => import("./pages/Checkout"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading component
@@ -55,6 +58,9 @@ const App = () => {
                 <Route path="/clients" element={<Clients />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/subscription" element={<SubscriptionStatus />} />
+                <Route path="/plans" element={<PlanSelection />} />
+                <Route path="/checkout" element={<Checkout />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

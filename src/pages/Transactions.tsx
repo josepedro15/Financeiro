@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { testDatabasePermissions, testClientIdNull } from '@/utils/testAuth';
@@ -14,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { SubscriptionGuard } from '@/components/SubscriptionGuard';
 import { 
   DollarSign, 
   Plus, 
@@ -46,6 +48,7 @@ interface Account {
 
 export default function Transactions() {
   const { user } = useAuth();
+  const { canPerformAction, incrementUsage, isMasterUser } = useSubscription();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -216,6 +219,19 @@ export default function Transactions() {
     e.preventDefault();
     if (!user) return;
 
+    // Verificar limites de assinatura (apenas para novos usuários)
+    if (!isMasterUser && !editingTransaction) {
+      const canCreate = await canPerformAction('transaction');
+      if (!canCreate) {
+        toast({
+          title: "Limite Atingido",
+          description: "Você atingiu o limite de transações do seu plano. Faça upgrade para continuar.",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     // Validação adicional
     if (!formData.account_name) {
       toast({
@@ -277,6 +293,11 @@ export default function Transactions() {
           title: "Sucesso",
           description: `Transação criada com sucesso na tabela ${result.tableName}`
         });
+
+        // Incrementar uso apenas para novos usuários
+        if (!isMasterUser) {
+          await incrementUsage('transaction', 1);
+        }
       }
 
       // Reset form and reload data
@@ -436,28 +457,29 @@ export default function Transactions() {
               🧪 Testar Auth
             </Button>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => {
-                console.log('Button clicked - opening dialog');
-                console.log('Current accounts:', accounts);
-            
-                setEditingTransaction(null);
-                setFormData({
-                  description: '',
-                  amount: '',
-                  transaction_type: 'income',
-                  category: '',
-                  transaction_date: new Date().toISOString().split('T')[0],
-                  client_id: '',
-                  account_id: ''
-                });
-                console.log('Form data reset, opening dialog');
-              }}>
-                <Plus className="w-4 h-4 mr-2" />
-                Nova Transação
-              </Button>
-            </DialogTrigger>
+          <SubscriptionGuard feature="transaction">
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => {
+                  console.log('Button clicked - opening dialog');
+                  console.log('Current accounts:', accounts);
+              
+                  setEditingTransaction(null);
+                  setFormData({
+                    description: '',
+                    amount: '',
+                    transaction_type: 'income',
+                    category: '',
+                    transaction_date: new Date().toISOString().split('T')[0],
+                    client_id: '',
+                    account_id: ''
+                  });
+                  console.log('Form data reset, opening dialog');
+                }}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nova Transação
+                </Button>
+              </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>
@@ -575,6 +597,7 @@ export default function Transactions() {
               </form>
             </DialogContent>
           </Dialog>
+        </SubscriptionGuard>
         </div>
       </header>
 
