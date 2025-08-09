@@ -89,8 +89,14 @@ export default function Transactions() {
     loadData();
   }, [user, navigate]);
 
-  // Function to apply filters
-  const applyFilters = () => {
+  // Clear all filters
+  const clearFilters = () => {
+    setFilters({ month: '', day: '', type: '', account: '' });
+    setFilteredTransactions(transactions);
+  };
+
+  // Apply filters when filters or transactions change
+  useEffect(() => {
     let filtered = [...transactions];
 
     // Filter by month
@@ -122,18 +128,7 @@ export default function Transactions() {
     }
 
     setFilteredTransactions(filtered);
-  };
-
-  // Clear all filters
-  const clearFilters = () => {
-    setFilters({ month: '', day: '', type: '', account: '' });
-    setFilteredTransactions(transactions);
-  };
-
-  // Apply filters when filters change
-  useEffect(() => {
-    applyFilters();
-  }, [filters, transactions]);
+  }, [transactions, filters]);
 
   const loadData = async () => {
     if (!user) {
@@ -686,12 +681,49 @@ export default function Transactions() {
           </div>
 
           <CardContent>
-            {transactions.length === 0 ? (
+            {loading ? (
               <div className="text-center py-8">
-                <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">
-                  Nenhuma transação encontrada. Adicione sua primeira transação.
-                </p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Carregando transações...</p>
+              </div>
+            ) : filteredTransactions.length === 0 ? (
+              <div className="text-center py-8">
+                {transactions.length === 0 ? (
+                  <>
+                    <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-4">
+                      Nenhuma transação encontrada. Adicione sua primeira transação.
+                    </p>
+                    <Button 
+                      onClick={() => {
+                        setEditingTransaction(null);
+                        setFormData({
+                          description: '',
+                          amount: '',
+                          transaction_type: 'income',
+                          category: '',
+                          transaction_date: new Date().toISOString().split('T')[0],
+                          client_name: '',
+                          account_name: ''
+                        });
+                        setDialogOpen(true);
+                      }}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Nova Transação
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Filter className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-4">
+                      Nenhuma transação encontrada com os filtros aplicados.
+                    </p>
+                    <Button variant="outline" onClick={clearFilters}>
+                      <X className="w-4 h-4 mr-2" />
+                      Limpar Filtros
+                    </Button>
+                  </>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
