@@ -510,7 +510,7 @@ export default function Transactions() {
                 <div className="space-y-2">
                   <Label htmlFor="account_name">Conta</Label>
                   <Select 
-                    value={formData.account_name || ""} 
+                    value={formData.account_name || undefined} 
                     onValueChange={(value) => setFormData({ ...formData, account_name: value })}
                   >
                     <SelectTrigger>
@@ -660,7 +660,7 @@ export default function Transactions() {
                     <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas</SelectItem>
+                    <SelectItem value="all">Todas</SelectItem>
                     <SelectItem value="Conta PJ">Conta PJ</SelectItem>
                     <SelectItem value="Conta Checkout">Conta Checkout</SelectItem>
                   </SelectContent>
