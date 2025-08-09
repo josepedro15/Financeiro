@@ -33,6 +33,17 @@ export default function SubscriptionStatus() {
   } = useSubscription();
   const navigate = useNavigate();
 
+  // Debug: Log dos dados para verificar
+  console.log('Subscription Status Debug:', {
+    subscription,
+    usage,
+    isTrialActive: isTrialActive(),
+    getTrialDaysLeft: getTrialDaysLeft(),
+    isMasterUser,
+    currentPlan,
+    loading
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -60,7 +71,7 @@ export default function SubscriptionStatus() {
 
   const getStatusText = () => {
     if (isMasterUser) return 'Conta Master';
-    if (isTrialActive()) return `Trial - ${getTrialDaysLeft()} dias restantes`;
+    if (isTrialActive()) return `Trial Gratuito - ${getTrialDaysLeft()} dias restantes`;
     if (subscription?.status === 'active') return `Plano ${getPlanName(currentPlan)} Ativo`;
     return 'Sem assinatura ativa';
   };
@@ -121,7 +132,7 @@ export default function SubscriptionStatus() {
                       className="bg-white/20 hover:bg-white/30 text-white border-white/30"
                     >
                       <ArrowUpRight className="w-4 h-4 mr-1" />
-                      Upgrade
+                      {isTrialActive() ? 'Escolher Plano' : 'Upgrade'}
                     </Button>
                   )}
                 </div>

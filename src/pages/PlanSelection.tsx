@@ -75,13 +75,13 @@ const plans: Plan[] = [
     popular: true,
     limits: {
       transactions: 1000,
-      users: 5,
-      clients: 100
+      users: 3,
+      clients: 50
     },
     features: [
       { name: 'Até 1.000 transações por mês', included: true },
-      { name: 'Até 5 usuários', included: true },
-      { name: 'Até 100 clientes', included: true },
+      { name: 'Até 3 usuários', included: true },
+      { name: 'Até 50 clientes', included: true },
       { name: 'Dashboard financeiro', included: true },
       { name: 'Relatórios avançados', included: true },
       { name: 'CRM completo', included: true },
