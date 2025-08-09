@@ -122,26 +122,47 @@ export default function Dashboard() {
       });
       
       // Buscar organizações onde sou membro (posso ver dados de outros)
+      console.log('Buscando organizações onde sou membro...');
+      console.log('Meu user.id:', user.id);
+      
+      // Versão simplificada sem foreign key automática
       const { data: memberOf, error: memberError } = await supabase
         .from('organization_members')
-        .select(`
-          owner_id,
-          profiles!organization_members_owner_id_fkey(email)
-        `)
+        .select('owner_id')
         .eq('member_id', user.id)
         .eq('status', 'active');
       
+      console.log('Resultado memberOf:', memberOf);
+      console.log('Erro memberError:', memberError);
+      
       if (!memberError && memberOf) {
+        console.log('Processando memberOf, length:', memberOf.length);
         for (const org of memberOf) {
-          if (org.profiles && org.profiles.email) {
+          console.log('Org item:', org);
+          
+          // Buscar email do owner separadamente
+          const { data: ownerProfile, error: ownerError } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('id', org.owner_id)
+            .single();
+          
+          console.log('Owner profile:', ownerProfile, 'error:', ownerError);
+          
+          if (!ownerError && ownerProfile?.email) {
+            console.log('Adicionando fonte:', ownerProfile.email);
             sources.push({
               id: org.owner_id,
-              email: org.profiles.email,
-              name: `Dados de ${org.profiles.email}`,
+              email: ownerProfile.email,
+              name: `Dados de ${ownerProfile.email}`,
               isOwner: false
             });
+          } else {
+            console.log('Erro ao buscar owner profile:', ownerError);
           }
         }
+      } else {
+        console.log('Não há organizações onde sou membro ou erro:', memberError);
       }
       
       // Buscar organizações onde sou owner (outros podem ver meus dados)
