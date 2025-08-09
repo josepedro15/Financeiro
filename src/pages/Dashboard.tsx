@@ -131,6 +131,9 @@ export default function Dashboard() {
       console.log('Meu user.id:', user.id);
       
       // Versão simplificada sem foreign key automática
+      console.log('📝 Executando consulta SQL...');
+      console.log('Query: SELECT owner_id FROM organization_members WHERE member_id =', user.id, 'AND status = active');
+      
       const { data: memberOf, error: memberError } = await supabase
         .from('organization_members')
         .select('owner_id')
