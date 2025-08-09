@@ -94,6 +94,48 @@ export default function SubscriptionStatus() {
     return 'bg-green-500';
   };
 
+  // Função para obter limites corretos baseados no status
+  const getLimits = () => {
+    if (isMasterUser) {
+      return {
+        transactions: 999999,
+        users: 999999,
+        clients: 999999
+      };
+    }
+    
+    if (isTrialActive()) {
+      // Limites do trial (mesmos do Starter)
+      return {
+        transactions: 100,
+        users: 1,
+        clients: 10
+      };
+    }
+    
+    // Limites baseados no plano atual
+    switch (subscription?.plan_type) {
+      case 'starter':
+        return {
+          transactions: 100,
+          users: 1,
+          clients: 10
+        };
+      case 'business':
+        return {
+          transactions: 1000,
+          users: 3,
+          clients: 50
+        };
+      default:
+        return {
+          transactions: 100,
+          users: 1,
+          clients: 10
+        };
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -245,15 +287,15 @@ export default function SubscriptionStatus() {
                         <span className="font-medium">Transações</span>
                       </div>
                       <span className="text-sm text-muted-foreground">
-                        {usage?.transactions || 0} / {subscription?.monthly_transaction_limit || 0}
+                        {usage?.transactions_count || 0} / {getLimits().transactions}
                       </span>
                     </div>
                     <Progress 
-                      value={getUsagePercentage(usage?.transactions || 0, subscription?.monthly_transaction_limit || 0)}
+                      value={getUsagePercentage(usage?.transactions_count || 0, getLimits().transactions)}
                       className="h-2"
                     />
                     <p className="text-xs text-muted-foreground">
-                      {subscription?.monthly_transaction_limit - (usage?.transactions || 0)} restantes
+                      {getLimits().transactions - (usage?.transactions_count || 0)} restantes
                     </p>
                   </div>
 
@@ -265,15 +307,15 @@ export default function SubscriptionStatus() {
                         <span className="font-medium">Usuários</span>
                       </div>
                       <span className="text-sm text-muted-foreground">
-                        {usage?.users || 0} / {subscription?.user_limit || 0}
+                        {usage?.users_count || 0} / {getLimits().users}
                       </span>
                     </div>
                     <Progress 
-                      value={getUsagePercentage(usage?.users || 0, subscription?.user_limit || 0)}
+                      value={getUsagePercentage(usage?.users_count || 0, getLimits().users)}
                       className="h-2"
                     />
                     <p className="text-xs text-muted-foreground">
-                      {subscription?.user_limit - (usage?.users || 0)} restantes
+                      {getLimits().users - (usage?.users_count || 0)} restantes
                     </p>
                   </div>
 
@@ -285,15 +327,15 @@ export default function SubscriptionStatus() {
                         <span className="font-medium">Clientes</span>
                       </div>
                       <span className="text-sm text-muted-foreground">
-                        {usage?.clients || 0} / {subscription?.client_limit || 0}
+                        {usage?.clients_count || 0} / {getLimits().clients}
                       </span>
                     </div>
                     <Progress 
-                      value={getUsagePercentage(usage?.clients || 0, subscription?.client_limit || 0)}
+                      value={getUsagePercentage(usage?.clients_count || 0, getLimits().clients)}
                       className="h-2"
                     />
                     <p className="text-xs text-muted-foreground">
-                      {subscription?.client_limit - (usage?.clients || 0)} restantes
+                      {getLimits().clients - (usage?.clients_count || 0)} restantes
                     </p>
                   </div>
                 </div>
