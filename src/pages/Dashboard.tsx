@@ -21,7 +21,6 @@ interface FinancialData {
   totalExpenses: number;
   balancePJ: number;
   balanceCheckout: number;
-  clientsCount: number;
   recentTransactions: any[];
   monthlyRevenue: Array<{ month: string; revenue: number }>;
   dailyRevenue: Array<{ day: string; revenue: number }>;
@@ -37,7 +36,6 @@ export default function Dashboard() {
     totalExpenses: 0,
     balancePJ: 0,
     balanceCheckout: 0,
-    clientsCount: 0,
     recentTransactions: [],
     monthlyRevenue: [],
     dailyRevenue: [],
@@ -104,6 +102,8 @@ export default function Dashboard() {
       let monthlyRevenue: Array<{ month: string; revenue: number }> = [];
       let totalIncome = 0;
       let totalExpenses = 0;
+      let balancePJTotal = 0;
+      let balanceCheckoutTotal = 0;
 
       // Carregar dados de cada tabela mensal
       for (const monthInfo of monthlyTables) {
@@ -134,22 +134,30 @@ export default function Dashboard() {
           const monthIncome = monthTransactions.filter(t => t.transaction_type === 'income');
           const monthExpenses = monthTransactions.filter(t => t.transaction_type === 'expense');
           
+          // Separar por conta
+          const monthIncomePJ = monthIncome.filter(t => t.account_name === 'Conta PJ');
+          const monthIncomeCheckout = monthIncome.filter(t => t.account_name === 'Conta Checkout');
+          
           // Calcular totais do mês
           const monthIncomeTotal = monthIncome.reduce((sum, t) => sum + Number(t.amount), 0);
           const monthExpensesTotal = monthExpenses.reduce((sum, t) => sum + Number(t.amount), 0);
+          const monthIncomePJTotal = monthIncomePJ.reduce((sum, t) => sum + Number(t.amount), 0);
+          const monthIncomeCheckoutTotal = monthIncomeCheckout.reduce((sum, t) => sum + Number(t.amount), 0);
           
           // Acumular totais gerais
           totalIncome += monthIncomeTotal;
           totalExpenses += monthExpensesTotal;
+          balancePJTotal += monthIncomePJTotal;
+          balanceCheckoutTotal += monthIncomeCheckoutTotal;
           
           // Adicionar transações aos arrays gerais
           allTransactionsData = [...allTransactionsData, ...monthTransactions];
           incomeOnlyData = [...incomeOnlyData, ...monthIncome];
           
-          // Adicionar dados mensais para gráfico
+          // Adicionar dados mensais para gráfico (apenas Conta PJ)
           monthlyRevenue.push({
             month: monthInfo.month,
-            revenue: monthIncomeTotal
+            revenue: monthIncomePJTotal
           });
           
 
@@ -192,12 +200,7 @@ export default function Dashboard() {
       console.log('Abril transactions found:', abrilTransactions.length);
       console.log('Abril transactions sample:', abrilTransactions.slice(0, 3));
 
-      // Get clients count (otimizado)
-      const { data: clientsData } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('is_active', true);
+      // Clients count não é mais necessário (substituído por saldo checkout)
 
       // Usar totais já calculados das tabelas mensais
       console.log('=== TOTAIS DAS TABELAS MENSAIS ===');
@@ -207,8 +210,8 @@ export default function Dashboard() {
       console.log('Total expenses calculated:', totalExpenses);
 
       // Calculate balance by account
-      const balancePJ = totalIncome;
-      const balanceCheckout = 0; // Simplified since we don't have account separation
+      const balancePJ = balancePJTotal;
+      const balanceCheckout = balanceCheckoutTotal;
 
       // Usar dados mensais já calculados das tabelas específicas
       console.log('=== DADOS MENSAIS FINAIS ===');
@@ -231,9 +234,10 @@ export default function Dashboard() {
       try {
         const { data: dailyData, error: dailyError } = await supabase
           .from(currentMonthTable)
-          .select('transaction_date, amount')
+          .select('transaction_date, amount, account_name')
           .eq('user_id', user.id)
-          .eq('transaction_type', 'income');
+          .eq('transaction_type', 'income')
+          .eq('account_name', 'Conta PJ');
 
         if (dailyError) {
           console.warn('Erro ao carregar dados diários:', dailyError);
@@ -266,7 +270,7 @@ export default function Dashboard() {
         totalExpenses,
         balancePJ,
         balanceCheckout,
-        clientsCount: clientsData?.length || 0,
+
         recentTransactions: recentData || [],
         monthlyRevenue,
         dailyRevenue,
@@ -386,13 +390,13 @@ export default function Dashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Clientes Ativos</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Saldo Checkout</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{financialData.clientsCount}</div>
+              <div className="text-2xl font-bold">{formatCurrency(financialData.balanceCheckout)}</div>
               <p className="text-xs text-muted-foreground">
-                Clientes cadastrados
+                Conta Checkout
               </p>
             </CardContent>
           </Card>
@@ -403,9 +407,9 @@ export default function Dashboard() {
           {/* Gráfico Mensal */}
           <Card>
             <CardHeader>
-              <CardTitle>Evolução Mensal</CardTitle>
+              <CardTitle>Evolução Mensal - Conta PJ</CardTitle>
               <CardDescription>
-                Receita mensal de 2025
+                Receita mensal da Conta PJ em 2025
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -428,14 +432,14 @@ export default function Dashboard() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                Faturamento Diário - {financialData.currentMonth}
+                Faturamento Diário Conta PJ - {financialData.currentMonth}
                 <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
                   Mês Atual
                 </span>
               </CardTitle>
               <CardDescription>
                 {financialData.currentMonth ? 
-                  `Receita diária de ${financialData.currentMonth.toLowerCase()} 2025 - Total: ${formatCurrency(financialData.currentMonthRevenue)}` 
+                  `Receita diária da Conta PJ em ${financialData.currentMonth.toLowerCase()} 2025 - Total: ${formatCurrency(financialData.currentMonthRevenue)}` 
                   : 'Carregando dados do mês atual...'
                 }
               </CardDescription>
