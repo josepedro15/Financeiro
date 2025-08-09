@@ -137,18 +137,33 @@ export default function Dashboard() {
           // Separar por conta
           const monthIncomePJ = monthIncome.filter(t => t.account_name === 'Conta PJ');
           const monthIncomeCheckout = monthIncome.filter(t => t.account_name === 'Conta Checkout');
+          const monthExpensesPJ = monthExpenses.filter(t => t.account_name === 'Conta PJ');
+          const monthExpensesCheckout = monthExpenses.filter(t => t.account_name === 'Conta Checkout');
           
           // Calcular totais do mês
           const monthIncomeTotal = monthIncome.reduce((sum, t) => sum + Number(t.amount), 0);
           const monthExpensesTotal = monthExpenses.reduce((sum, t) => sum + Number(t.amount), 0);
           const monthIncomePJTotal = monthIncomePJ.reduce((sum, t) => sum + Number(t.amount), 0);
           const monthIncomeCheckoutTotal = monthIncomeCheckout.reduce((sum, t) => sum + Number(t.amount), 0);
+          const monthExpensesPJTotal = monthExpensesPJ.reduce((sum, t) => sum + Number(t.amount), 0);
+          const monthExpensesCheckoutTotal = monthExpensesCheckout.reduce((sum, t) => sum + Number(t.amount), 0);
+          
+          // Debug: Log dos valores calculados
+          console.log(`=== ${monthInfo.month} ===`);
+          console.log(`Receitas PJ: ${monthIncomePJTotal}`);
+          console.log(`Despesas PJ: ${monthExpensesPJTotal}`);
+          console.log(`Receitas Checkout: ${monthIncomeCheckoutTotal}`);
+          console.log(`Despesas Checkout: ${monthExpensesCheckoutTotal}`);
           
           // Acumular totais gerais
           totalIncome += monthIncomeTotal;
           totalExpenses += monthExpensesTotal;
-          balancePJTotal += monthIncomePJTotal;
-          balanceCheckoutTotal += monthIncomeCheckoutTotal;
+          // Saldo = Receitas - Despesas
+          balancePJTotal += (monthIncomePJTotal - monthExpensesPJTotal);
+          balanceCheckoutTotal += (monthIncomeCheckoutTotal - monthExpensesCheckoutTotal);
+          
+          console.log(`Saldo PJ acumulado: ${balancePJTotal}`);
+          console.log(`Saldo Checkout acumulado: ${balanceCheckoutTotal}`);
           
           // Adicionar transações aos arrays gerais
           allTransactionsData = [...allTransactionsData, ...monthTransactions];
