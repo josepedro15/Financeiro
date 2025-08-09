@@ -24,7 +24,10 @@ import {
   User,
   UserCheck,
   Crown,
-  Target
+  Target,
+  Settings,
+  Save,
+  X
 } from 'lucide-react';
 
 interface Client {
@@ -34,18 +37,21 @@ interface Client {
   phone?: string;
   document?: string;
   address?: string;
-  stage: 'lead' | 'prospect' | 'client' | 'vip';
+  stage: string;
   notes?: string;
   is_active: boolean;
   created_at: string;
 }
 
-const STAGES = {
-  lead: { name: 'Lead', icon: Target, color: 'bg-yellow-100 text-yellow-800', description: 'Interessados' },
-  prospect: { name: 'Prospect', icon: User, color: 'bg-blue-100 text-blue-800', description: 'Em negociação' },
-  client: { name: 'Cliente', icon: UserCheck, color: 'bg-green-100 text-green-800', description: 'Compraram' },
-  vip: { name: 'VIP', icon: Crown, color: 'bg-purple-100 text-purple-800', description: 'Clientes premium' }
-};
+interface Stage {
+  key: string;
+  name: string;
+  icon: any;
+  color: string;
+  description: string;
+}
+
+
 
 export default function Clients() {
   const { user } = useAuth();
@@ -56,6 +62,22 @@ export default function Clients() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  
+  // Stage management state
+  const [stagesDialogOpen, setStagesDialogOpen] = useState(false);
+  const [stages, setStages] = useState<Record<string, Stage>>({
+    lead: { key: 'lead', name: 'Lead', icon: Target, color: 'bg-yellow-100 text-yellow-800', description: 'Interessados' },
+    prospect: { key: 'prospect', name: 'Prospect', icon: User, color: 'bg-blue-100 text-blue-800', description: 'Em negociação' },
+    client: { key: 'client', name: 'Cliente', icon: UserCheck, color: 'bg-green-100 text-green-800', description: 'Compraram' },
+    vip: { key: 'vip', name: 'VIP', icon: Crown, color: 'bg-purple-100 text-purple-800', description: 'Clientes premium' }
+  });
+  const [editingStage, setEditingStage] = useState<Stage | null>(null);
+  const [stageFormData, setStageFormData] = useState({
+    key: '',
+    name: '',
+    description: '',
+    color: 'bg-gray-100 text-gray-800'
+  });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -207,7 +229,7 @@ export default function Clients() {
     }
   };
 
-  const handleStageChange = async (clientId: string, newStage: Client['stage']) => {
+  const handleStageChange = async (clientId: string, newStage: string) => {
     try {
       const { error } = await supabase
         .from('clients')
@@ -218,7 +240,7 @@ export default function Clients() {
 
       toast({
         title: "Sucesso",
-        description: `Cliente movido para ${STAGES[newStage].name}`
+        description: `Cliente movido para ${stages[newStage].name}`
       });
       loadClients();
     } catch (error: any) {
@@ -230,8 +252,108 @@ export default function Clients() {
     }
   };
 
-  const getClientsByStage = (stage: Client['stage']) => {
+  const getClientsByStage = (stage: string) => {
     return clients.filter(client => client.stage === stage);
+  };
+
+  // Stage management functions
+  const handleEditStage = (stageKey: string) => {
+    const stage = stages[stageKey];
+    setEditingStage(stage);
+    setStageFormData({
+      key: stage.key,
+      name: stage.name,
+      description: stage.description,
+      color: stage.color
+    });
+  };
+
+  const handleSaveStage = () => {
+    if (!stageFormData.key || !stageFormData.name) {
+      toast({
+        title: "Erro",
+        description: "Chave e nome são obrigatórios",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const updatedStages = { ...stages };
+    
+    if (editingStage) {
+      // Editing existing stage
+      updatedStages[editingStage.key] = {
+        ...editingStage,
+        name: stageFormData.name,
+        description: stageFormData.description,
+        color: stageFormData.color
+      };
+    } else {
+      // Creating new stage
+      if (stages[stageFormData.key]) {
+        toast({
+          title: "Erro",
+          description: "Já existe um estágio com essa chave",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      updatedStages[stageFormData.key] = {
+        key: stageFormData.key,
+        name: stageFormData.name,
+        icon: Target, // Default icon
+        color: stageFormData.color,
+        description: stageFormData.description
+      };
+    }
+
+    setStages(updatedStages);
+    setEditingStage(null);
+    setStageFormData({
+      key: '',
+      name: '',
+      description: '',
+      color: 'bg-gray-100 text-gray-800'
+    });
+
+    toast({
+      title: "Sucesso",
+      description: editingStage ? "Estágio atualizado" : "Estágio criado"
+    });
+  };
+
+  const handleDeleteStage = (stageKey: string) => {
+    const clientsInStage = getClientsByStage(stageKey);
+    if (clientsInStage.length > 0) {
+      toast({
+        title: "Erro",
+        description: `Não é possível excluir o estágio "${stages[stageKey].name}" pois há ${clientsInStage.length} cliente(s) nele`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!confirm(`Tem certeza que deseja excluir o estágio "${stages[stageKey].name}"?`)) return;
+
+    const updatedStages = { ...stages };
+    delete updatedStages[stageKey];
+    setStages(updatedStages);
+
+    toast({
+      title: "Sucesso",
+      description: "Estágio excluído com sucesso"
+    });
+  };
+
+  const resetStageForm = () => {
+    setEditingStage(null);
+    setStageFormData({
+      key: '',
+      name: '',
+      description: '',
+      color: 'bg-gray-100 text-gray-800'
+    });
   };
 
   if (loading) {
@@ -257,13 +379,23 @@ export default function Clients() {
             </div>
             <h1 className="text-2xl font-bold">CRM - Gestão de Clientes</h1>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => resetForm()}>
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Cliente
-              </Button>
-            </DialogTrigger>
+          <div className="flex space-x-2">
+            <Dialog open={stagesDialogOpen} onOpenChange={setStagesDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" onClick={() => resetStageForm()}>
+                  <Settings className="w-4 h-4 mr-2" />
+                  Configurar Estágios
+                </Button>
+              </DialogTrigger>
+            </Dialog>
+            
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => resetForm()}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Cliente
+                </Button>
+              </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
                 <DialogTitle>
@@ -287,12 +419,12 @@ export default function Clients() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="stage">Estágio *</Label>
-                    <Select value={formData.stage} onValueChange={(value: Client['stage']) => setFormData({ ...formData, stage: value })}>
+                    <Select value={formData.stage} onValueChange={(value: string) => setFormData({ ...formData, stage: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o estágio" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.entries(STAGES).map(([key, stage]) => (
+                        {Object.entries(stages).map(([key, stage]) => (
                           <SelectItem key={key} value={key}>
                             <div className="flex items-center space-x-2">
                               <stage.icon className="w-4 h-4" />
@@ -370,14 +502,136 @@ export default function Clients() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
+          
+          {/* Stage Management Dialog */}
+          <Dialog open={stagesDialogOpen} onOpenChange={setStagesDialogOpen}>
+            <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Configurar Estágios do Kanban</DialogTitle>
+                <DialogDescription>
+                  Gerencie os estágios do seu pipeline de vendas
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-6">
+                {/* Current Stages */}
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Estágios Atuais</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {Object.entries(stages).map(([key, stage]) => {
+                      const StageIcon = stage.icon;
+                      return (
+                        <Card key={key} className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <StageIcon className="w-5 h-5" />
+                              <div>
+                                <h4 className="font-medium">{stage.name}</h4>
+                                <p className="text-sm text-muted-foreground">{stage.description}</p>
+                                <span className={`inline-block px-2 py-1 rounded text-xs ${stage.color} mt-1`}>
+                                  {getClientsByStage(key).length} clientes
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex space-x-1">
+                              <Button size="sm" variant="ghost" onClick={() => handleEditStage(key)}>
+                                <Edit className="w-3 h-3" />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => handleDeleteStage(key)}
+                                disabled={getClientsByStage(key).length > 0}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Stage Form */}
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-medium mb-4">
+                    {editingStage ? 'Editar Estágio' : 'Novo Estágio'}
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="stage-key">Chave do Estágio *</Label>
+                      <Input
+                        id="stage-key"
+                        placeholder="ex: negociacao"
+                        value={stageFormData.key}
+                        onChange={(e) => setStageFormData({ ...stageFormData, key: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
+                        disabled={!!editingStage}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="stage-name">Nome do Estágio *</Label>
+                      <Input
+                        id="stage-name"
+                        placeholder="ex: Negociação"
+                        value={stageFormData.name}
+                        onChange={(e) => setStageFormData({ ...stageFormData, name: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 mt-4">
+                    <Label htmlFor="stage-description">Descrição</Label>
+                    <Input
+                      id="stage-description"
+                      placeholder="ex: Clientes em processo de negociação"
+                      value={stageFormData.description}
+                      onChange={(e) => setStageFormData({ ...stageFormData, description: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2 mt-4">
+                    <Label htmlFor="stage-color">Cor do Badge</Label>
+                    <Select value={stageFormData.color} onValueChange={(value) => setStageFormData({ ...stageFormData, color: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma cor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="bg-yellow-100 text-yellow-800">🟡 Amarelo</SelectItem>
+                        <SelectItem value="bg-blue-100 text-blue-800">🔵 Azul</SelectItem>
+                        <SelectItem value="bg-green-100 text-green-800">🟢 Verde</SelectItem>
+                        <SelectItem value="bg-purple-100 text-purple-800">🟣 Roxo</SelectItem>
+                        <SelectItem value="bg-red-100 text-red-800">🔴 Vermelho</SelectItem>
+                        <SelectItem value="bg-orange-100 text-orange-800">🟠 Laranja</SelectItem>
+                        <SelectItem value="bg-gray-100 text-gray-800">⚫ Cinza</SelectItem>
+                        <SelectItem value="bg-pink-100 text-pink-800">🩷 Rosa</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex justify-end space-x-2 mt-6">
+                    <Button variant="outline" onClick={resetStageForm}>
+                      <X className="w-4 h-4 mr-2" />
+                      Cancelar
+                    </Button>
+                    <Button onClick={handleSaveStage}>
+                      <Save className="w-4 h-4 mr-2" />
+                      {editingStage ? 'Atualizar' : 'Criar'} Estágio
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </header>
 
       {/* Kanban Board */}
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {Object.entries(STAGES).map(([stageKey, stage]) => {
-            const stageClients = getClientsByStage(stageKey as Client['stage']);
+          {Object.entries(stages).map(([stageKey, stage]) => {
+            const stageClients = getClientsByStage(stageKey);
             const StageIcon = stage.icon;
             
             return (
@@ -453,12 +707,12 @@ export default function Clients() {
                             <span>{new Date(client.created_at).toLocaleDateString('pt-BR')}</span>
                           </div>
                           
-                          <Select value={client.stage} onValueChange={(newStage: Client['stage']) => handleStageChange(client.id, newStage)}>
+                          <Select value={client.stage} onValueChange={(newStage: string) => handleStageChange(client.id, newStage)}>
                             <SelectTrigger className="h-7 text-xs">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              {Object.entries(STAGES).map(([key, stageOption]) => (
+                              {Object.entries(stages).map(([key, stageOption]) => (
                                 <SelectItem key={key} value={key}>
                                   <div className="flex items-center space-x-2">
                                     <stageOption.icon className="w-3 h-3" />
