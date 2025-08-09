@@ -12,7 +12,11 @@ import {
   CreditCard,
   ArrowUpRight,
   ArrowDownRight,
-  Plus
+  Plus,
+  Calculator,
+  PiggyBank,
+  Percent,
+  BarChart3
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Area } from 'recharts';
 
@@ -26,6 +30,12 @@ interface FinancialData {
   dailyRevenue: Array<{ day: string; revenue: number }>;
   currentMonth: string;
   currentMonthRevenue: number;
+  // Novos indicadores
+  ticketMedio: number;
+  lucroLiquido: number;
+  margemLucro: number;
+  crescimentoMensal: number;
+  totalTransacoes: number;
 }
 
 export default function Dashboard() {
@@ -40,7 +50,13 @@ export default function Dashboard() {
     monthlyRevenue: [],
     dailyRevenue: [],
     currentMonth: '',
-    currentMonthRevenue: 0
+    currentMonthRevenue: 0,
+    // Novos indicadores
+    ticketMedio: 0,
+    lucroLiquido: 0,
+    margemLucro: 0,
+    crescimentoMensal: 0,
+    totalTransacoes: 0
   });
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -104,6 +120,7 @@ export default function Dashboard() {
       let totalExpenses = 0;
       let balancePJTotal = 0;
       let balanceCheckoutTotal = 0;
+      let totalIncomeTransactions = 0; // Para calcular ticket médio
 
       // Carregar dados de cada tabela mensal
       for (const monthInfo of monthlyTables) {
@@ -158,6 +175,7 @@ export default function Dashboard() {
           // Acumular totais gerais
           totalIncome += monthIncomeTotal;
           totalExpenses += monthExpensesTotal;
+          totalIncomeTransactions += monthIncome.length; // Contar transações de receita
           // Saldo = Receitas - Despesas
           balancePJTotal += (monthIncomePJTotal - monthExpensesPJTotal);
           balanceCheckoutTotal += (monthIncomeCheckoutTotal - monthExpensesCheckoutTotal);
@@ -280,17 +298,50 @@ export default function Dashboard() {
         console.error('Erro ao carregar dados diários:', error);
       }
 
+      // CALCULAR NOVOS INDICADORES
+      console.log('=== CALCULANDO INDICADORES ===');
+      
+      // 1. Ticket Médio = receita ÷ número de vendas
+      const ticketMedio = totalIncomeTransactions > 0 ? totalIncome / totalIncomeTransactions : 0;
+      
+      // 2. Lucro Líquido = receita - despesas
+      const lucroLiquido = totalIncome - totalExpenses;
+      
+      // 3. Margem de Lucro (%) = lucro líquido ÷ receita × 100
+      const margemLucro = totalIncome > 0 ? (lucroLiquido / totalIncome) * 100 : 0;
+      
+      // 4. Crescimento Mensal (%) = comparação mês atual vs anterior
+      let crescimentoMensal = 0;
+      if (monthlyRevenue.length >= 2) {
+        const currentMonthData = monthlyRevenue[monthlyRevenue.length - 1];
+        const previousMonthData = monthlyRevenue[monthlyRevenue.length - 2];
+        if (previousMonthData.revenue > 0) {
+          crescimentoMensal = ((currentMonthData.revenue - previousMonthData.revenue) / previousMonthData.revenue) * 100;
+        }
+      }
+      
+      console.log('Ticket Médio:', ticketMedio);
+      console.log('Lucro Líquido:', lucroLiquido);
+      console.log('Margem de Lucro:', margemLucro);
+      console.log('Crescimento Mensal:', crescimentoMensal);
+      console.log('Total de transações de receita:', totalIncomeTransactions);
+
       const newFinancialData = {
         totalIncome,
         totalExpenses,
         balancePJ,
         balanceCheckout,
-
         recentTransactions: recentData || [],
         monthlyRevenue,
         dailyRevenue,
         currentMonth: currentMonthName,
-        currentMonthRevenue
+        currentMonthRevenue,
+        // Novos indicadores
+        ticketMedio,
+        lucroLiquido,
+        margemLucro,
+        crescimentoMensal,
+        totalTransacoes: totalIncomeTransactions
       };
       
       console.log('=== ATUALIZANDO ESTADO AGRESSIVO ===');
@@ -363,7 +414,7 @@ export default function Dashboard() {
 
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
@@ -412,6 +463,74 @@ export default function Dashboard() {
               <div className="text-2xl font-bold">{formatCurrency(financialData.balanceCheckout)}</div>
               <p className="text-xs text-muted-foreground">
                 Conta Checkout
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Novos Indicadores */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
+              <Calculator className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(financialData.ticketMedio)}</div>
+              <p className="text-xs text-muted-foreground">
+                Por venda ({financialData.totalTransacoes} vendas)
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Lucro Líquido</CardTitle>
+              <PiggyBank className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${financialData.lucroLiquido >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatCurrency(financialData.lucroLiquido)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Receita - Despesas
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Margem de Lucro</CardTitle>
+              <Percent className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${financialData.margemLucro >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {financialData.margemLucro.toFixed(1)}%
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Eficiência financeira
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Crescimento Mensal</CardTitle>
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold flex items-center ${
+                financialData.crescimentoMensal >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {financialData.crescimentoMensal >= 0 ? (
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                ) : (
+                  <TrendingDown className="h-4 w-4 mr-1" />
+                )}
+                {Math.abs(financialData.crescimentoMensal).toFixed(1)}%
+              </div>
+              <p className="text-xs text-muted-foreground">
+                vs mês anterior
               </p>
             </CardContent>
           </Card>
