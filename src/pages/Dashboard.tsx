@@ -90,6 +90,7 @@ export default function Dashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [trialDaysLeft, setTrialDaysLeft] = useState<number>(0);
 
 
   useEffect(() => {
@@ -117,6 +118,24 @@ export default function Dashboard() {
     
     return () => clearInterval(interval);
   }, [user]);
+
+  // Atualizar contador de dias do trial a cada minuto
+  useEffect(() => {
+    if (!isMasterUser && isTrialActive()) {
+      const updateTrialDays = () => {
+        const daysLeft = getTrialDaysLeft();
+        setTrialDaysLeft(daysLeft);
+      };
+
+      // Atualizar imediatamente
+      updateTrialDays();
+
+      // Atualizar a cada minuto
+      const interval = setInterval(updateTrialDays, 60000); // 1 minuto
+
+      return () => clearInterval(interval);
+    }
+  }, [isMasterUser, isTrialActive, getTrialDaysLeft]);
 
   const loadDataSources = async () => {
     if (!user) return;
@@ -622,10 +641,18 @@ export default function Dashboard() {
                     <Clock className="w-5 h-5 text-blue-600" />
                     <div>
                       <p className="text-sm font-medium text-blue-900">
-                        Trial Gratuito - {getTrialDaysLeft()} dias restantes
+                        Trial Gratuito - {trialDaysLeft} dias restantes
+                        {trialDaysLeft <= 3 && trialDaysLeft > 0 && (
+                          <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            ⚠️ Acaba em breve!
+                          </span>
+                        )}
                       </p>
                       <p className="text-xs text-blue-700">
-                        Aproveite o período de teste para conhecer todas as funcionalidades
+                        {trialDaysLeft <= 3 && trialDaysLeft > 0 
+                          ? 'Seu trial está acabando! Faça upgrade para continuar usando.'
+                          : 'Aproveite o período de teste para conhecer todas as funcionalidades'
+                        }
                       </p>
                     </div>
                   </>
