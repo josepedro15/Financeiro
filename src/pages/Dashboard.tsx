@@ -168,10 +168,15 @@ export default function Dashboard() {
       }
       
       console.log('Fontes de dados encontradas:', sources);
+      console.log('Total de fontes:', sources.length);
+      console.log('dataSources atual:', dataSources);
+      console.log('selectedDataSource atual:', selectedDataSource);
+      
       setDataSources(sources);
       
       // Selecionar a primeira fonte (próprios dados) por padrão
       if (sources.length > 0 && !selectedDataSource) {
+        console.log('Selecionando primeira fonte:', sources[0]);
         setSelectedDataSource(sources[0].id);
       }
       
@@ -549,8 +554,11 @@ export default function Dashboard() {
               Bem-vindo, {user?.email}
             </span>
             
-            {/* Seletor de Fonte de Dados */}
-            {dataSources.length > 1 && (
+            {/* DEBUG: Informações do seletor */}
+            {console.log('RENDER - dataSources:', dataSources, 'length:', dataSources.length)}
+            
+            {/* Seletor de Fonte de Dados - TESTE: Sempre mostrar se tiver pelo menos 1 fonte */}
+            {dataSources.length >= 1 && (
               <div className="flex items-center space-x-2">
                 <Database className="h-4 w-4 text-gray-600" />
                 <Select value={selectedDataSource} onValueChange={setSelectedDataSource}>
