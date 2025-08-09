@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     plan_type VARCHAR(20) NOT NULL CHECK (plan_type IN ('starter', 'business', 'unlimited')),
-    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'cancelled', 'expired')),
+    status VARCHAR(20) NOT NULL DEFAULT 'trial' CHECK (status IN ('trial', 'active', 'inactive', 'cancelled', 'expired')),
     started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     expires_at TIMESTAMP WITH TIME ZONE,
     trial_ends_at TIMESTAMP WITH TIME ZONE,
@@ -111,7 +111,7 @@ BEGIN
     -- Buscar assinatura do usuário
     SELECT * INTO user_subscription 
     FROM public.subscriptions 
-    WHERE user_id = target_user_id AND status = 'active';
+    WHERE user_id = target_user_id AND status IN ('trial', 'active');
 
     -- Se não tem assinatura, criar trial automático (SÓ PARA USUÁRIOS REAIS)
     IF user_subscription IS NULL THEN
@@ -126,12 +126,12 @@ BEGIN
                 client_limit
             ) VALUES (
                 target_user_id,
-                'starter',
-                'active',
+                'starter',  -- Trial sempre Starter
+                'trial',    -- Status específico para trial
                 NOW() + INTERVAL '14 days',
-                1000,
-                1,
-                50
+                100,        -- Limite Starter para transações
+                1,          -- 1 usuário (trial Starter)
+                10          -- 10 clientes (trial Starter)
             );
             
             SELECT * INTO user_subscription 

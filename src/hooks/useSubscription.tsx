@@ -165,6 +165,7 @@ export const useSubscription = () => {
 
   const isTrialActive = () => {
     if (!subscription || !subscription.trial_ends_at) return false;
+    if (subscription.status !== 'trial') return false;
     return new Date(subscription.trial_ends_at) > new Date();
   };
 
