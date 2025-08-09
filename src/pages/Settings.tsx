@@ -47,20 +47,28 @@ export default function Settings() {
     if (!user) return;
     
     try {
+      console.log('=== CARREGANDO USUÁRIOS COMPARTILHADOS ===');
+      console.log('User ID:', user.id);
+
       const { data, error } = await supabase
         .from('organization_members')
         .select('*')
         .eq('owner_id', user.id)
         .order('created_at', { ascending: false });
 
+      console.log('Load result:', { data, error });
+
       if (error) {
         console.error('Erro ao carregar usuários compartilhados:', error);
+        toast.error(`Erro ao carregar usuários: ${error.message}`);
         return;
       }
 
       setSharedUsers(data || []);
+      console.log('Usuários carregados:', data?.length || 0);
     } catch (error) {
       console.error('Erro ao carregar usuários:', error);
+      toast.error(`Erro inesperado ao carregar: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
   };
 
@@ -80,7 +88,12 @@ export default function Settings() {
     setAddingUser(true);
 
     try {
+      console.log('=== ADICIONANDO USUÁRIO ===');
+      console.log('Email:', newUserEmail.trim().toLowerCase());
+      console.log('Owner ID:', user.id);
+
       // Verificar se o email já foi adicionado
+      console.log('Verificando se email já existe...');
       const { data: existingUser, error: checkError } = await supabase
         .from('organization_members')
         .select('email')
@@ -88,18 +101,31 @@ export default function Settings() {
         .eq('email', newUserEmail.trim().toLowerCase())
         .single();
 
+      console.log('Check result:', { existingUser, checkError });
+
       if (existingUser) {
         toast.error('Este email já foi adicionado à organização');
         setAddingUser(false);
         return;
       }
 
+      // Se o erro não for "PGRST116" (no rows found), é um erro real
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Erro ao verificar email existente:', checkError);
+        toast.error(`Erro ao verificar email: ${checkError.message}`);
+        setAddingUser(false);
+        return;
+      }
+
       // Verificar se o usuário existe no sistema
+      console.log('Verificando se usuário existe no sistema...');
       const { data: userExists, error: userError } = await supabase
         .from('profiles')
         .select('id, email')
         .eq('email', newUserEmail.trim().toLowerCase())
         .single();
+
+      console.log('User exists result:', { userExists, userError });
 
       let status: 'pending' | 'active' = 'pending';
       let member_id: string | null = null;
@@ -107,23 +133,32 @@ export default function Settings() {
       if (userExists && !userError) {
         status = 'active';
         member_id = userExists.id;
+        console.log('Usuário encontrado, status será ativo');
+      } else {
+        console.log('Usuário não encontrado, status será pendente');
       }
 
       // Adicionar à tabela de membros da organização
+      console.log('Inserindo na tabela organization_members...');
+      const insertData = {
+        owner_id: user.id,
+        member_id: member_id,
+        email: newUserEmail.trim().toLowerCase(),
+        status: status
+      };
+      console.log('Insert data:', insertData);
+
       const { data, error } = await supabase
         .from('organization_members')
-        .insert({
-          owner_id: user.id,
-          member_id: member_id,
-          email: newUserEmail.trim().toLowerCase(),
-          status: status
-        })
+        .insert(insertData)
         .select()
         .single();
 
+      console.log('Insert result:', { data, error });
+
       if (error) {
-        console.error('Erro ao adicionar usuário:', error);
-        toast.error('Erro ao adicionar usuário');
+        console.error('Erro detalhado ao inserir:', error);
+        toast.error(`Erro ao adicionar usuário: ${error.message}`);
         return;
       }
 
@@ -132,8 +167,8 @@ export default function Settings() {
       loadSharedUsers();
 
     } catch (error) {
-      console.error('Erro ao adicionar usuário:', error);
-      toast.error('Erro ao adicionar usuário');
+      console.error('Erro geral:', error);
+      toast.error(`Erro inesperado: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     } finally {
       setAddingUser(false);
     }
