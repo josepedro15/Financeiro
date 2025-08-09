@@ -547,115 +547,119 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
+      {/* Header Otimizado */}
+      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-3">
+          {/* Linha Principal */}
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+            
+            {/* Logo e Branding */}
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-primary rounded-lg flex items-center justify-center shadow-sm">
+                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900">FinanceiroLogotiq</h1>
+                <p className="text-xs text-muted-foreground hidden sm:block">
+                  Bem-vindo, {user?.email}
+                </p>
+              </div>
             </div>
-            <h1 className="text-lg sm:text-2xl font-bold">FinanceiroLogotiq</h1>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
-            <span className="text-xs sm:text-sm text-muted-foreground text-center">
-              Bem-vindo, {user?.email}
-            </span>
-            
-            {/* Seletor de Fonte de Dados */}
-            {dataSources.length >= 1 && (
-              <div className="flex items-center space-x-2">
-                <Database className="h-4 w-4 text-gray-600" />
-                <Select value={selectedDataSource} onValueChange={setSelectedDataSource}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Selecionar fonte de dados" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {dataSources.map((source) => (
-                      <SelectItem key={source.id} value={source.id}>
-                        <div className="flex items-center space-x-2">
-                          <span>{source.name}</span>
-                          {source.isOwner && source.id !== user.id && (
-                            <span className="text-xs text-blue-600">(Compartilhado)</span>
-                          )}
-                          {!source.isOwner && (
-                            <span className="text-xs text-green-600">(Organização)</span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            
-            {/* Trial Counter */}
-            {!isMasterUser && isTrialActive() && (
-              <div className="flex items-center px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
-                <Clock className="w-4 h-4 text-blue-600 mr-2" />
-                <span className="text-sm font-medium text-blue-800">
-                  Trial: {getTrialDaysLeft()} dias restantes
-                </span>
-                <Button 
-                  variant="link" 
-                  size="sm" 
-                  className="ml-2 h-auto p-0 text-blue-600 hover:text-blue-800"
-                  onClick={() => navigate('/subscription')}
-                >
-                  Ver planos
-                </Button>
-              </div>
-            )}
 
-            {/* Aviso trial próximo do fim */}
-            {!isMasterUser && isTrialActive() && getTrialDaysLeft() <= 3 && (
-              <div className="flex items-center px-3 py-2 bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-lg">
-                <AlertTriangle className="w-4 h-4 text-orange-600 mr-2" />
-                <span className="text-sm font-medium text-orange-800">
-                  Trial expira em {getTrialDaysLeft()} dias!
-                </span>
-                <Button 
-                  variant="link" 
-                  size="sm" 
-                  className="ml-2 h-auto p-0 text-orange-600 hover:text-orange-800"
-                  onClick={() => navigate('/subscription')}
-                >
-                  Upgrade agora
-                </Button>
-              </div>
-            )}
+            {/* Trial Status & Actions */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto">
+              
+              {/* Seletor de Fonte de Dados */}
+              {dataSources.length > 1 && (
+                <div className="flex items-center space-x-2 order-3 sm:order-1">
+                  <Database className="h-4 w-4 text-gray-500" />
+                  <Select value={selectedDataSource} onValueChange={setSelectedDataSource}>
+                    <SelectTrigger className="w-full sm:w-48 h-8">
+                      <SelectValue placeholder="Selecionar fonte" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {dataSources.map((source) => (
+                        <SelectItem key={source.id} value={source.id}>
+                          <div className="flex items-center space-x-2">
+                            <span className="truncate">{source.name}</span>
+                            {source.isOwner && source.id !== user.id && (
+                              <Badge variant="outline" className="text-xs">Compartilhado</Badge>
+                            )}
+                            {!source.isOwner && (
+                              <Badge variant="outline" className="text-xs">Organização</Badge>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" onClick={() => navigate('/clients')}>
-                <Users className="w-4 h-4 mr-1" />
-                CRM
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate('/subscription')} className="relative">
-                <Crown className="w-4 h-4 mr-1" />
-                Assinatura
-                {!isMasterUser && (
-                  <Badge 
-                    variant={isTrialActive() ? "default" : "secondary"} 
-                    className="ml-2 text-xs"
+              {/* Trial Status Compacto */}
+              {!isMasterUser && isTrialActive() && (
+                <div className={`flex items-center px-3 py-1.5 rounded-lg border text-xs font-medium order-1 sm:order-2 ${
+                  getTrialDaysLeft() <= 3 
+                    ? 'bg-gradient-to-r from-orange-50 to-red-50 border-orange-200 text-orange-800' 
+                    : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-800'
+                }`}>
+                  {getTrialDaysLeft() <= 3 ? (
+                    <AlertTriangle className="w-3 h-3 mr-1.5" />
+                  ) : (
+                    <Clock className="w-3 h-3 mr-1.5" />
+                  )}
+                  <span>Trial: {getTrialDaysLeft()} dias</span>
+                  <Button 
+                    variant="link" 
+                    size="sm" 
+                    className="ml-2 h-auto p-0 text-xs hover:underline"
+                    onClick={() => navigate('/subscription')}
                   >
-                    {isTrialActive() ? `Trial ${getTrialDaysLeft()}d` : getPlanName(currentPlan)}
-                  </Badge>
-                )}
-                {isMasterUser && (
-                  <Badge variant="outline" className="ml-2 text-xs border-primary text-primary">
-                    Master
-                  </Badge>
-                )}
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate('/settings')}>
-                <Settings className="w-4 h-4 mr-1" />
-                Configurações
-              </Button>
-              <Button variant="outline" size="sm" onClick={loadFinancialData}>
-                Atualizar
-              </Button>
-              <Button variant="outline" size="sm" onClick={signOut}>
-                Sair
-              </Button>
+                    {getTrialDaysLeft() <= 3 ? 'Upgrade' : 'Ver planos'}
+                  </Button>
+                </div>
+              )}
+
+              {/* Master Badge */}
+              {isMasterUser && (
+                <Badge variant="outline" className="border-primary text-primary px-2 py-1 order-1 sm:order-2">
+                  <Crown className="w-3 h-3 mr-1" />
+                  Master
+                </Badge>
+              )}
+
+              {/* Menu de Ações */}
+              <div className="flex flex-wrap items-center gap-1.5 order-2 sm:order-3">
+                <Button variant="outline" size="sm" onClick={() => navigate('/clients')} className="h-8">
+                  <Users className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+                  <span className="hidden sm:inline">CRM</span>
+                </Button>
+                
+                <Button variant="outline" size="sm" onClick={() => navigate('/subscription')} className="h-8 relative">
+                  <Crown className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+                  <span className="hidden sm:inline">Assinatura</span>
+                  {!isMasterUser && !isTrialActive() && (
+                    <Badge variant="secondary" className="ml-1 text-xs hidden lg:inline-flex">
+                      {getPlanName(currentPlan)}
+                    </Badge>
+                  )}
+                </Button>
+                
+                <Button variant="outline" size="sm" onClick={() => navigate('/settings')} className="h-8">
+                  <Settings className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+                  <span className="hidden sm:inline">Config</span>
+                </Button>
+                
+                <Button variant="outline" size="sm" onClick={loadFinancialData} className="h-8">
+                  <span className="hidden sm:inline">Atualizar</span>
+                  <span className="sm:hidden">↻</span>
+                </Button>
+                
+                <Button variant="outline" size="sm" onClick={signOut} className="h-8 hover:bg-red-50 hover:text-red-600 hover:border-red-200">
+                  <span className="hidden sm:inline">Sair</span>
+                  <span className="sm:hidden">⏻</span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
