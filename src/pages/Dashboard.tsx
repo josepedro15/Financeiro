@@ -81,9 +81,6 @@ export default function Dashboard() {
       navigate('/auth');
       return;
     }
-    console.log('=== DASHBOARD MOUNTED ===');
-    console.log('User:', user.email);
-    console.log('Executando loadDataSources...');
     loadDataSources();
   }, [user, navigate]);
 
@@ -106,14 +103,9 @@ export default function Dashboard() {
   }, [user]);
 
   const loadDataSources = async () => {
-    console.log('🔍 INÍCIO loadDataSources - user:', user?.email);
-    if (!user) {
-      console.log('❌ Sem user, retornando...');
-      return;
-    }
+    if (!user) return;
     
     setLoadingDataSources(true);
-    console.log('=== CARREGANDO FONTES DE DADOS ===');
     
     try {
       const sources: DataSource[] = [];
@@ -127,46 +119,26 @@ export default function Dashboard() {
       });
       
       // Buscar organizações onde sou membro (posso ver dados de outros)
-      console.log('Buscando organizações onde sou membro...');
-      console.log('Meu user.id:', user.id);
-      
-      // Versão com consulta SQL direta (bypass do ORM)
-      console.log('📝 Executando consulta SQL direta...');
-      console.log('Query: SELECT owner_id FROM organization_members WHERE member_id =', user.id, 'AND status = active');
-      
       const { data: memberOf, error: memberError } = await supabase
         .rpc('get_organization_members', { 
           user_member_id: user.id 
         });
       
-      console.log('Resultado memberOf:', memberOf);
-      console.log('Erro memberError:', memberError);
-      
       if (!memberError && memberOf && Array.isArray(memberOf)) {
-        console.log('Processando memberOf, length:', memberOf.length);
         for (const org of memberOf) {
-          console.log('Org item:', org);
-          
           // Buscar email do owner separadamente usando RPC também
           const { data: ownerProfile, error: ownerError } = await supabase
             .rpc('get_profile_email', { user_profile_id: org.owner_id });
           
-          console.log('Owner profile:', ownerProfile, 'error:', ownerError);
-          
           if (!ownerError && ownerProfile) {
-            console.log('Adicionando fonte:', ownerProfile);
             sources.push({
               id: org.owner_id,
               email: ownerProfile,
               name: `Dados de ${ownerProfile}`,
               isOwner: false
             });
-          } else {
-            console.log('Erro ao buscar owner profile:', ownerError);
           }
         }
-      } else {
-        console.log('Não há organizações onde sou membro ou erro:', memberError);
       }
       
       // Buscar organizações onde sou owner (outros podem ver meus dados)
@@ -192,16 +164,10 @@ export default function Dashboard() {
         }
       }
       
-      console.log('Fontes de dados encontradas:', sources);
-      console.log('Total de fontes:', sources.length);
-      console.log('dataSources atual:', dataSources);
-      console.log('selectedDataSource atual:', selectedDataSource);
-      
       setDataSources(sources);
       
       // Selecionar a primeira fonte (próprios dados) por padrão
       if (sources.length > 0 && !selectedDataSource) {
-        console.log('Selecionando primeira fonte:', sources[0]);
         setSelectedDataSource(sources[0].id);
       }
       
@@ -579,31 +545,10 @@ export default function Dashboard() {
               Bem-vindo, {user?.email}
             </span>
             
-            {/* DEBUG: Informações do seletor */}
-            {console.log('RENDER - dataSources:', dataSources, 'length:', dataSources.length)}
+
             
-            {/* DEBUG VISUAL TEMPORÁRIO */}
-            <div className="text-xs text-red-600 bg-red-50 p-2 rounded flex items-center space-x-2">
-              <span>
-                DEBUG: dataSources.length = {dataSources.length} | 
-                selectedDataSource = {selectedDataSource} | 
-                loadingDataSources = {loadingDataSources ? 'true' : 'false'}
-              </span>
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => {
-                  alert('🔥 BOTÃO TESTE CLICADO!');
-                  console.log('🔥 BOTÃO TESTE CLICADO');
-                  loadDataSources();
-                }}
-              >
-                Testar Load
-              </Button>
-            </div>
-            
-            {/* Seletor de Fonte de Dados - TESTE: Sempre mostrar se tiver pelo menos 1 fonte */}
-            {dataSources.length >= 1 && (
+            {/* Seletor de Fonte de Dados */}
+            {dataSources.length > 1 && (
               <div className="flex items-center space-x-2">
                 <Database className="h-4 w-4 text-gray-600" />
                 <Select value={selectedDataSource} onValueChange={setSelectedDataSource}>
