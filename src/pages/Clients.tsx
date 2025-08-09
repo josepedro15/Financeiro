@@ -78,13 +78,17 @@ function DroppableStageColumn({
   stage, 
   clients, 
   onEdit, 
-  onDelete 
+  onDelete,
+  onEditStage,
+  onDeleteStage 
 }: {
   stageKey: string;
   stage: Stage;
   clients: Client[];
   onEdit: (client: Client) => void;
   onDelete: (id: string) => void;
+  onEditStage: (stage: Stage) => void;
+  onDeleteStage: (stageKey: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: stageKey,
@@ -95,16 +99,49 @@ function DroppableStageColumn({
   return (
     <div className="flex-shrink-0 w-80 space-y-4">
       {/* Stage Header */}
-      <Card className="bg-gradient-to-r from-background to-muted/30">
+      <Card className="bg-gradient-to-r from-background to-muted/30 group">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <StageIcon className="w-5 h-5" />
               <CardTitle className="text-lg">{stage.name}</CardTitle>
             </div>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${stage.color}`}>
-              {clients.length}
-            </span>
+            <div className="flex items-center space-x-2">
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${stage.color}`}>
+                {clients.length}
+              </span>
+              
+              {/* Botões de ação do estágio */}
+              <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditStage(stage);
+                  }}
+                  className="h-6 w-6 p-0 hover:bg-blue-100"
+                  title="Editar estágio"
+                >
+                  <Edit className="w-3 h-3" />
+                </Button>
+                
+                {!stage.is_default && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteStage(stageKey);
+                    }}
+                    className="h-6 w-6 p-0 hover:bg-red-100 text-red-600"
+                    title="Excluir estágio"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
           <CardDescription>{stage.description}</CardDescription>
         </CardHeader>
@@ -507,15 +544,15 @@ export default function Clients() {
   };
 
   // Stage management functions
-  const handleEditStage = (stageKey: string) => {
-    const stage = stages[stageKey];
+  const handleEditStage = (stage: Stage) => {
     setEditingStage(stage);
     setStageFormData({
       key: stage.key,
       name: stage.name,
-      description: stage.description,
+      description: stage.description || '',
       color: stage.color
     });
+    setStagesDialogOpen(true);
   };
 
   const handleSaveStage = async () => {
@@ -867,7 +904,7 @@ export default function Clients() {
                               </div>
                             </div>
                             <div className="flex space-x-1">
-                              <Button size="sm" variant="ghost" onClick={() => handleEditStage(key)}>
+                              <Button size="sm" variant="ghost" onClick={() => handleEditStage(stages[key])}>
                                 <Edit className="w-3 h-3" />
                               </Button>
                               <Button 
@@ -978,6 +1015,8 @@ export default function Clients() {
                   clients={stageClients}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
+                  onEditStage={handleEditStage}
+                  onDeleteStage={handleDeleteStage}
                 />
               );
             })}
