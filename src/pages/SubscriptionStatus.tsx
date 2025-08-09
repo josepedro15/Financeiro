@@ -41,7 +41,14 @@ export default function SubscriptionStatus() {
     getTrialDaysLeft: getTrialDaysLeft(),
     isMasterUser,
     currentPlan,
-    loading
+    loading,
+    subscriptionStatus: subscription?.status,
+    subscriptionPlanType: subscription?.plan_type,
+    subscriptionLimits: {
+      transactions: subscription?.monthly_transaction_limit,
+      users: subscription?.user_limit,
+      clients: subscription?.client_limit
+    }
   });
 
   if (loading) {
