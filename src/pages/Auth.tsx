@@ -7,19 +7,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DollarSign, TrendingUp, BarChart3 } from 'lucide-react';
+import SplashScreen from '@/components/SplashScreen';
 
 export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showSplash, setShowSplash] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      setShowSplash(true);
     }
-  }, [user, navigate]);
+  }, [user]);
+
+  const handleSplashFinish = () => {
+    setShowSplash(false);
+    navigate('/dashboard');
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +41,11 @@ export default function Auth() {
     await signUp(email, password);
     setLoading(false);
   };
+
+  // Show splash screen after successful login
+  if (showSplash) {
+    return <SplashScreen onFinish={handleSplashFinish} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/50 to-background flex items-center justify-center p-4">
