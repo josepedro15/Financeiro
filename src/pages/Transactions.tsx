@@ -3,6 +3,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { testDatabasePermissions, testClientIdNull } from '@/utils/testAuth';
+import { insertTransactionInCorrectTable, updateTransactionInCorrectTable, deleteTransactionFromCorrectTable } from '@/utils/transactionInsertion';
+import TableIndicator from '@/components/TableIndicator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -147,27 +149,43 @@ export default function Transactions() {
       };
 
       if (editingTransaction) {
-        const { error } = await supabase
-          .from('transactions')
-          .update(transactionData)
-          .eq('id', editingTransaction.id);
+        // Usar atualização inteligente que pode mover entre tabelas
+        const originalData = {
+          user_id: editingTransaction.user_id || user.id,
+          description: editingTransaction.description,
+          amount: editingTransaction.amount,
+          transaction_type: editingTransaction.transaction_type,
+          category: editingTransaction.category,
+          transaction_date: editingTransaction.transaction_date,
+          account_name: editingTransaction.account_name,
+          client_name: editingTransaction.client_name
+        };
 
-        if (error) throw error;
+        const result = await updateTransactionInCorrectTable(
+          editingTransaction.id,
+          originalData,
+          transactionData
+        );
+
+        if (!result.success) {
+          throw new Error(result.error || 'Erro ao atualizar transação');
+        }
 
         toast({
           title: "Sucesso",
-          description: "Transação atualizada com sucesso"
+          description: `Transação atualizada com sucesso na tabela ${result.tableName}`
         });
       } else {
-        const { error } = await supabase
-          .from('transactions')
-          .insert([transactionData]);
+        // Usar inserção inteligente na tabela correta
+        const result = await insertTransactionInCorrectTable(transactionData);
 
-        if (error) throw error;
+        if (!result.success) {
+          throw new Error(result.error || 'Erro ao criar transação');
+        }
 
         toast({
           title: "Sucesso",
-          description: "Transação criada com sucesso"
+          description: `Transação criada com sucesso na tabela ${result.tableName}`
         });
       }
 
@@ -222,16 +240,26 @@ export default function Transactions() {
     if (!confirm('Tem certeza que deseja excluir esta transação?')) return;
 
     try {
-      const { error } = await supabase
-        .from('transactions')
-        .delete()
-        .eq('id', id);
+      // Encontrar a transação para obter a data
+      const transactionToDelete = transactions.find(t => t.id === id);
+      
+      if (!transactionToDelete) {
+        throw new Error('Transação não encontrada');
+      }
 
-      if (error) throw error;
+      // Usar remoção inteligente da tabela correta
+      const result = await deleteTransactionFromCorrectTable(
+        id, 
+        transactionToDelete.transaction_date
+      );
+
+      if (!result.success) {
+        throw new Error(result.error || 'Erro ao excluir transação');
+      }
 
       toast({
         title: "Sucesso",
-        description: "Transação excluída com sucesso"
+        description: `Transação excluída com sucesso da tabela ${result.tableName}`
       });
       loadData();
     } catch (error: any) {
@@ -434,6 +462,11 @@ export default function Transactions() {
                       value={formData.transaction_date}
                       onChange={(e) => setFormData({ ...formData, transaction_date: e.target.value })}
                       required
+                    />
+                    {/* Indicador da tabela que será usada */}
+                    <TableIndicator 
+                      transactionDate={formData.transaction_date}
+                      className="mt-2"
                     />
                   </div>
                 </div>
