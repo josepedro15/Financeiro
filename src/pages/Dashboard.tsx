@@ -118,6 +118,7 @@ export default function Dashboard() {
       let monthlyRevenue: Array<{ month: string; revenue: number }> = [];
       let totalIncome = 0;
       let totalExpenses = 0;
+      let totalExpensesSemProlabore = 0; // Para cálculo da margem de lucro
       let balancePJTotal = 0;
       let balanceCheckoutTotal = 0;
       let totalIncomeTransactions = 0; // Para calcular ticket médio
@@ -150,6 +151,7 @@ export default function Dashboard() {
           // Separar receitas e despesas
           const monthIncome = monthTransactions.filter(t => t.transaction_type === 'income');
           const monthExpenses = monthTransactions.filter(t => t.transaction_type === 'expense');
+          const monthExpensesSemProlabore = monthExpenses.filter(t => t.category !== 'Prolabore');
           
           // Separar por conta
           const monthIncomePJ = monthIncome.filter(t => t.account_name === 'Conta PJ');
@@ -160,6 +162,7 @@ export default function Dashboard() {
           // Calcular totais do mês
           const monthIncomeTotal = monthIncome.reduce((sum, t) => sum + Number(t.amount), 0);
           const monthExpensesTotal = monthExpenses.reduce((sum, t) => sum + Number(t.amount), 0);
+          const monthExpensesSemProlaboreTotal = monthExpensesSemProlabore.reduce((sum, t) => sum + Number(t.amount), 0);
           const monthIncomePJTotal = monthIncomePJ.reduce((sum, t) => sum + Number(t.amount), 0);
           const monthIncomeCheckoutTotal = monthIncomeCheckout.reduce((sum, t) => sum + Number(t.amount), 0);
           const monthExpensesPJTotal = monthExpensesPJ.reduce((sum, t) => sum + Number(t.amount), 0);
@@ -175,6 +178,7 @@ export default function Dashboard() {
           // Acumular totais gerais
           totalIncome += monthIncomeTotal;
           totalExpenses += monthExpensesTotal;
+          totalExpensesSemProlabore += monthExpensesSemProlaboreTotal;
           totalIncomeTransactions += monthIncome.length; // Contar transações de receita
           // Saldo = Receitas - Despesas
           balancePJTotal += (monthIncomePJTotal - monthExpensesPJTotal);
@@ -304,11 +308,12 @@ export default function Dashboard() {
       // 1. Ticket Médio = receita ÷ número de vendas
       const ticketMedio = totalIncomeTransactions > 0 ? totalIncome / totalIncomeTransactions : 0;
       
-      // 2. Lucro Líquido = receita - despesas
+      // 2. Lucro Líquido = receita - despesas (com todas as despesas para o card)
       const lucroLiquido = totalIncome - totalExpenses;
       
-      // 3. Margem de Lucro (%) = lucro líquido ÷ receita × 100
-      const margemLucro = totalIncome > 0 ? (lucroLiquido / totalIncome) * 100 : 0;
+      // 3. Margem de Lucro (%) = (receita - despesas sem prolabore) ÷ receita × 100
+      const lucroLiquidoSemProlabore = totalIncome - totalExpensesSemProlabore;
+      const margemLucro = totalIncome > 0 ? (lucroLiquidoSemProlabore / totalIncome) * 100 : 0;
       
       // 4. Crescimento Mensal (%) = comparação mês atual vs anterior
       let crescimentoMensal = 0;
@@ -321,8 +326,11 @@ export default function Dashboard() {
       }
       
       console.log('Ticket Médio:', ticketMedio);
-      console.log('Lucro Líquido:', lucroLiquido);
-      console.log('Margem de Lucro:', margemLucro);
+      console.log('Lucro Líquido (com todas despesas):', lucroLiquido);
+      console.log('Lucro Líquido sem Prolabore:', lucroLiquidoSemProlabore);
+      console.log('Total Despesas:', totalExpenses);
+      console.log('Total Despesas sem Prolabore:', totalExpensesSemProlabore);
+      console.log('Margem de Lucro (sem prolabore):', margemLucro);
       console.log('Crescimento Mensal:', crescimentoMensal);
       console.log('Total de transações de receita:', totalIncomeTransactions);
 
