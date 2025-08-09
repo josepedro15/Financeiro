@@ -17,8 +17,6 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -119,14 +117,16 @@ function DroppableStageColumn({
           backgroundColor: clients.length === 0 && !isOver ? 'rgba(0,0,0,0.02)' : undefined
         }}
       >
-        {clients.map((client) => (
-          <DraggableClientCard
-            key={client.id}
-            client={client}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        ))}
+        <SortableContext items={clients.map(c => c.id)} strategy={verticalListSortingStrategy}>
+          {clients.map((client) => (
+            <DraggableClientCard
+              key={client.id}
+              client={client}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          ))}
+        </SortableContext>
 
         {clients.length === 0 && (
           <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center mt-4">

@@ -226,11 +226,16 @@ export default function NotificationCenter() {
                 <div className="flex items-center space-x-2">
                   <Button
                     size="sm"
-                    onClick={() => handleInviteResponse(
-                      notification.id, 
-                      notification.data.organization_member_id, 
-                      'accepted'
-                    )}
+                    onClick={() => {
+                      console.log('🔍 Dados da notificação:', notification.data);
+                      const orgMemberId = notification.data?.organization_member_id;
+                      if (!orgMemberId) {
+                        console.error('❌ organization_member_id não encontrado!', notification.data);
+                        toast.error('Erro: ID da organização não encontrado');
+                        return;
+                      }
+                      handleInviteResponse(notification.id, orgMemberId, 'accepted');
+                    }}
                     className="bg-green-600 hover:bg-green-700"
                   >
                     <Check className="h-4 w-4 mr-1" />
@@ -239,11 +244,16 @@ export default function NotificationCenter() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleInviteResponse(
-                      notification.id, 
-                      notification.data.organization_member_id, 
-                      'rejected'
-                    )}
+                    onClick={() => {
+                      console.log('🔍 Dados da notificação:', notification.data);
+                      const orgMemberId = notification.data?.organization_member_id;
+                      if (!orgMemberId) {
+                        console.error('❌ organization_member_id não encontrado!', notification.data);
+                        toast.error('Erro: ID da organização não encontrado');
+                        return;
+                      }
+                      handleInviteResponse(notification.id, orgMemberId, 'rejected');
+                    }}
                   >
                     <X className="h-4 w-4 mr-1" />
                     Rejeitar
