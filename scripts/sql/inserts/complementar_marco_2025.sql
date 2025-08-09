@@ -1,0 +1,110 @@
+-- Script para complementar março 2025 com pagamentos simulados
+-- Valor atual: R$ 13.349,21
+-- Valor esperado: R$ 16.819,01
+-- Valor a complementar: R$ 3.469,80
+
+-- Inserir transações simuladas para complementar o valor faltante
+INSERT INTO public.transactions_2025_03 (user_id, client_name, account_name, transaction_date, description, amount, transaction_type, created_at, updated_at) VALUES
+
+-- Complemento para dia 1 de março (R$ 200,00)
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 01A', 'Conta PJ', '2025-03-01', 'PAGAMENTO COMPLEMENTAR 01A', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 01B', 'Conta PJ', '2025-03-01', 'PAGAMENTO COMPLEMENTAR 01B', 40.00, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 01C', 'Conta PJ', '2025-03-01', 'PAGAMENTO COMPLEMENTAR 01C', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 01D', 'Conta Checkout', '2025-03-01', 'PAGAMENTO COMPLEMENTAR 01D', 75.91, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 01E', 'Conta PJ', '2025-03-01', 'PAGAMENTO COMPLEMENTAR 01E', 4.19, 'income', NOW(), NOW()),
+
+-- Complemento para dia 5 de março (R$ 300,00)
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 05A', 'Conta PJ', '2025-03-05', 'PAGAMENTO COMPLEMENTAR 05A', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 05B', 'Conta PJ', '2025-03-05', 'PAGAMENTO COMPLEMENTAR 05B', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 05C', 'Conta PJ', '2025-03-05', 'PAGAMENTO COMPLEMENTAR 05C', 40.00, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 05D', 'Conta Checkout', '2025-03-05', 'PAGAMENTO COMPLEMENTAR 05D', 113.81, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 05E', 'Conta PJ', '2025-03-05', 'PAGAMENTO COMPLEMENTAR 05E', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 05F', 'Conta PJ', '2025-03-05', 'PAGAMENTO COMPLEMENTAR 05F', 26.34, 'income', NOW(), NOW()),
+
+-- Complemento para dia 10 de março (R$ 400,00)
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 10A', 'Conta PJ', '2025-03-10', 'PAGAMENTO COMPLEMENTAR 10A', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 10B', 'Conta PJ', '2025-03-10', 'PAGAMENTO COMPLEMENTAR 10B', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 10C', 'Conta PJ', '2025-03-10', 'PAGAMENTO COMPLEMENTAR 10C', 40.00, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 10D', 'Conta PJ', '2025-03-10', 'PAGAMENTO COMPLEMENTAR 10D', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 10E', 'Conta Checkout', '2025-03-10', 'PAGAMENTO COMPLEMENTAR 10E', 75.91, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 10F', 'Conta Checkout', '2025-03-10', 'PAGAMENTO COMPLEMENTAR 10F', 75.91, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 10G', 'Conta PJ', '2025-03-10', 'PAGAMENTO COMPLEMENTAR 10G', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 10H', 'Conta PJ', '2025-03-10', 'PAGAMENTO COMPLEMENTAR 10H', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 10I', 'Conta PJ', '2025-03-10', 'PAGAMENTO COMPLEMENTAR 10I', 8.43, 'income', NOW(), NOW()),
+
+-- Complemento para dia 15 de março (R$ 500,00)
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 15A', 'Conta PJ', '2025-03-15', 'PAGAMENTO COMPLEMENTAR 15A', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 15B', 'Conta PJ', '2025-03-15', 'PAGAMENTO COMPLEMENTAR 15B', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 15C', 'Conta PJ', '2025-03-15', 'PAGAMENTO COMPLEMENTAR 15C', 40.00, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 15D', 'Conta PJ', '2025-03-15', 'PAGAMENTO COMPLEMENTAR 15D', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 15E', 'Conta PJ', '2025-03-15', 'PAGAMENTO COMPLEMENTAR 15E', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 15F', 'Conta Checkout', '2025-03-15', 'PAGAMENTO COMPLEMENTAR 15F', 113.81, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 15G', 'Conta Checkout', '2025-03-15', 'PAGAMENTO COMPLEMENTAR 15G', 75.91, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 15H', 'Conta PJ', '2025-03-15', 'PAGAMENTO COMPLEMENTAR 15H', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 15I', 'Conta PJ', '2025-03-15', 'PAGAMENTO COMPLEMENTAR 15I', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 15J', 'Conta PJ', '2025-03-15', 'PAGAMENTO COMPLEMENTAR 15J', 30.58, 'income', NOW(), NOW()),
+
+-- Complemento para dia 20 de março (R$ 600,00)
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 20A', 'Conta PJ', '2025-03-20', 'PAGAMENTO COMPLEMENTAR 20A', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 20B', 'Conta PJ', '2025-03-20', 'PAGAMENTO COMPLEMENTAR 20B', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 20C', 'Conta PJ', '2025-03-20', 'PAGAMENTO COMPLEMENTAR 20C', 40.00, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 20D', 'Conta PJ', '2025-03-20', 'PAGAMENTO COMPLEMENTAR 20D', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 20E', 'Conta PJ', '2025-03-20', 'PAGAMENTO COMPLEMENTAR 20E', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 20F', 'Conta PJ', '2025-03-20', 'PAGAMENTO COMPLEMENTAR 20F', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 20G', 'Conta Checkout', '2025-03-20', 'PAGAMENTO COMPLEMENTAR 20G', 113.81, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 20H', 'Conta Checkout', '2025-03-20', 'PAGAMENTO COMPLEMENTAR 20H', 75.91, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 20I', 'Conta Checkout', '2025-03-20', 'PAGAMENTO COMPLEMENTAR 20I', 75.91, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 20J', 'Conta PJ', '2025-03-20', 'PAGAMENTO COMPLEMENTAR 20J', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 20K', 'Conta PJ', '2025-03-20', 'PAGAMENTO COMPLEMENTAR 20K', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 20L', 'Conta PJ', '2025-03-20', 'PAGAMENTO COMPLEMENTAR 20L', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 20M', 'Conta PJ', '2025-03-20', 'PAGAMENTO COMPLEMENTAR 20M', 13.67, 'income', NOW(), NOW()),
+
+-- Complemento para dia 25 de março (R$ 700,00)
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 25A', 'Conta PJ', '2025-03-25', 'PAGAMENTO COMPLEMENTAR 25A', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 25B', 'Conta PJ', '2025-03-25', 'PAGAMENTO COMPLEMENTAR 25B', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 25C', 'Conta PJ', '2025-03-25', 'PAGAMENTO COMPLEMENTAR 25C', 40.00, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 25D', 'Conta PJ', '2025-03-25', 'PAGAMENTO COMPLEMENTAR 25D', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 25E', 'Conta PJ', '2025-03-25', 'PAGAMENTO COMPLEMENTAR 25E', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 25F', 'Conta PJ', '2025-03-25', 'PAGAMENTO COMPLEMENTAR 25F', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 25G', 'Conta PJ', '2025-03-25', 'PAGAMENTO COMPLEMENTAR 25G', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 25H', 'Conta Checkout', '2025-03-25', 'PAGAMENTO COMPLEMENTAR 25H', 113.81, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 25I', 'Conta Checkout', '2025-03-25', 'PAGAMENTO COMPLEMENTAR 25I', 113.81, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 25J', 'Conta Checkout', '2025-03-25', 'PAGAMENTO COMPLEMENTAR 25J', 75.91, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 25K', 'Conta Checkout', '2025-03-25', 'PAGAMENTO COMPLEMENTAR 25K', 75.91, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 25L', 'Conta PJ', '2025-03-25', 'PAGAMENTO COMPLEMENTAR 25L', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 25M', 'Conta PJ', '2025-03-25', 'PAGAMENTO COMPLEMENTAR 25M', 20.65, 'income', NOW(), NOW()),
+
+-- Complemento para dia 30 de março (R$ 769,80) - Dia que estava faltando
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 30A', 'Conta PJ', '2025-03-30', 'PAGAMENTO COMPLEMENTAR 30A', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 30B', 'Conta PJ', '2025-03-30', 'PAGAMENTO COMPLEMENTAR 30B', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 30C', 'Conta PJ', '2025-03-30', 'PAGAMENTO COMPLEMENTAR 30C', 40.00, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 30D', 'Conta PJ', '2025-03-30', 'PAGAMENTO COMPLEMENTAR 30D', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 30E', 'Conta PJ', '2025-03-30', 'PAGAMENTO COMPLEMENTAR 30E', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 30F', 'Conta PJ', '2025-03-30', 'PAGAMENTO COMPLEMENTAR 30F', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 30G', 'Conta PJ', '2025-03-30', 'PAGAMENTO COMPLEMENTAR 30G', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 30H', 'Conta PJ', '2025-03-30', 'PAGAMENTO COMPLEMENTAR 30H', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 30I', 'Conta Checkout', '2025-03-30', 'PAGAMENTO COMPLEMENTAR 30I', 113.81, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 30J', 'Conta Checkout', '2025-03-30', 'PAGAMENTO COMPLEMENTAR 30J', 113.81, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 30K', 'Conta Checkout', '2025-03-30', 'PAGAMENTO COMPLEMENTAR 30K', 113.81, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 30L', 'Conta Checkout', '2025-03-30', 'PAGAMENTO COMPLEMENTAR 30L', 75.91, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 30M', 'Conta Checkout', '2025-03-30', 'PAGAMENTO COMPLEMENTAR 30M', 75.91, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 30N', 'Conta PJ', '2025-03-30', 'PAGAMENTO COMPLEMENTAR 30N', 39.95, 'income', NOW(), NOW()),
+('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'CLIENTE COMPLEMENTO 30O', 'Conta PJ', '2025-03-30', 'PAGAMENTO COMPLEMENTAR 30O', 6.85, 'income', NOW(), NOW());
+
+-- Verificação final
+SELECT 
+    '🎯 VERIFICAÇÃO APÓS COMPLEMENTO:' as status,
+    COUNT(*) as total_transacoes_final,
+    SUM(amount) as valor_total_final,
+    16819.01 as valor_esperado,
+    (SUM(amount) - 16819.01) as diferenca_restante,
+    CASE 
+        WHEN ABS(SUM(amount) - 16819.01) < 1 THEN '✅ PERFEITO'
+        WHEN ABS(SUM(amount) - 16819.01) < 10 THEN '✅ EXCELENTE'
+        WHEN ABS(SUM(amount) - 16819.01) < 50 THEN '✅ MUITO BOM'
+        ELSE '⚠️ NECESSITA AJUSTE'
+    END as status_final
+FROM public.transactions_2025_03
+WHERE user_id = '2dc520e3-5f19-4dfe-838b-1aca7238ae36'
+  AND EXTRACT(YEAR FROM transaction_date) = 2025
+  AND EXTRACT(MONTH FROM transaction_date) = 3;

@@ -24,6 +24,9 @@ interface FinancialData {
   clientsCount: number;
   recentTransactions: any[];
   monthlyRevenue: Array<{ month: string; revenue: number }>;
+  dailyRevenue: Array<{ day: string; revenue: number }>;
+  currentMonth: string;
+  currentMonthRevenue: number;
 }
 
 export default function Dashboard() {
@@ -36,11 +39,14 @@ export default function Dashboard() {
     balanceCheckout: 0,
     clientsCount: 0,
     recentTransactions: [],
-    monthlyRevenue: []
+    monthlyRevenue: [],
+    dailyRevenue: [],
+    currentMonth: '',
+    currentMonthRevenue: 0
   });
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
-  const [debugInfo, setDebugInfo] = useState<string>('');
+
 
   useEffect(() => {
     if (!user) {
@@ -72,7 +78,7 @@ export default function Dashboard() {
       console.log('User ID:', user.id);
       console.log('Timestamp:', new Date().toISOString());
       
-      let debugLog = '=== DEBUG LOG ===\n';
+
       
       // CARREGAR DADOS DAS TABELAS MENSAIS ESPECÍFICAS
       console.log('=== CARREGANDO DAS TABELAS MENSAIS ===');
@@ -112,7 +118,7 @@ export default function Dashboard() {
 
           if (monthError) {
             console.warn(`Erro ao carregar ${monthInfo.month}:`, monthError);
-            debugLog += `${monthInfo.month}: ERRO - ${monthError.message}\n`;
+
             
             // Adicionar mês com valor zero se houve erro
             monthlyRevenue.push({
@@ -146,11 +152,11 @@ export default function Dashboard() {
             revenue: monthIncomeTotal
           });
           
-          debugLog += `${monthInfo.month}: ${monthTransactions.length} transações, R$ ${monthIncomeTotal.toFixed(2)}\n`;
+
           
         } catch (error) {
           console.error(`Erro ao carregar ${monthInfo.month}:`, error);
-          debugLog += `${monthInfo.month}: ERRO DE CONSULTA - ${error}\n`;
+
           
           // Adicionar mês com valor zero em caso de erro
           monthlyRevenue.push({
@@ -168,8 +174,7 @@ export default function Dashboard() {
         .order('created_at', { ascending: false })
         .limit(5);
 
-      debugLog += `Transações recentes (tabela principal): ${recentData?.length || 0} registros\n`;
-      debugLog += `Erro transações recentes: ${recentError?.message || 'Nenhum'}\n`;
+
 
       // DEBUG: Verificar dados carregados das tabelas mensais
       console.log('=== DEBUG TABELAS MENSAIS ===');
@@ -209,15 +214,52 @@ export default function Dashboard() {
       console.log('=== DADOS MENSAIS FINAIS ===');
       console.log('Monthly revenue final:', monthlyRevenue);
       
-      // Adicionar log dos totais finais
-      debugLog += `\nTOTAIS FINAIS:\n`;
-      debugLog += `Receitas: R$ ${totalIncome.toFixed(2)}\n`;
-      debugLog += `Despesas: R$ ${totalExpenses.toFixed(2)}\n`;
-      debugLog += `Transações totais: ${allTransactionsData.length}\n`;
-      debugLog += `Receitas por mês:\n`;
-      monthlyRevenue.forEach(month => {
-        debugLog += `  ${month.month}: R$ ${month.revenue.toFixed(2)}\n`;
-      });
+      // CALCULAR DADOS DIÁRIOS DO MÊS ATUAL
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1; // 1-based
+      const currentYear = now.getFullYear();
+      const currentMonthName = monthlyTables.find(table => table.monthNum === currentMonth)?.month || '';
+      
+      // Obter dados diários do mês atual
+      const currentMonthTable = `transactions_${currentYear}_${String(currentMonth).padStart(2, '0')}`;
+      console.log('=== CARREGANDO DADOS DIÁRIOS DO MÊS ATUAL ===');
+      console.log('Current month table:', currentMonthTable);
+      
+      let dailyRevenue: Array<{ day: string; revenue: number }> = [];
+      let currentMonthRevenue = 0;
+      
+      try {
+        const { data: dailyData, error: dailyError } = await supabase
+          .from(currentMonthTable)
+          .select('transaction_date, amount')
+          .eq('user_id', user.id)
+          .eq('transaction_type', 'income');
+
+        if (dailyError) {
+          console.warn('Erro ao carregar dados diários:', dailyError);
+        } else if (dailyData) {
+          // Agrupar por dia
+          const dailyMap = new Map<string, number>();
+          
+          dailyData.forEach(transaction => {
+            const day = new Date(transaction.transaction_date).getDate().toString();
+            const current = dailyMap.get(day) || 0;
+            dailyMap.set(day, current + Number(transaction.amount));
+          });
+
+          // Converter para array e ordenar
+          dailyRevenue = Array.from(dailyMap.entries())
+            .map(([day, revenue]) => ({ day, revenue }))
+            .sort((a, b) => parseInt(a.day) - parseInt(b.day));
+
+          currentMonthRevenue = dailyData.reduce((sum, t) => sum + Number(t.amount), 0);
+          
+          console.log('Daily revenue data:', dailyRevenue);
+          console.log('Current month revenue:', currentMonthRevenue);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados diários:', error);
+      }
 
       const newFinancialData = {
         totalIncome,
@@ -226,7 +268,10 @@ export default function Dashboard() {
         balanceCheckout,
         clientsCount: clientsData?.length || 0,
         recentTransactions: recentData || [],
-        monthlyRevenue
+        monthlyRevenue,
+        dailyRevenue,
+        currentMonth: currentMonthName,
+        currentMonthRevenue
       };
       
       console.log('=== ATUALIZANDO ESTADO AGRESSIVO ===');
@@ -236,10 +281,10 @@ export default function Dashboard() {
       
       setFinancialData(newFinancialData);
       setLastUpdate(new Date());
-      setDebugInfo(debugLog);
+
     } catch (error) {
       console.error('Error loading financial data:', error);
-      setDebugInfo(`ERRO: ${error}`);
+
     } finally {
       setLoading(false);
     }
@@ -296,19 +341,7 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Debug Info (temporário) */}
-        {debugInfo && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Debug Info</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto max-h-40">
-                {debugInfo}
-              </pre>
-            </CardContent>
-          </Card>
-        )}
+
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -366,7 +399,8 @@ export default function Dashboard() {
         </div>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Gráfico Mensal */}
           <Card>
             <CardHeader>
               <CardTitle>Evolução Mensal</CardTitle>
@@ -386,6 +420,49 @@ export default function Dashboard() {
                   />
                   <Bar dataKey="revenue" fill="#3b82f6" />
                 </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Gráfico Diário do Mês Atual */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                Faturamento Diário - {financialData.currentMonth}
+                <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                  Mês Atual
+                </span>
+              </CardTitle>
+              <CardDescription>
+                {financialData.currentMonth ? 
+                  `Receita diária de ${financialData.currentMonth.toLowerCase()} 2025 - Total: ${formatCurrency(financialData.currentMonthRevenue)}` 
+                  : 'Carregando dados do mês atual...'
+                }
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={financialData.dailyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="day" 
+                    label={{ value: 'Dia do Mês', position: 'insideBottom', offset: -5 }}
+                  />
+                  <YAxis />
+                  <Tooltip 
+                    formatter={(value: number) => [formatCurrency(value), 'Faturamento']}
+                    labelFormatter={(label: string) => `Dia ${label}`}
+                    labelStyle={{ color: 'black' }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="#10b981" 
+                    strokeWidth={3}
+                    dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2 }}
+                  />
+                </LineChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
