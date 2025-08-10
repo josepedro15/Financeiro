@@ -48,27 +48,38 @@ export const useSubscription = () => {
   const isMasterUser = user?.id === MASTER_USER_ID;
 
   const loadSubscription = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('loadSubscription: user não encontrado');
+      return;
+    }
 
     try {
+      console.log('loadSubscription: iniciando carregamento para user:', user.id);
       setLoading(true);
       setError(null);
 
       // Buscar assinatura
+      console.log('loadSubscription: buscando assinatura...');
       const { data: subscriptionData, error: subError } = await supabase
         .from('subscriptions')
         .select('*')
         .eq('user_id', user.id)
         .single();
 
+      console.log('loadSubscription: resposta assinatura:', { subscriptionData, subError });
+
       if (subError && subError.code !== 'PGRST116') {
+        console.error('loadSubscription: erro na assinatura:', subError);
         throw subError;
       }
 
       setSubscription(subscriptionData);
+      console.log('loadSubscription: assinatura definida:', subscriptionData);
 
       // Buscar uso atual
       const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+      console.log('loadSubscription: buscando uso para mês:', currentMonth);
+      
       const { data: usageData, error: usageError } = await supabase
         .from('usage_tracking')
         .select('*')
@@ -76,32 +87,50 @@ export const useSubscription = () => {
         .eq('month_year', currentMonth)
         .single();
 
+      console.log('loadSubscription: resposta uso:', { usageData, usageError });
+
       if (usageError && usageError.code !== 'PGRST116') {
+        console.error('loadSubscription: erro no uso:', usageError);
         throw usageError;
       }
 
       setUsage(usageData);
+      console.log('loadSubscription: uso definido:', usageData);
     } catch (err) {
       console.error('Erro ao carregar assinatura:', err);
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
     } finally {
       setLoading(false);
+      console.log('loadSubscription: carregamento finalizado');
     }
   };
 
   const checkPlanLimits = async (
     checkType: 'transaction' | 'user' | 'client' = 'transaction'
   ): Promise<PlanLimits | null> => {
-    if (!user) return null;
+    if (!user) {
+      console.log('checkPlanLimits: user não encontrado');
+      return null;
+    }
 
     try {
+      console.log('checkPlanLimits: chamando RPC com user_id:', user.id, 'check_type:', checkType);
+      
       const { data, error } = await supabase.rpc('check_plan_limits', {
         target_user_id: user.id,
         check_type: checkType
       });
 
-      if (error) throw error;
-      return data?.[0] || null;
+      console.log('checkPlanLimits: resposta RPC:', { data, error });
+
+      if (error) {
+        console.error('checkPlanLimits: erro RPC:', error);
+        throw error;
+      }
+      
+      const result = data?.[0] || null;
+      console.log('checkPlanLimits: resultado final:', result);
+      return result;
     } catch (err) {
       console.error('Erro ao verificar limites:', err);
       return null;
@@ -133,10 +162,22 @@ export const useSubscription = () => {
   };
 
   const canPerformAction = async (actionType: 'transaction' | 'user' | 'client'): Promise<boolean> => {
-    if (isMasterUser) return true;
+    console.log('canPerformAction: iniciando verificação para:', actionType);
+    console.log('canPerformAction: isMasterUser:', isMasterUser);
     
+    if (isMasterUser) {
+      console.log('canPerformAction: usuário master, permitindo ação');
+      return true;
+    }
+    
+    console.log('canPerformAction: verificando limites...');
     const limits = await checkPlanLimits(actionType);
-    return limits?.allowed || false;
+    console.log('canPerformAction: limites obtidos:', limits);
+    
+    const allowed = limits?.allowed || false;
+    console.log('canPerformAction: resultado final:', allowed);
+    
+    return allowed;
   };
 
   const getPlanName = (planType: string) => {
