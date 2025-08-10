@@ -1029,11 +1029,11 @@ export default function Clients() {
             <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-semibold mb-2">Nenhum cliente cadastrado</h3>
             <p className="text-muted-foreground mb-6">
-              Comece adicionando seu primeiro cliente ao CRM
+              Comece criando seu primeiro estágio para organizar os clientes
             </p>
-            <Button onClick={() => setDialogOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar Primeiro Cliente
+            <Button onClick={() => setStageDialogOpen(true)}>
+              <Settings className="w-4 h-4 mr-2" />
+              Criar Primeiro Estágio
             </Button>
           </div>
         )}
