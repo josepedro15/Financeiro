@@ -27,6 +27,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Se o usuário fez logout, redirecionar para a página inicial
+        if (event === 'SIGNED_OUT') {
+          window.location.href = '/';
+        }
       }
     );
 
@@ -93,6 +98,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: error.message,
         variant: "destructive"
       });
+    } else {
+      // Redirecionar para a página inicial após logout bem-sucedido
+      window.location.href = '/';
     }
   };
 
