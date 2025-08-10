@@ -159,8 +159,15 @@ export const useSubscription = () => {
 
   const isTrialActive = () => {
     if (!subscription || !subscription.trial_ends_at) return false;
-    if (subscription.status !== 'trial') return false;
-    return new Date(subscription.trial_ends_at) > new Date();
+    
+    // Está no trial se:
+    // 1. Status é 'trial' OU
+    // 2. Status é 'active' mas ainda está dentro do período de trial
+    const isWithinTrialPeriod = new Date(subscription.trial_ends_at) > new Date();
+    const isTrialStatus = subscription.status === 'trial';
+    const isActiveButWithinTrial = subscription.status === 'active' && isWithinTrialPeriod;
+    
+    return isTrialStatus || isActiveButWithinTrial;
   };
 
   const getTrialDaysLeft = () => {
