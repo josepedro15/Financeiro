@@ -1020,14 +1020,27 @@ export default function Clients() {
                 />
               );
             })}
+            
+            {/* Botão para adicionar mais estágios - Mostrar quando há estágios */}
+            {Object.keys(stages).length > 0 && (
+              <div className="flex-shrink-0 w-80 flex items-center justify-center">
+                <Button 
+                  variant="outline" 
+                  className="h-12 w-12 rounded-full border-dashed border-2 hover:border-solid"
+                  onClick={() => setStagesDialogOpen(true)}
+                >
+                  <Plus className="w-6 h-6" />
+                </Button>
+              </div>
+            )}
           </div>
         </DndContext>
 
-        {/* Empty State */}
-        {clients.length === 0 && (
+        {/* Empty State - Mostrar apenas quando não há estágios */}
+        {Object.keys(stages).length === 0 && (
           <div className="text-center py-12">
             <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Nenhum cliente cadastrado</h3>
+            <h3 className="text-xl font-semibold mb-2">Nenhum estágio criado</h3>
             <p className="text-muted-foreground mb-6">
               Comece criando seu primeiro estágio para organizar os clientes
             </p>
@@ -1035,6 +1048,27 @@ export default function Clients() {
               <Settings className="w-4 h-4 mr-2" />
               Criar Primeiro Estágio
             </Button>
+          </div>
+        )}
+
+        {/* Botão para adicionar mais estágios - Mostrar quando há estágios mas não há clientes */}
+        {Object.keys(stages).length > 0 && clients.length === 0 && (
+          <div className="text-center py-12">
+            <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Nenhum cliente cadastrado</h3>
+            <p className="text-muted-foreground mb-6">
+              Adicione seu primeiro cliente ou crie mais estágios
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Button onClick={() => setDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Primeiro Cliente
+              </Button>
+              <Button variant="outline" onClick={() => setStagesDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Estágio
+              </Button>
+            </div>
           </div>
         )}
       </main>
