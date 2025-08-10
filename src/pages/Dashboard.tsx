@@ -25,7 +25,8 @@ import {
   ChevronDown,
   Crown,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  Shield
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Area } from 'recharts';
 import NotificationCenter from '@/components/NotificationCenter';
@@ -627,6 +628,12 @@ export default function Dashboard() {
                 <Settings className="w-4 h-4 mr-1" />
                 Configurações
               </Button>
+              {isMasterUser && (
+                <Button variant="outline" size="sm" onClick={() => navigate('/analytics')}>
+                  <Shield className="w-4 h-4 mr-1" />
+                  Analytics
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={loadFinancialData}>
                 Atualizar
               </Button>

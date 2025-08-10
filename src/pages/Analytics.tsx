@@ -25,13 +25,17 @@ import {
   Info,
   AlertTriangle,
   CheckCircle,
-  Settings
+  Settings,
+  Lock,
+  Shield
 } from 'lucide-react';
 import { useCookieAnalytics } from '@/hooks/useCookieAnalytics';
 import { cookieManager } from '@/utils/cookies';
+import { useAuth } from '@/hooks/useAuth';
 
 const Analytics = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { 
     preferences, 
     analytics, 
@@ -43,6 +47,23 @@ const Analytics = () => {
 
   const [stats, setStats] = useState(getUsageStats());
   const [exportedData, setExportedData] = useState<any>(null);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Verificar autorização
+  useEffect(() => {
+    const checkAuthorization = () => {
+      if (user?.id === '2dc520e3-5f19-4dfe-838b-1aca7238ae36') {
+        setIsAuthorized(true);
+      } else {
+        // Redirecionar usuários não autorizados
+        navigate('/dashboard');
+      }
+      setIsLoading(false);
+    };
+
+    checkAuthorization();
+  }, [user, navigate]);
 
   // Atualizar estatísticas
   const refreshStats = () => {
@@ -59,7 +80,7 @@ const Analytics = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `financeirologotiq-data-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `financeirologotiq-analytics-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -92,6 +113,38 @@ const Analytics = () => {
   const totalSessionHours = Math.round(stats.totalSessionTime / 3600000 * 10) / 10;
   const daysSinceFirstVisit = Math.ceil((Date.now() - new Date(analytics.firstVisit).getTime()) / (1000 * 60 * 60 * 24));
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Acesso negado
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-md mx-auto text-center">
+            <div className="w-16 h-16 bg-destructive/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-8 h-8 text-destructive" />
+            </div>
+            <h1 className="text-2xl font-bold mb-4">Acesso Negado</h1>
+            <p className="text-muted-foreground mb-6">
+              Esta página é exclusiva para administradores do sistema.
+            </p>
+            <Button onClick={() => navigate('/dashboard')}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar ao Dashboard
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
       {/* Header */}
@@ -114,13 +167,17 @@ const Analytics = () => {
             </Button>
             
             <div className="flex items-center gap-2">
+              <Badge variant="default" className="bg-primary/10 text-primary border-primary/20">
+                <Shield className="w-3 h-3 mr-1" />
+                Admin
+              </Badge>
               <Button variant="outline" onClick={refreshStats}>
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Atualizar
               </Button>
-              <Button variant="outline" onClick={() => navigate('/')}>
+              <Button variant="outline" onClick={() => navigate('/dashboard')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Voltar
+                Dashboard
               </Button>
             </div>
           </div>
@@ -135,10 +192,16 @@ const Analytics = () => {
             <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
               <BarChart3 className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-4xl font-bold mb-4">Analytics e Dados</h1>
+            <h1 className="text-4xl font-bold mb-4">Analytics do Sistema</h1>
             <p className="text-xl text-muted-foreground">
-              Visualize os dados coletados sobre seu uso do FinanceiroLogotiq
+              Dashboard exclusivo para análise de dados do FinanceiroLogotiq
             </p>
+            <div className="mt-4">
+              <Badge variant="secondary" className="bg-primary/10 text-primary">
+                <Shield className="w-3 h-3 mr-1" />
+                Acesso Administrativo
+              </Badge>
+            </div>
           </div>
 
           {/* Status do Analytics */}
@@ -158,7 +221,7 @@ const Analytics = () => {
                       </h3>
                       <p className="text-sm text-muted-foreground">
                         {preferences.analytics 
-                          ? 'Coletando dados para melhorar sua experiência'
+                          ? 'Coletando dados para melhorar a experiência'
                           : 'Analytics desabilitado - alguns dados podem não estar disponíveis'
                         }
                       </p>
