@@ -1051,26 +1051,7 @@ export default function Clients() {
           </div>
         )}
 
-        {/* Botão para adicionar mais estágios - Mostrar quando há estágios mas não há clientes */}
-        {Object.keys(stages).length > 0 && clients.length === 0 && (
-          <div className="text-center py-12">
-            <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Nenhum cliente cadastrado</h3>
-            <p className="text-muted-foreground mb-6">
-              Adicione seu primeiro cliente ou crie mais estágios
-            </p>
-            <div className="flex gap-4 justify-center">
-              <Button onClick={() => setDialogOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar Primeiro Cliente
-              </Button>
-              <Button variant="outline" onClick={() => setStagesDialogOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar Estágio
-              </Button>
-            </div>
-          </div>
-        )}
+        {/* Estado vazio quando há estágios mas não há clientes - REMOVIDO */}
       </main>
     </div>
   );
