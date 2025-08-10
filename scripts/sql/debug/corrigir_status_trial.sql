@@ -33,25 +33,29 @@ BEGIN
         WHERE id NOT IN (SELECT user_id FROM public.subscriptions)
         AND id != '2dc520e3-5f19-4dfe-838b-1aca7238ae36'
     LOOP
-        INSERT INTO public.subscriptions (
-            user_id,
-            plan_type,
-            status,
-            trial_ends_at,
-            monthly_transaction_limit,
-            user_limit,
-            client_limit
-        ) VALUES (
-            user_record.id,
-            'starter',
-            'trial',
-            NOW() + INTERVAL '14 days',
-            100,
-            1,
-            10
-        );
-        
-        RAISE NOTICE 'Trial criado para usuário: %', user_record.id;
+        BEGIN
+            INSERT INTO public.subscriptions (
+                user_id,
+                plan_type,
+                status,
+                trial_ends_at,
+                monthly_transaction_limit,
+                user_limit,
+                client_limit
+            ) VALUES (
+                user_record.id,
+                'starter',
+                'trial',
+                NOW() + INTERVAL '14 days',
+                100,
+                1,
+                10
+            );
+            
+            RAISE NOTICE 'Trial criado para usuário: %', user_record.id;
+        EXCEPTION WHEN OTHERS THEN
+            RAISE NOTICE 'Erro ao criar trial para usuário %: %', user_record.id, SQLERRM;
+        END;
     END LOOP;
 END $$;
 
