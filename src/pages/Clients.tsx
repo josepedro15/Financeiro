@@ -1031,7 +1031,7 @@ export default function Clients() {
             <p className="text-muted-foreground mb-6">
               Comece criando seu primeiro estágio para organizar os clientes
             </p>
-            <Button onClick={() => setStageDialogOpen(true)}>
+            <Button onClick={() => setStagesDialogOpen(true)}>
               <Settings className="w-4 h-4 mr-2" />
               Criar Primeiro Estágio
             </Button>
