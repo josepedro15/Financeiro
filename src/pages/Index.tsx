@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -45,6 +45,8 @@ const Index = () => {
   const navigate = useNavigate();
   const [isNavbarScrolled, setIsNavbarScrolled] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [animatedElements, setAnimatedElements] = useState<Set<string>>(new Set());
+  const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   useEffect(() => {
     if (!loading && user) {
@@ -55,10 +57,25 @@ const Index = () => {
   useEffect(() => {
     const handleScroll = () => {
       setIsNavbarScrolled(window.scrollY > 50);
+      
+      // Animações de scroll
+      Object.keys(sectionRefs.current).forEach((key) => {
+        const element = sectionRefs.current[key];
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          const isVisible = rect.top < window.innerHeight * 0.8 && rect.bottom > 0;
+          
+          if (isVisible && !animatedElements.has(key)) {
+            setAnimatedElements(prev => new Set([...prev, key]));
+          }
+        }
+      });
     };
+    
     window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Executar uma vez para elementos já visíveis
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [animatedElements]);
 
   if (loading) {
     return (
@@ -209,6 +226,167 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes fadeInLeft {
+          from {
+            opacity: 0;
+            transform: translateX(-30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        
+        @keyframes fadeInRight {
+          from {
+            opacity: 0;
+            transform: translateX(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        
+        @keyframes scaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        
+        @keyframes slideInUp {
+          from {
+            opacity: 0;
+            transform: translateY(50px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes pulse {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.05);
+          }
+        }
+        
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
+        }
+        
+        @keyframes gradient {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+        
+        .animate-fade-in-up {
+          animation: fadeInUp 0.8s ease-out forwards;
+        }
+        
+        .animate-fade-in-left {
+          animation: fadeInLeft 0.8s ease-out forwards;
+        }
+        
+        .animate-fade-in-right {
+          animation: fadeInRight 0.8s ease-out forwards;
+        }
+        
+        .animate-scale-in {
+          animation: scaleIn 0.6s ease-out forwards;
+        }
+        
+        .animate-slide-in-up {
+          animation: slideInUp 0.8s ease-out forwards;
+        }
+        
+        .animate-pulse-slow {
+          animation: pulse 3s ease-in-out infinite;
+        }
+        
+        .animate-float {
+          animation: float 3s ease-in-out infinite;
+        }
+        
+        .animate-gradient {
+          background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+          background-size: 400% 400%;
+          animation: gradient 15s ease infinite;
+        }
+        
+        .opacity-0 {
+          opacity: 0;
+        }
+        
+        .opacity-1 {
+          opacity: 1;
+        }
+        
+        .transition-all {
+          transition: all 0.3s ease;
+        }
+        
+        .hover-scale:hover {
+          transform: scale(1.05);
+        }
+        
+        .hover-lift:hover {
+          transform: translateY(-5px);
+        }
+        
+        .text-gradient {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        
+        .text-gradient-2 {
+          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        
+        .text-gradient-3 {
+          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+      `}</style>
       {/* Fixed Navbar */}
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isNavbarScrolled ? 'bg-background/95 backdrop-blur-md border-b shadow-lg' : 'bg-transparent'
@@ -241,26 +419,37 @@ const Index = () => {
       {/* Hero Section */}
       <main className="pt-20">
         <section className="container mx-auto px-4 py-20">
-          <div className="text-center max-w-4xl mx-auto mb-16">
-            <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
+          <div 
+            ref={(el) => sectionRefs.current['hero'] = el}
+            className={`text-center max-w-4xl mx-auto mb-16 ${animatedElements.has('hero') ? 'animate-fade-in-up' : 'opacity-0'}`}
+          >
+            <Badge className="mb-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 animate-pulse-slow">
               <Sparkles className="w-3 h-3 mr-1" />
               Plataforma #1 em Gestão Financeira
             </Badge>
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent animate-fade-in">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 text-gradient">
               Gestão Financeira
               <br />
-              <span className="text-primary">Inteligente</span>
+              <span className="text-gradient-2">Inteligente</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto">
               Sistema completo para controle financeiro empresarial. 
               Gerencie receitas, despesas, clientes e obtenha insights em tempo real.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <Button size="lg" className="text-lg px-8 group" onClick={() => navigate('/auth')}>
+              <Button 
+                size="lg" 
+                className="text-lg px-8 group bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white border-0 hover-scale transition-all" 
+                onClick={() => navigate('/auth')}
+              >
                 Começar Gratuitamente
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 group">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="text-lg px-8 group hover-scale transition-all border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white"
+              >
                 <Play className="w-4 h-4 mr-2" />
                 Ver Demo
               </Button>
@@ -283,23 +472,33 @@ const Index = () => {
         </section>
 
         {/* Problems & Solutions Section */}
-        <section className="py-20 bg-muted/30">
+        <section className="py-20 bg-gradient-to-br from-red-50 to-orange-50">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold mb-4">Problemas que Resolvemos</h2>
+            <div 
+              ref={(el) => sectionRefs.current['problems'] = el}
+              className={`text-center mb-16 ${animatedElements.has('problems') ? 'animate-fade-in-up' : 'opacity-0'}`}
+            >
+              <h2 className="text-3xl font-bold mb-4 text-gradient-2">Problemas que Resolvemos</h2>
               <p className="text-xl text-muted-foreground">Transforme seus desafios em oportunidades</p>
             </div>
             
             <div className="grid md:grid-cols-2 gap-16 mb-16">
               {/* Problems */}
-              <div>
-                <h3 className="text-2xl font-bold mb-8 text-destructive">Antes</h3>
+              <div 
+                ref={(el) => sectionRefs.current['problems-left'] = el}
+                className={`${animatedElements.has('problems-left') ? 'animate-fade-in-left' : 'opacity-0'}`}
+              >
+                <h3 className="text-2xl font-bold mb-8 text-red-600">Antes</h3>
                 <div className="space-y-6">
                   {problems.map((problem, index) => (
-                    <div key={index} className="flex items-start space-x-4 p-4 rounded-lg bg-destructive/5 border border-destructive/10">
-                      <problem.icon className="w-6 h-6 text-destructive mt-1 flex-shrink-0" />
+                    <div 
+                      key={index} 
+                      className="flex items-start space-x-4 p-4 rounded-lg bg-red-50 border border-red-200 hover-lift transition-all hover:shadow-lg"
+                      style={{ animationDelay: `${index * 0.2}s` }}
+                    >
+                      <problem.icon className="w-6 h-6 text-red-500 mt-1 flex-shrink-0" />
                       <div>
-                        <h4 className="font-semibold text-destructive">{problem.title}</h4>
+                        <h4 className="font-semibold text-red-600">{problem.title}</h4>
                         <p className="text-muted-foreground">{problem.description}</p>
                       </div>
                     </div>
@@ -308,14 +507,21 @@ const Index = () => {
               </div>
 
               {/* Solutions */}
-              <div>
-                <h3 className="text-2xl font-bold mb-8 text-success">Depois</h3>
+              <div 
+                ref={(el) => sectionRefs.current['solutions-right'] = el}
+                className={`${animatedElements.has('solutions-right') ? 'animate-fade-in-right' : 'opacity-0'}`}
+              >
+                <h3 className="text-2xl font-bold mb-8 text-green-600">Depois</h3>
                 <div className="space-y-6">
                   {solutions.map((solution, index) => (
-                    <div key={index} className="flex items-start space-x-4 p-4 rounded-lg bg-success/5 border border-success/10">
-                      <solution.icon className="w-6 h-6 text-success mt-1 flex-shrink-0" />
+                    <div 
+                      key={index} 
+                      className="flex items-start space-x-4 p-4 rounded-lg bg-green-50 border border-green-200 hover-lift transition-all hover:shadow-lg"
+                      style={{ animationDelay: `${index * 0.2}s` }}
+                    >
+                      <solution.icon className="w-6 h-6 text-green-500 mt-1 flex-shrink-0" />
                       <div>
-                        <h4 className="font-semibold text-success">{solution.title}</h4>
+                        <h4 className="font-semibold text-green-600">{solution.title}</h4>
                         <p className="text-muted-foreground">{solution.description}</p>
                       </div>
                     </div>
@@ -327,20 +533,28 @@ const Index = () => {
         </section>
 
         {/* Benefits Section */}
-        <section className="py-20">
+        <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-50">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold mb-4">Por que escolher o FinanceiroLogotiq?</h2>
+            <div 
+              ref={(el) => sectionRefs.current['benefits'] = el}
+              className={`text-center mb-16 ${animatedElements.has('benefits') ? 'animate-fade-in-up' : 'opacity-0'}`}
+            >
+              <h2 className="text-3xl font-bold mb-4 text-gradient-3">Por que escolher o FinanceiroLogotiq?</h2>
               <p className="text-xl text-muted-foreground">Resultados comprovados por centenas de empresas</p>
             </div>
             
             <div className="grid md:grid-cols-3 gap-8 mb-16">
               {benefits.map((benefit, index) => (
-                <Card key={index} className="text-center p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                  <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <benefit.icon className="w-8 h-8 text-primary" />
+                <Card 
+                  key={index} 
+                  ref={(el) => sectionRefs.current[`benefit-${index}`] = el}
+                  className={`text-center p-6 hover-scale transition-all duration-300 bg-white/80 backdrop-blur-sm border-0 shadow-lg ${animatedElements.has(`benefit-${index}`) ? 'animate-scale-in' : 'opacity-0'}`}
+                  style={{ animationDelay: `${index * 0.2}s` }}
+                >
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4 animate-float">
+                    <benefit.icon className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-2">{benefit.title}</h3>
+                  <h3 className="text-xl font-semibold mb-2 text-gradient-3">{benefit.title}</h3>
                   <p className="text-muted-foreground">{benefit.description}</p>
                 </Card>
               ))}
