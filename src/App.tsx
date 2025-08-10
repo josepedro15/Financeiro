@@ -17,6 +17,7 @@ const Settings = lazy(() => import("./pages/Settings"));
 const SubscriptionStatus = lazy(() => import("./pages/SubscriptionStatus"));
 const PlanSelection = lazy(() => import("./pages/PlanSelection"));
 const Checkout = lazy(() => import("./pages/Checkout"));
+const UpgradePlan = lazy(() => import("./pages/UpgradePlan"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TestPage = lazy(() => import("./pages/TestPage"));
 
@@ -61,6 +62,7 @@ const App = () => {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/subscription" element={<SubscriptionStatus />} />
                 <Route path="/plans" element={<PlanSelection />} />
+                <Route path="/upgrade" element={<UpgradePlan />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/test" element={<TestPage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

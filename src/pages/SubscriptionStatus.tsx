@@ -200,7 +200,7 @@ export default function SubscriptionStatus() {
                 <>
                   <Button 
                     className="w-full" 
-                    onClick={() => navigate('/subscription')}
+                    onClick={() => navigate('/upgrade')}
                   >
                     <ArrowUpRight className="w-4 h-4 mr-2" />
                     {isTrialActive() ? 'Escolher Plano' : 'Alterar Plano'}
