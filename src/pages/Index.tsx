@@ -898,7 +898,7 @@ const Index = () => {
             <div className="flex space-x-6 text-sm text-muted-foreground">
               <a href="#" className="hover:text-foreground transition-colors">Privacidade</a>
               <a href="/terms" className="hover:text-foreground transition-colors">Termos</a>
-              <a href="#" className="hover:text-foreground transition-colors">Cookies</a>
+              <a href="/cookies" className="hover:text-foreground transition-colors">Cookies</a>
             </div>
           </div>
         </div>

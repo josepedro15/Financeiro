@@ -19,6 +19,7 @@ const PlanSelection = lazy(() => import("./pages/PlanSelection"));
 const Checkout = lazy(() => import("./pages/Checkout"));
 const UpgradePlan = lazy(() => import("./pages/UpgradePlan"));
 const Terms = lazy(() => import("./pages/Terms"));
+const Cookies = lazy(() => import("./pages/Cookies"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TestPage = lazy(() => import("./pages/TestPage"));
 
@@ -65,6 +66,7 @@ const App = () => {
                 <Route path="/plans" element={<PlanSelection />} />
                 <Route path="/upgrade" element={<UpgradePlan />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/cookies" element={<Cookies />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/test" element={<TestPage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
