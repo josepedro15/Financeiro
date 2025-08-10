@@ -37,7 +37,8 @@ import {
   ThumbsUp,
   AlertTriangle,
   CheckCircle,
-  XCircle
+  XCircle,
+  Building
 } from 'lucide-react';
 
 const Index = () => {
@@ -46,6 +47,7 @@ const Index = () => {
   const [isNavbarScrolled, setIsNavbarScrolled] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [animatedElements, setAnimatedElements] = useState<Set<string>>(new Set());
+  const [counters, setCounters] = useState<{ [key: string]: number }>({});
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   useEffect(() => {
@@ -67,6 +69,29 @@ const Index = () => {
           
           if (isVisible && !animatedElements.has(key)) {
             setAnimatedElements(prev => new Set([...prev, key]));
+            
+            // Animar contadores quando a seção de métricas aparecer
+            if (key === 'metrics') {
+              metrics.forEach((metric, index) => {
+                const target = parseInt(metric.number.replace(/\D/g, ''));
+                const duration = 2000; // 2 segundos
+                const steps = 60;
+                const increment = target / steps;
+                let current = 0;
+                
+                const timer = setInterval(() => {
+                  current += increment;
+                  if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                  }
+                  setCounters(prev => ({
+                    ...prev,
+                    [metric.number]: Math.floor(current)
+                  }));
+                }, duration / steps);
+              });
+            }
           }
         }
       });
@@ -218,10 +243,79 @@ const Index = () => {
   ];
 
   const metrics = [
-    { number: '500+', label: 'Empresas Atendidas' },
-    { number: '15h', label: 'Economia Semanal' },
-    { number: '25%', label: 'Aumento de Lucro' },
-    { number: '99.9%', label: 'Uptime Garantido' }
+    { number: '500+', label: 'Empresas Atendidas', icon: Users },
+    { number: '15h', label: 'Economia Semanal', icon: Clock },
+    { number: '25%', label: 'Aumento de Lucro', icon: TrendingUp },
+    { number: '99.9%', label: 'Uptime Garantido', icon: Shield }
+  ];
+
+  const integrations = [
+    { name: 'Banco do Brasil', logo: '🏦' },
+    { name: 'Itaú', logo: '🏦' },
+    { name: 'Bradesco', logo: '🏦' },
+    { name: 'Santander', logo: '🏦' },
+    { name: 'Nubank', logo: '🟣' },
+    { name: 'Inter', logo: '🟡' }
+  ];
+
+  const features = [
+    {
+      icon: BarChart3,
+      title: 'Dashboard Intuitivo',
+      description: 'Visualize todos os dados financeiros em um só lugar'
+    },
+    {
+      icon: Users,
+      title: 'CRM Integrado',
+      description: 'Gerencie clientes e vendas em uma única plataforma'
+    },
+    {
+      icon: FileText,
+      title: 'Relatórios Automáticos',
+      description: 'Relatórios detalhados gerados automaticamente'
+    },
+    {
+      icon: Shield,
+      title: 'Segurança Total',
+      description: 'Seus dados protegidos com criptografia de ponta a ponta'
+    },
+    {
+      icon: Zap,
+      title: 'Automação Inteligente',
+      description: 'Processos automatizados que economizam tempo'
+    },
+    {
+      icon: Globe,
+      title: 'Acesso Multiplataforma',
+      description: 'Acesse de qualquer dispositivo, a qualquer hora'
+    }
+  ];
+
+  const caseStudies = [
+    {
+      company: 'Silva Consultoria',
+      industry: 'Consultoria',
+      results: {
+        timeSaved: '15h/semana',
+        profitIncrease: '30%',
+        clientsManaged: '150+'
+      },
+      testimonial: 'O FinanceiroLogotiq revolucionou nossa gestão financeira. Agora temos controle total e economia de 15h por semana.',
+      before: 'Planilhas espalhadas, dados desatualizados',
+      after: 'Dashboard unificado, dados em tempo real'
+    },
+    {
+      company: 'Santos Tech',
+      industry: 'Tecnologia',
+      results: {
+        timeSaved: '12h/semana',
+        profitIncrease: '25%',
+        clientsManaged: '80+'
+      },
+      testimonial: 'Sistema intuitivo e completo. O CRM integrado é fantástico para acompanhar nossos clientes.',
+      before: 'Sistema desorganizado, perda de informações',
+      after: 'Organização completa, informações centralizadas'
+    }
   ];
 
   return (
@@ -562,10 +656,43 @@ const Index = () => {
           </div>
         </section>
 
+        {/* Features Section */}
+        <section className="py-20">
+          <div className="container mx-auto px-4">
+            <div 
+              ref={(el) => sectionRefs.current['features'] = el}
+              className={`text-center mb-16 ${animatedElements.has('features') ? 'animate-fade-in-up' : 'opacity-0'}`}
+            >
+              <h2 className="text-3xl font-bold mb-4">Funcionalidades Completas</h2>
+              <p className="text-xl text-muted-foreground">Tudo que você precisa para gerenciar suas finanças</p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8 mb-16">
+              {features.map((feature, index) => (
+                <Card 
+                  key={index} 
+                  ref={(el) => sectionRefs.current[`feature-${index}`] = el}
+                  className={`text-center p-6 hover-scale transition-all duration-300 hover:shadow-lg ${animatedElements.has(`feature-${index}`) ? 'animate-scale-in' : 'opacity-0'}`}
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <feature.icon className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-muted-foreground">{feature.description}</p>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Demo/Preview Section */}
         <section className="py-20 bg-muted/30">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
+            <div 
+              ref={(el) => sectionRefs.current['demo'] = el}
+              className={`text-center mb-16 ${animatedElements.has('demo') ? 'animate-fade-in-up' : 'opacity-0'}`}
+            >
               <h2 className="text-3xl font-bold mb-4">Veja o Sistema em Ação</h2>
               <p className="text-xl text-muted-foreground">Dashboard intuitivo e funcionalidades poderosas</p>
             </div>
@@ -585,13 +712,61 @@ const Index = () => {
         </section>
 
         {/* Metrics Section */}
-        <section className="py-20">
+        <section className="py-20 bg-muted/30">
           <div className="container mx-auto px-4">
+            <div 
+              ref={(el) => sectionRefs.current['metrics'] = el}
+              className={`text-center mb-16 ${animatedElements.has('metrics') ? 'animate-fade-in-up' : 'opacity-0'}`}
+            >
+              <h2 className="text-3xl font-bold mb-4">Números que Impressionam</h2>
+              <p className="text-xl text-muted-foreground">Resultados reais de empresas que confiam em nós</p>
+            </div>
+            
             <div className="grid md:grid-cols-4 gap-8">
               {metrics.map((metric, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">{metric.number}</div>
-                  <div className="text-muted-foreground">{metric.label}</div>
+                <div 
+                  key={index} 
+                  ref={(el) => sectionRefs.current[`metric-${index}`] = el}
+                  className={`text-center p-6 rounded-lg bg-white shadow-lg hover-lift transition-all ${animatedElements.has(`metric-${index}`) ? 'animate-scale-in' : 'opacity-0'}`}
+                  style={{ animationDelay: `${index * 0.2}s` }}
+                >
+                  <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <metric.icon className="w-8 h-8 text-primary" />
+                  </div>
+                  <div className="text-4xl font-bold text-primary mb-2">
+                    {counters[metric.number] || 0}
+                    {metric.number.includes('+') && '+'}
+                    {metric.number.includes('%') && '%'}
+                    {metric.number.includes('h') && 'h'}
+                  </div>
+                  <div className="text-muted-foreground font-medium">{metric.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Integrations Section */}
+        <section className="py-20">
+          <div className="container mx-auto px-4">
+            <div 
+              ref={(el) => sectionRefs.current['integrations'] = el}
+              className={`text-center mb-16 ${animatedElements.has('integrations') ? 'animate-fade-in-up' : 'opacity-0'}`}
+            >
+              <h2 className="text-3xl font-bold mb-4">Integrações Disponíveis</h2>
+              <p className="text-xl text-muted-foreground">Conecte-se com os principais bancos e serviços</p>
+            </div>
+            
+            <div className="grid md:grid-cols-6 gap-8 mb-16">
+              {integrations.map((integration, index) => (
+                <div 
+                  key={index} 
+                  ref={(el) => sectionRefs.current[`integration-${index}`] = el}
+                  className={`text-center p-4 rounded-lg bg-white shadow-md hover-lift transition-all ${animatedElements.has(`integration-${index}`) ? 'animate-scale-in' : 'opacity-0'}`}
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="text-3xl mb-2">{integration.logo}</div>
+                  <div className="text-sm font-medium text-muted-foreground">{integration.name}</div>
                 </div>
               ))}
             </div>
@@ -601,14 +776,22 @@ const Index = () => {
         {/* Testimonials Section */}
         <section className="py-20 bg-muted/30">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
+            <div 
+              ref={(el) => sectionRefs.current['testimonials'] = el}
+              className={`text-center mb-16 ${animatedElements.has('testimonials') ? 'animate-fade-in-up' : 'opacity-0'}`}
+            >
               <h2 className="text-3xl font-bold mb-4">O que nossos clientes dizem</h2>
               <p className="text-xl text-muted-foreground">Depoimentos reais de quem já transformou sua gestão</p>
             </div>
             
             <div className="grid md:grid-cols-3 gap-8">
               {testimonials.map((testimonial, index) => (
-                <Card key={index} className="p-6">
+                <Card 
+                  key={index} 
+                  ref={(el) => sectionRefs.current[`testimonial-${index}`] = el}
+                  className={`p-6 hover-lift transition-all ${animatedElements.has(`testimonial-${index}`) ? 'animate-scale-in' : 'opacity-0'}`}
+                  style={{ animationDelay: `${index * 0.2}s` }}
+                >
                   <div className="flex mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
                       <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
@@ -625,26 +808,109 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Security Section */}
+        {/* Case Studies Section */}
         <section className="py-20">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
+            <div 
+              ref={(el) => sectionRefs.current['case-studies'] = el}
+              className={`text-center mb-16 ${animatedElements.has('case-studies') ? 'animate-fade-in-up' : 'opacity-0'}`}
+            >
+              <h2 className="text-3xl font-bold mb-4">Casos de Sucesso</h2>
+              <p className="text-xl text-muted-foreground">Veja como empresas reais transformaram suas finanças</p>
+            </div>
+            
+            <div className="space-y-12">
+              {caseStudies.map((study, index) => (
+                <Card 
+                  key={index} 
+                  ref={(el) => sectionRefs.current[`case-study-${index}`] = el}
+                  className={`p-8 hover-lift transition-all ${animatedElements.has(`case-study-${index}`) ? 'animate-scale-in' : 'opacity-0'}`}
+                  style={{ animationDelay: `${index * 0.3}s` }}
+                >
+                  <div className="grid md:grid-cols-2 gap-8">
+                    <div>
+                      <div className="flex items-center mb-4">
+                        <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mr-4">
+                          <Building className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold">{study.company}</h3>
+                          <p className="text-muted-foreground">{study.industry}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-4 mb-6">
+                        <div className="text-center p-3 bg-success/10 rounded-lg">
+                          <div className="text-2xl font-bold text-success">{study.results.timeSaved}</div>
+                          <div className="text-sm text-muted-foreground">Tempo Economizado</div>
+                        </div>
+                        <div className="text-center p-3 bg-primary/10 rounded-lg">
+                          <div className="text-2xl font-bold text-primary">{study.results.profitIncrease}</div>
+                          <div className="text-sm text-muted-foreground">Aumento de Lucro</div>
+                        </div>
+                        <div className="text-center p-3 bg-info/10 rounded-lg">
+                          <div className="text-2xl font-bold text-info">{study.results.clientsManaged}</div>
+                          <div className="text-sm text-muted-foreground">Clientes Gerenciados</div>
+                        </div>
+                      </div>
+                      
+                      <p className="text-muted-foreground italic mb-4">"{study.testimonial}"</p>
+                    </div>
+                    
+                    <div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 bg-destructive/5 border border-destructive/10 rounded-lg">
+                          <h4 className="font-semibold text-destructive mb-2">Antes</h4>
+                          <p className="text-sm text-muted-foreground">{study.before}</p>
+                        </div>
+                        <div className="p-4 bg-success/5 border border-success/10 rounded-lg">
+                          <h4 className="font-semibold text-success mb-2">Depois</h4>
+                          <p className="text-sm text-muted-foreground">{study.after}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Security Section */}
+        <section className="py-20 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div 
+              ref={(el) => sectionRefs.current['security'] = el}
+              className={`text-center mb-16 ${animatedElements.has('security') ? 'animate-fade-in-up' : 'opacity-0'}`}
+            >
               <h2 className="text-3xl font-bold mb-4">Segurança e Confiança</h2>
               <p className="text-xl text-muted-foreground">Seus dados protegidos com a mais alta tecnologia</p>
             </div>
             
             <div className="grid md:grid-cols-3 gap-8">
-              <Card className="text-center p-6">
+              <Card 
+                ref={(el) => sectionRefs.current['security-1'] = el}
+                className={`text-center p-6 hover-lift transition-all ${animatedElements.has('security-1') ? 'animate-scale-in' : 'opacity-0'}`}
+                style={{ animationDelay: '0s' }}
+              >
                 <Lock className="w-12 h-12 text-primary mx-auto mb-4" />
                 <h3 className="text-xl font-semibold mb-2">Criptografia SSL</h3>
                 <p className="text-muted-foreground">Dados protegidos com criptografia de ponta a ponta</p>
               </Card>
-              <Card className="text-center p-6">
+              <Card 
+                ref={(el) => sectionRefs.current['security-2'] = el}
+                className={`text-center p-6 hover-lift transition-all ${animatedElements.has('security-2') ? 'animate-scale-in' : 'opacity-0'}`}
+                style={{ animationDelay: '0.2s' }}
+              >
                 <Database className="w-12 h-12 text-primary mx-auto mb-4" />
                 <h3 className="text-xl font-semibold mb-2">Backup Automático</h3>
                 <p className="text-muted-foreground">Backup diário automático em servidores seguros</p>
               </Card>
-              <Card className="text-center p-6">
+              <Card 
+                ref={(el) => sectionRefs.current['security-3'] = el}
+                className={`text-center p-6 hover-lift transition-all ${animatedElements.has('security-3') ? 'animate-scale-in' : 'opacity-0'}`}
+                style={{ animationDelay: '0.4s' }}
+              >
                 <Headphones className="w-12 h-12 text-primary mx-auto mb-4" />
                 <h3 className="text-xl font-semibold mb-2">Suporte 24/7</h3>
                 <p className="text-muted-foreground">Equipe especializada disponível quando você precisar</p>
