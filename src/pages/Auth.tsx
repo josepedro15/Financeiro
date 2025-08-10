@@ -94,10 +94,18 @@ export default function Auth() {
           <Card className="shadow-finance-lg border-0">
             <CardHeader className="text-center">
               <div className="lg:hidden flex items-center justify-center space-x-2 mb-4">
-                <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-5 h-5 text-primary-foreground" />
-                </div>
-                <h1 className="text-2xl font-bold">FinanceiroLogotiq</h1>
+                <Button 
+                  variant="ghost" 
+                  className="p-0 h-auto hover:bg-transparent"
+                  onClick={() => navigate('/')}
+                >
+                  <div className="flex items-center space-x-2">
+                    <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
+                      <DollarSign className="w-5 h-5 text-primary-foreground" />
+                    </div>
+                    <h1 className="text-2xl font-bold">FinanceiroLogotiq</h1>
+                  </div>
+                </Button>
               </div>
               <CardTitle className="text-2xl">Bem-vindo</CardTitle>
               <CardDescription>

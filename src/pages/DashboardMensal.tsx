@@ -217,10 +217,18 @@ export default function DashboardMensal() {
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
-            </div>
-            <h1 className="text-lg sm:text-2xl font-bold">FinanceiroLogotiq (Mensal)</h1>
+            <Button 
+              variant="ghost" 
+              className="p-0 h-auto hover:bg-transparent"
+              onClick={() => navigate('/')}
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
+                </div>
+                <h1 className="text-lg sm:text-2xl font-bold">FinanceiroLogotiq (Mensal)</h1>
+              </div>
+            </Button>
           </div>
           <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
             <span className="text-xs sm:text-sm text-muted-foreground text-center">

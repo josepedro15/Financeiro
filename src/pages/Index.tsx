@@ -488,12 +488,20 @@ const Index = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                FinanceiroLogotiq
-              </h1>
+              <Button 
+                variant="ghost" 
+                className="p-0 h-auto hover:bg-transparent"
+                onClick={() => navigate('/')}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center">
+                    <DollarSign className="w-5 h-5 text-primary-foreground" />
+                  </div>
+                  <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                    FinanceiroLogotiq
+                  </h1>
+                </div>
+              </Button>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="ghost" onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}>
