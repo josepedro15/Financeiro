@@ -526,6 +526,8 @@ export default function Clients() {
 
     try {
       console.log('🔄 Tentando deletar cliente:', id);
+      console.log('📊 Stages disponíveis:', Object.keys(stages));
+      console.log('📊 Clients disponíveis:', clients.length);
       
       // Primeiro, vamos verificar o cliente antes de deletar
       const { data: clientData, error: fetchError } = await supabase
@@ -594,9 +596,12 @@ export default function Clients() {
 
       if (error) throw error;
 
+      // Verificar se o stage existe antes de acessar .name
+      const stageName = stages[newStage]?.name || newStage;
+      
       toast({
         title: "Sucesso",
-        description: `Cliente movido para ${stages[newStage].name}`
+        description: `Cliente movido para ${stageName}`
       });
       loadClients();
     } catch (error: any) {
@@ -717,16 +722,18 @@ export default function Clients() {
 
   const handleDeleteStage = async (stageKey: string) => {
     const clientsInStage = getClientsByStage(stageKey);
+    const stageName = stages[stageKey]?.name || stageKey;
+    
     if (clientsInStage.length > 0) {
       toast({
         title: "Erro",
-        description: `Não é possível excluir o estágio "${stages[stageKey].name}" pois há ${clientsInStage.length} cliente(s) nele`,
+        description: `Não é possível excluir o estágio "${stageName}" pois há ${clientsInStage.length} cliente(s) nele`,
         variant: "destructive"
       });
       return;
     }
 
-    if (!confirm(`Tem certeza que deseja excluir o estágio "${stages[stageKey].name}"?`)) return;
+    if (!confirm(`Tem certeza que deseja excluir o estágio "${stageName}"?`)) return;
 
     const stage = stages[stageKey];
     if (!stage?.id) {
