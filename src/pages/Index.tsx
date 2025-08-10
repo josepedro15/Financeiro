@@ -2,7 +2,9 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { DollarSign, TrendingUp, BarChart3, Shield, Users, Zap } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Check, DollarSign, TrendingUp, BarChart3, Shield, Users, Zap, Star, Crown, CreditCard, FileText, Mail } from 'lucide-react';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -21,6 +23,44 @@ const Index = () => {
       </div>
     );
   }
+
+  const plans = [
+    {
+      name: 'Starter',
+      description: 'Ideal para MEI e pequenos negócios',
+      price: 'R$ 79,90',
+      period: '/mês',
+      features: [
+        'Dashboard financeiro básico',
+        'Até 1.000 transações/mês',
+        '1 usuário incluído',
+        'CRM básico (até 50 clientes)',
+        'Relatórios mensais',
+        'Suporte por email'
+      ],
+      popular: false,
+      buttonText: 'Começar com Starter',
+      buttonVariant: 'outline' as const
+    },
+    {
+      name: 'Business',
+      description: 'Para empresas em crescimento',
+      price: 'R$ 159,90',
+      period: '/mês',
+      features: [
+        'Tudo do Starter +',
+        'Transações ilimitadas',
+        'Até 3 usuários',
+        'CRM completo (clientes ilimitados)',
+        'Sistema organizacional',
+        'Relatórios avançados',
+        'Múltiplas contas financeiras'
+      ],
+      popular: true,
+      buttonText: 'Começar com Business',
+      buttonVariant: 'default' as const
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
@@ -93,6 +133,59 @@ const Index = () => {
             <p className="text-muted-foreground">
               Seus dados protegidos com autenticação segura e criptografia
             </p>
+          </div>
+        </div>
+
+        {/* Pricing Section */}
+        <div className="mb-16">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Planos e Preços</h2>
+            <p className="text-xl text-muted-foreground">
+              Escolha o plano ideal para o seu negócio
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {plans.map((plan) => (
+              <Card key={plan.name} className={`relative ${plan.popular ? 'ring-2 ring-primary' : ''}`}>
+                {plan.popular && (
+                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground">
+                    <Star className="w-3 h-3 mr-1" />
+                    Mais Popular
+                  </Badge>
+                )}
+                <CardHeader className="text-center pb-4">
+                  <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
+                  <CardDescription className="text-base">{plan.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="text-center">
+                    <div className="flex items-baseline justify-center">
+                      <span className="text-4xl font-bold">{plan.price}</span>
+                      <span className="text-muted-foreground ml-1">{plan.period}</span>
+                    </div>
+                  </div>
+                  
+                  <ul className="space-y-3">
+                    {plan.features.map((feature, index) => (
+                      <li key={index} className="flex items-center">
+                        <Check className="w-4 h-4 text-success mr-3 flex-shrink-0" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  
+                  <Button 
+                    variant={plan.buttonVariant} 
+                    className="w-full" 
+                    size="lg"
+                    onClick={() => navigate('/auth')}
+                  >
+                    {plan.buttonText}
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
 
