@@ -439,7 +439,7 @@ export default function Clients() {
         phone: formData.phone || null,
         document: formData.document || null,
         address: formData.address || null,
-        stage: formData.stage,
+        stage: formData.stage || 'lead',
         notes: formData.notes || null,
         is_active: true
       };
@@ -519,12 +519,33 @@ export default function Clients() {
     if (!confirm('Tem certeza que deseja excluir este cliente?')) return;
 
     try {
+      console.log('🔄 Tentando deletar cliente:', id);
+      
+      // Primeiro, vamos verificar o cliente antes de deletar
+      const { data: clientData, error: fetchError } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) {
+        console.error('Erro ao buscar cliente:', fetchError);
+        throw fetchError;
+      }
+
+      console.log('📋 Dados do cliente antes do delete:', clientData);
+
       const { error } = await supabase
         .from('clients')
         .update({ is_active: false })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro no update:', error);
+        throw error;
+      }
+
+      console.log('✅ Cliente deletado com sucesso');
 
       toast({
         title: "Sucesso",
@@ -532,6 +553,7 @@ export default function Clients() {
       });
       loadClients();
     } catch (error: any) {
+      console.error('❌ Erro ao deletar cliente:', error);
       toast({
         title: "Erro",
         description: error.message || "Erro ao excluir cliente",
