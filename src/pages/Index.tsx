@@ -423,14 +423,14 @@ const Index = () => {
             ref={(el) => sectionRefs.current['hero'] = el}
             className={`text-center max-w-4xl mx-auto mb-16 ${animatedElements.has('hero') ? 'animate-fade-in-up' : 'opacity-0'}`}
           >
-            <Badge className="mb-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 animate-pulse-slow">
+            <Badge className="mb-4 bg-primary/10 text-primary border-primary/20 animate-pulse-slow">
               <Sparkles className="w-3 h-3 mr-1" />
               Plataforma #1 em Gestão Financeira
             </Badge>
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 text-gradient">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent">
               Gestão Financeira
               <br />
-              <span className="text-gradient-2">Inteligente</span>
+              <span className="text-primary">Inteligente</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto">
               Sistema completo para controle financeiro empresarial. 
@@ -439,7 +439,7 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Button 
                 size="lg" 
-                className="text-lg px-8 group bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white border-0 hover-scale transition-all" 
+                className="text-lg px-8 group hover-scale transition-all" 
                 onClick={() => navigate('/auth')}
               >
                 Começar Gratuitamente
@@ -448,7 +448,7 @@ const Index = () => {
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="text-lg px-8 group hover-scale transition-all border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white"
+                className="text-lg px-8 group hover-scale transition-all"
               >
                 <Play className="w-4 h-4 mr-2" />
                 Ver Demo
@@ -472,13 +472,13 @@ const Index = () => {
         </section>
 
         {/* Problems & Solutions Section */}
-        <section className="py-20 bg-gradient-to-br from-red-50 to-orange-50">
+        <section className="py-20 bg-muted/30">
           <div className="container mx-auto px-4">
             <div 
               ref={(el) => sectionRefs.current['problems'] = el}
               className={`text-center mb-16 ${animatedElements.has('problems') ? 'animate-fade-in-up' : 'opacity-0'}`}
             >
-              <h2 className="text-3xl font-bold mb-4 text-gradient-2">Problemas que Resolvemos</h2>
+              <h2 className="text-3xl font-bold mb-4">Problemas que Resolvemos</h2>
               <p className="text-xl text-muted-foreground">Transforme seus desafios em oportunidades</p>
             </div>
             
@@ -488,17 +488,17 @@ const Index = () => {
                 ref={(el) => sectionRefs.current['problems-left'] = el}
                 className={`${animatedElements.has('problems-left') ? 'animate-fade-in-left' : 'opacity-0'}`}
               >
-                <h3 className="text-2xl font-bold mb-8 text-red-600">Antes</h3>
+                <h3 className="text-2xl font-bold mb-8 text-destructive">Antes</h3>
                 <div className="space-y-6">
                   {problems.map((problem, index) => (
                     <div 
                       key={index} 
-                      className="flex items-start space-x-4 p-4 rounded-lg bg-red-50 border border-red-200 hover-lift transition-all hover:shadow-lg"
+                      className="flex items-start space-x-4 p-4 rounded-lg bg-destructive/5 border border-destructive/10 hover-lift transition-all hover:shadow-lg"
                       style={{ animationDelay: `${index * 0.2}s` }}
                     >
-                      <problem.icon className="w-6 h-6 text-red-500 mt-1 flex-shrink-0" />
+                      <problem.icon className="w-6 h-6 text-destructive mt-1 flex-shrink-0" />
                       <div>
-                        <h4 className="font-semibold text-red-600">{problem.title}</h4>
+                        <h4 className="font-semibold text-destructive">{problem.title}</h4>
                         <p className="text-muted-foreground">{problem.description}</p>
                       </div>
                     </div>
@@ -511,17 +511,17 @@ const Index = () => {
                 ref={(el) => sectionRefs.current['solutions-right'] = el}
                 className={`${animatedElements.has('solutions-right') ? 'animate-fade-in-right' : 'opacity-0'}`}
               >
-                <h3 className="text-2xl font-bold mb-8 text-green-600">Depois</h3>
+                <h3 className="text-2xl font-bold mb-8 text-success">Depois</h3>
                 <div className="space-y-6">
                   {solutions.map((solution, index) => (
                     <div 
                       key={index} 
-                      className="flex items-start space-x-4 p-4 rounded-lg bg-green-50 border border-green-200 hover-lift transition-all hover:shadow-lg"
+                      className="flex items-start space-x-4 p-4 rounded-lg bg-success/5 border border-success/10 hover-lift transition-all hover:shadow-lg"
                       style={{ animationDelay: `${index * 0.2}s` }}
                     >
-                      <solution.icon className="w-6 h-6 text-green-500 mt-1 flex-shrink-0" />
+                      <solution.icon className="w-6 h-6 text-success mt-1 flex-shrink-0" />
                       <div>
-                        <h4 className="font-semibold text-green-600">{solution.title}</h4>
+                        <h4 className="font-semibold text-success">{solution.title}</h4>
                         <p className="text-muted-foreground">{solution.description}</p>
                       </div>
                     </div>
@@ -533,13 +533,13 @@ const Index = () => {
         </section>
 
         {/* Benefits Section */}
-        <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-50">
+        <section className="py-20">
           <div className="container mx-auto px-4">
             <div 
               ref={(el) => sectionRefs.current['benefits'] = el}
               className={`text-center mb-16 ${animatedElements.has('benefits') ? 'animate-fade-in-up' : 'opacity-0'}`}
             >
-              <h2 className="text-3xl font-bold mb-4 text-gradient-3">Por que escolher o FinanceiroLogotiq?</h2>
+              <h2 className="text-3xl font-bold mb-4">Por que escolher o FinanceiroLogotiq?</h2>
               <p className="text-xl text-muted-foreground">Resultados comprovados por centenas de empresas</p>
             </div>
             
@@ -548,13 +548,13 @@ const Index = () => {
                 <Card 
                   key={index} 
                   ref={(el) => sectionRefs.current[`benefit-${index}`] = el}
-                  className={`text-center p-6 hover-scale transition-all duration-300 bg-white/80 backdrop-blur-sm border-0 shadow-lg ${animatedElements.has(`benefit-${index}`) ? 'animate-scale-in' : 'opacity-0'}`}
+                  className={`text-center p-6 hover-scale transition-all duration-300 hover:shadow-lg ${animatedElements.has(`benefit-${index}`) ? 'animate-scale-in' : 'opacity-0'}`}
                   style={{ animationDelay: `${index * 0.2}s` }}
                 >
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4 animate-float">
-                    <benefit.icon className="w-8 h-8 text-white" />
+                  <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4 animate-float">
+                    <benefit.icon className="w-8 h-8 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-2 text-gradient-3">{benefit.title}</h3>
+                  <h3 className="text-xl font-semibold mb-2">{benefit.title}</h3>
                   <p className="text-muted-foreground">{benefit.description}</p>
                 </Card>
               ))}
