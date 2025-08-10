@@ -432,6 +432,12 @@ export default function Clients() {
         }
       }
 
+      // Garantir que o stage tenha um valor válido e seguro
+      let safeStage = formData.stage || 'lead';
+      if (safeStage.length > 100) {
+        safeStage = safeStage.substring(0, 100);
+      }
+
       const clientData = {
         user_id: user.id,
         name: formData.name,
@@ -439,7 +445,7 @@ export default function Clients() {
         phone: formData.phone || null,
         document: formData.document || null,
         address: formData.address || null,
-        stage: formData.stage || 'lead',
+        stage: safeStage,
         notes: formData.notes || null,
         is_active: true
       };
@@ -535,9 +541,26 @@ export default function Clients() {
 
       console.log('📋 Dados do cliente antes do delete:', clientData);
 
+      // Preparar dados para update com valores seguros
+      const updateData = {
+        is_active: false,
+        updated_at: new Date().toISOString()
+      };
+
+      // Garantir que o stage não seja enviado se for problemático
+      if (clientData.stage && clientData.stage.length <= 100) {
+        updateData.stage = clientData.stage;
+      } else if (clientData.stage && clientData.stage.length > 100) {
+        updateData.stage = clientData.stage.substring(0, 100);
+      } else {
+        updateData.stage = 'lead';
+      }
+
+      console.log('📤 Dados para update:', updateData);
+
       const { error } = await supabase
         .from('clients')
-        .update({ is_active: false })
+        .update(updateData)
         .eq('id', id);
 
       if (error) {
