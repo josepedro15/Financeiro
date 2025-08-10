@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -47,31 +47,47 @@ const Index = () => {
   const [isNavbarScrolled, setIsNavbarScrolled] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [animatedElements, setAnimatedElements] = useState<Set<string>>(new Set());
-  const [counters, setCounters] = useState<{ [key: string]: number }>({});
+  const [counters, setCounters] = useState<{ [key: string]: number | boolean }>({});
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // Removido redirecionamento automático para permitir acesso à página inicial mesmo logado
 
+  // Throttle function para otimizar performance
+  const throttle = useCallback((func: Function, limit: number) => {
+    let inThrottle: boolean;
+    return function() {
+      const args = arguments;
+      const context = this;
+      if (!inThrottle) {
+        func.apply(context, args);
+        inThrottle = true;
+        setTimeout(() => inThrottle = false, limit);
+      }
+    }
+  }, []);
+
   useEffect(() => {
-    const handleScroll = () => {
+    const handleScroll = throttle(() => {
       setIsNavbarScrolled(window.scrollY > 50);
       
-      // Animações de scroll
-      Object.keys(sectionRefs.current).forEach((key) => {
+      // Animações de scroll otimizadas
+      const keys = Object.keys(sectionRefs.current);
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
         const element = sectionRefs.current[key];
-        if (element) {
+        if (element && !animatedElements.has(key)) {
           const rect = element.getBoundingClientRect();
           const isVisible = rect.top < window.innerHeight * 0.8 && rect.bottom > 0;
           
-          if (isVisible && !animatedElements.has(key)) {
+          if (isVisible) {
             setAnimatedElements(prev => new Set([...prev, key]));
             
-            // Animar contadores quando a seção de métricas aparecer
-            if (key === 'metrics') {
+            // Animar contadores apenas uma vez
+            if (key === 'metrics' && !counters.initialized) {
               metrics.forEach((metric, index) => {
                 const target = parseInt(metric.number.replace(/\D/g, ''));
-                const duration = 2000; // 2 segundos
-                const steps = 60;
+                const duration = 1500; // Reduzido para 1.5 segundos
+                const steps = 30; // Reduzido para 30 steps
                 const increment = target / steps;
                 let current = 0;
                 
@@ -87,16 +103,17 @@ const Index = () => {
                   }));
                 }, duration / steps);
               });
+              setCounters(prev => ({ ...prev, initialized: true }));
             }
           }
         }
-      });
-    };
+      }
+    }, 16); // ~60fps
     
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // Executar uma vez para elementos já visíveis
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [animatedElements]);
+  }, [animatedElements, counters.initialized]);
 
   if (loading) {
     return (
@@ -106,7 +123,8 @@ const Index = () => {
     );
   }
 
-  const plans = [
+  // Otimizar dados estáticos com useMemo
+  const plans = useMemo(() => [
     {
       name: 'Starter',
       description: 'Ideal para MEI e pequenos negócios',
@@ -142,9 +160,9 @@ const Index = () => {
       buttonText: 'Começar com Business',
       buttonVariant: 'default' as const
     }
-  ];
+  ], []);
 
-  const testimonials = [
+  const testimonials = useMemo(() => [
     {
       name: 'Maria Silva',
       role: 'CEO, Silva Consultoria',
@@ -163,9 +181,9 @@ const Index = () => {
       content: 'Relatórios detalhados e dashboard em tempo real. Nossa lucratividade aumentou 30% em 3 meses.',
       rating: 5
     }
-  ];
+  ], []);
 
-  const benefits = [
+  const benefits = useMemo(() => [
     {
       icon: Clock,
       title: 'Economize 15h por semana',
@@ -181,9 +199,9 @@ const Index = () => {
       title: '100% Seguro e Confiável',
       description: 'Seus dados protegidos com criptografia de ponta a ponta'
     }
-  ];
+  ], []);
 
-  const problems = [
+  const problems = useMemo(() => [
     {
       icon: AlertTriangle,
       title: 'Controle financeiro desorganizado?',
@@ -199,9 +217,9 @@ const Index = () => {
       title: 'Tempo demais com burocracia?',
       description: 'Processos manuais, relatórios demorados, erros frequentes'
     }
-  ];
+  ], []);
 
-  const solutions = [
+  const solutions = useMemo(() => [
     {
       icon: CheckCircle,
       title: 'Tudo organizado em um só lugar',
@@ -217,9 +235,9 @@ const Index = () => {
       title: 'Automação completa',
       description: 'Processos automatizados que economizam tempo'
     }
-  ];
+  ], []);
 
-  const faqs = [
+  const faqs = useMemo(() => [
     {
       question: 'Como funciona o período de teste gratuito?',
       answer: 'Oferecemos 14 dias de teste gratuito sem compromisso. Você pode testar todas as funcionalidades sem cartão de crédito.'
@@ -236,25 +254,25 @@ const Index = () => {
       question: 'Oferecem suporte técnico?',
       answer: 'Sim! Oferecemos suporte por email, chat e telefone para todos os planos.'
     }
-  ];
+  ], []);
 
-  const metrics = [
+  const metrics = useMemo(() => [
     { number: '500+', label: 'Empresas Atendidas', icon: Users },
     { number: '15h', label: 'Economia Semanal', icon: Clock },
     { number: '25%', label: 'Aumento de Lucro', icon: TrendingUp },
     { number: '99.9%', label: 'Uptime Garantido', icon: Shield }
-  ];
+  ], []);
 
-  const integrations = [
+  const integrations = useMemo(() => [
     { name: 'Banco do Brasil', logo: '🏦' },
     { name: 'Itaú', logo: '🏦' },
     { name: 'Bradesco', logo: '🏦' },
     { name: 'Santander', logo: '🏦' },
     { name: 'Nubank', logo: '🟣' },
     { name: 'Inter', logo: '🟡' }
-  ];
+  ], []);
 
-  const features = [
+  const features = useMemo(() => [
     {
       icon: BarChart3,
       title: 'Dashboard Intuitivo',
@@ -285,9 +303,9 @@ const Index = () => {
       title: 'Acesso Multiplataforma',
       description: 'Acesse de qualquer dispositivo, a qualquer hora'
     }
-  ];
+  ], []);
 
-  const caseStudies = [
+  const caseStudies = useMemo(() => [
     {
       company: 'Silva Consultoria',
       industry: 'Consultoria',
@@ -312,7 +330,7 @@ const Index = () => {
       before: 'Sistema desorganizado, perda de informações',
       after: 'Organização completa, informações centralizadas'
     }
-  ];
+  ], []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
