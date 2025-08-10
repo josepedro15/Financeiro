@@ -215,7 +215,11 @@ export default function SubscriptionStatus() {
                 </>
               )}
               
-              <Button variant="outline" className="w-full">
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => navigate('/invoices')}
+              >
                 <FileText className="w-4 h-4 mr-2" />
                 Histórico de Faturas
               </Button>
