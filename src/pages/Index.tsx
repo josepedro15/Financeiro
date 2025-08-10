@@ -50,11 +50,7 @@ const Index = () => {
   const [counters, setCounters] = useState<{ [key: string]: number }>({});
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  useEffect(() => {
-    if (!loading && user) {
-      navigate('/dashboard');
-    }
-  }, [user, loading, navigate]);
+  // Removido redirecionamento automático para permitir acesso à página inicial mesmo logado
 
   useEffect(() => {
     const handleScroll = () => {
@@ -510,8 +506,8 @@ const Index = () => {
               <Button variant="ghost" onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}>
                 Contato
               </Button>
-              <Button onClick={() => navigate('/auth')}>
-                Acessar Sistema
+              <Button onClick={() => navigate(user ? '/dashboard' : '/auth')}>
+                {user ? 'Dashboard' : 'Acessar Sistema'}
               </Button>
             </div>
           </div>
@@ -542,9 +538,9 @@ const Index = () => {
               <Button 
                 size="lg" 
                 className="text-lg px-8 group hover-scale transition-all" 
-                onClick={() => navigate('/auth')}
+                onClick={() => navigate(user ? '/dashboard' : '/auth')}
               >
-                Começar Gratuitamente
+                {user ? 'Acessar Dashboard' : 'Começar Gratuitamente'}
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
               <Button 
@@ -1024,9 +1020,9 @@ const Index = () => {
               Junte-se a centenas de empresas que já revolucionaram suas finanças
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" variant="secondary" className="text-lg px-8 group" onClick={() => navigate('/auth')}>
+              <Button size="lg" variant="secondary" className="text-lg px-8 group" onClick={() => navigate(user ? '/dashboard' : '/auth')}>
                 <Rocket className="w-4 h-4 mr-2" />
-                Começar Gratuitamente
+                {user ? 'Acessar Dashboard' : 'Começar Gratuitamente'}
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
               <Button size="lg" variant="outline" className="text-lg px-8 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
