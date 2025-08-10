@@ -219,31 +219,37 @@ export default function Transactions() {
     e.preventDefault();
     if (!user) return;
 
-    // Verificar limites de assinatura (apenas para novos usuários)
-    if (!isMasterUser && !editingTransaction) {
-      console.log('=== DEBUG LIMITES ===');
-      console.log('isMasterUser:', isMasterUser);
-      console.log('editingTransaction:', editingTransaction);
-      
-      const canCreate = await canPerformAction('transaction');
-      console.log('canCreate:', canCreate);
-      
-      // Debug adicional - verificar limites diretamente
-      const limits = await checkPlanLimits('transaction');
-      console.log('Limits:', limits);
-      
-      if (!canCreate) {
-        console.log('Limite atingido - bloqueando criação');
-        toast({
-          title: "Limite Atingido",
-          description: "Você atingiu o limite de transações do seu plano. Faça upgrade para continuar.",
-          variant: "destructive"
-        });
-        return;
+          // Verificar limites de assinatura (apenas para novos usuários)
+      if (!isMasterUser && !editingTransaction) {
+        console.log('=== DEBUG LIMITES ===');
+        console.log('isMasterUser:', isMasterUser);
+        console.log('editingTransaction:', editingTransaction);
+        console.log('user.id:', user?.id);
+        
+        const canCreate = await canPerformAction('transaction');
+        console.log('canCreate:', canCreate);
+        
+        // Debug adicional - verificar limites diretamente
+        const limits = await checkPlanLimits('transaction');
+        console.log('Limits:', limits);
+        
+        // Debug adicional - verificar subscription e usage
+        console.log('Subscription:', subscription);
+        console.log('Usage:', usage);
+        
+        if (!canCreate) {
+          console.log('Limite atingido - bloqueando criação');
+          console.log('Motivo: canPerformAction retornou false');
+          toast({
+            title: "Limite Atingido",
+            description: "Você atingiu o limite de transações do seu plano. Faça upgrade para continuar.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        console.log('Limite OK - permitindo criação');
       }
-      
-      console.log('Limite OK - permitindo criação');
-    }
 
     // Validação adicional
     if (!formData.account_name) {
