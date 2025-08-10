@@ -692,9 +692,9 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 py-8">
         
         {/* Centro de Notificações */}
-        {/* <div className="mb-6">
+        <div className="mb-6">
           <NotificationCenter />
-        </div> */}
+        </div>
         {/* Status de atualização */}
         <div className="mb-6 text-center">
           <p className="text-sm text-muted-foreground">
