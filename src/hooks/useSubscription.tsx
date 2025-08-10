@@ -170,14 +170,8 @@ export const useSubscription = () => {
       return true;
     }
     
-    // Lógica simplificada: se está no trial, permite
-    if (isTrialActive()) {
-      console.log('canPerformAction: usuário no trial, permitindo ação');
-      return true;
-    }
-    
-    // Se não está no trial, verifica limites da assinatura
-    console.log('canPerformAction: usuário não está no trial, verificando limites...');
+    // Verificar limites (tanto para trial quanto para assinatura ativa)
+    console.log('canPerformAction: verificando limites...');
     const limits = await checkPlanLimits(actionType);
     console.log('canPerformAction: limites obtidos:', limits);
     
