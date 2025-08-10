@@ -48,7 +48,7 @@ interface Account {
 
 export default function Transactions() {
   const { user } = useAuth();
-  const { canPerformAction, incrementUsage, isMasterUser } = useSubscription();
+  const { canPerformAction, incrementUsage, isMasterUser, checkPlanLimits, subscription, usage } = useSubscription();
   const navigate = useNavigate();
   const { toast } = useToast();
   

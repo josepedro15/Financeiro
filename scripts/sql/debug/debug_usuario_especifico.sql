@@ -1,8 +1,8 @@
+-- scripts/sql/debug/debug_usuario_especifico.sql
 -- =====================================================
 -- DEBUG USUÁRIO ESPECÍFICO - LIMITES DE TRANSAÇÕES
 -- =====================================================
 
--- Substitua este ID pelo ID do usuário que está tendo problemas
 DO $$
 DECLARE
     target_user_id UUID := '5b86818d-3fbe-4e30-ac35-68211c100b90';
@@ -10,6 +10,7 @@ DECLARE
     user_subscription RECORD;
     current_usage RECORD;
     test_result RECORD;
+    test_increment RECORD;
 BEGIN
     RAISE NOTICE '=== DEBUG USUÁRIO: % ===', target_user_id;
     RAISE NOTICE '=== MÊS ATUAL: % ===', current_month;
@@ -68,7 +69,29 @@ BEGIN
         END IF;
     END IF;
     
-    -- 6. CALCULAR MANUALMENTE SE PODE CRIAR TRANSAÇÃO
+    -- 6. TESTAR FUNÇÃO increment_usage
+    RAISE NOTICE 'TESTANDO increment_usage...';
+    BEGIN
+        SELECT * INTO test_increment 
+        FROM public.increment_usage(target_user_id, 'transaction', 1);
+        RAISE NOTICE 'increment_usage executado com sucesso';
+    EXCEPTION WHEN OTHERS THEN
+        RAISE NOTICE 'ERRO em increment_usage: %', SQLERRM;
+    END;
+    
+    -- 7. VERIFICAR USO APÓS INCREMENTO
+    SELECT * INTO current_usage 
+    FROM public.usage_tracking 
+    WHERE user_id = target_user_id AND month_year = current_month;
+    
+    IF current_usage IS NOT NULL THEN
+        RAISE NOTICE 'USO APÓS INCREMENTO: transactions=%, users=%, clients=%', 
+            current_usage.transactions_count, 
+            current_usage.users_count, 
+            current_usage.clients_count;
+    END IF;
+    
+    -- 8. CALCULAR MANUALMENTE SE PODE CRIAR TRANSAÇÃO
     IF user_subscription IS NOT NULL AND current_usage IS NOT NULL THEN
         IF user_subscription.monthly_transaction_limit IS NOT NULL THEN
             IF current_usage.transactions_count < user_subscription.monthly_transaction_limit THEN
@@ -85,7 +108,7 @@ BEGIN
     
 END $$;
 
--- 7. MOSTRAR TODOS OS DADOS RELEVANTES
+-- 9. MOSTRAR TODOS OS DADOS RELEVANTES
 SELECT 
     '=== RESUMO COMPLETO ===' as info,
     s.user_id,
@@ -112,3 +135,13 @@ FROM public.subscriptions s
 LEFT JOIN public.usage_tracking ut ON s.user_id = ut.user_id 
     AND ut.month_year = TO_CHAR(NOW(), 'YYYY-MM')
 WHERE s.user_id = '5b86818d-3fbe-4e30-ac35-68211c100b90';
+
+-- 10. VERIFICAR FUNÇÕES DISPONÍVEIS
+SELECT 
+    '=== FUNÇÕES DISPONÍVEIS ===' as info,
+    routine_name,
+    routine_type
+FROM information_schema.routines 
+WHERE routine_schema = 'public' 
+    AND routine_name IN ('check_plan_limits', 'increment_usage', 'is_user_in_trial')
+ORDER BY routine_name;
