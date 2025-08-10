@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -280,6 +281,7 @@ function DraggableClientCard({ client, onEdit, onDelete }: {
 
 export default function Clients() {
   const { user } = useAuth();
+  const { canPerformAction, incrementUsage, isMasterUser } = useSubscription();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -414,6 +416,22 @@ export default function Clients() {
     if (!user) return;
 
     try {
+      // Verificar se pode criar cliente (apenas para novos clientes, não edições)
+      if (!editingClient) {
+        console.log('handleSubmit: verificando se pode criar cliente...');
+        const canCreate = await canPerformAction('client');
+        console.log('handleSubmit: pode criar cliente?', canCreate);
+        
+        if (!canCreate) {
+          toast({
+            title: "Limite Atingido",
+            description: "Você atingiu o limite de clientes para seu plano atual",
+            variant: "destructive"
+          });
+          return;
+        }
+      }
+
       const clientData = {
         user_id: user.id,
         name: formData.name,
@@ -445,6 +463,11 @@ export default function Clients() {
 
         if (error) throw error;
 
+        // Incrementar contador de uso apenas para novos clientes
+        console.log('handleSubmit: incrementando uso de cliente...');
+        await incrementUsage('client', 1);
+        console.log('handleSubmit: uso incrementado com sucesso');
+
         toast({
           title: "Sucesso",
           description: "Cliente criado com sucesso"
@@ -455,6 +478,7 @@ export default function Clients() {
       resetForm();
       loadClients();
     } catch (error: any) {
+      console.error('handleSubmit: erro:', error);
       toast({
         title: "Erro",
         description: error.message || "Erro ao salvar cliente",
