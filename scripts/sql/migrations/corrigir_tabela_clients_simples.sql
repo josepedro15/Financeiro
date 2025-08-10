@@ -20,12 +20,12 @@ ORDER BY ordinal_position;
 -- 4. Testar inserção
 SELECT '=== TESTANDO INSERÇÃO ===' as info;
 INSERT INTO public.clients (user_id, name, email, phone, document, address, stage, notes) 
-VALUES ('test-user-id', 'Cliente Teste', 'teste@email.com', '123456789', '123.456.789-00', 'Endereço Teste', 'Negociação', 'Observação teste')
+VALUES ('00000000-0000-0000-0000-000000000001', 'Cliente Teste', 'teste@email.com', '123456789', '123.456.789-00', 'Endereço Teste', 'Negociação', 'Observação teste')
 ON CONFLICT DO NOTHING;
 
 -- 5. Verificar se foi inserido
 SELECT '=== CLIENTE INSERIDO ===' as info;
-SELECT name, email, stage, notes FROM public.clients WHERE user_id = 'test-user-id';
+SELECT name, email, stage, notes FROM public.clients WHERE user_id = '00000000-0000-0000-0000-000000000001';
 
 -- 6. Limpar teste
-DELETE FROM public.clients WHERE user_id = 'test-user-id';
+DELETE FROM public.clients WHERE user_id = '00000000-0000-0000-0000-000000000001';
