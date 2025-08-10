@@ -35,68 +35,39 @@ const UpgradePlan = () => {
     {
       id: 'starter',
       name: 'Starter',
-      price: 'R$ 29',
+      price: 'R$ 79,90',
       period: '/mês',
-      description: 'Perfeito para pequenas empresas',
+      description: 'Ideal para MEI e pequenos negócios',
       icon: Zap,
       color: 'bg-blue-500',
       features: [
-        { text: '1.000 transações/mês', included: true },
-        { text: '1 usuário', included: true },
-        { text: '50 clientes', included: true },
-        { text: 'Dashboard básico', included: true },
-        { text: 'Relatórios básicos', included: true },
-        { text: 'Suporte por email', included: true },
-        { text: 'Integrações bancárias', included: false },
-        { text: 'CRM avançado', included: false },
-        { text: 'Relatórios personalizados', included: false },
-        { text: 'Suporte prioritário', included: false }
+        { text: 'Dashboard financeiro básico', included: true },
+        { text: 'Até 1.000 transações/mês', included: true },
+        { text: '1 usuário incluído', included: true },
+        { text: 'CRM básico (até 50 clientes)', included: true },
+        { text: 'Relatórios mensais', included: true },
+        { text: 'Suporte por email', included: true }
       ],
       popular: false
     },
     {
       id: 'business',
       name: 'Business',
-      price: 'R$ 79',
+      price: 'R$ 159,90',
       period: '/mês',
-      description: 'Ideal para empresas em crescimento',
+      description: 'Para empresas em crescimento',
       icon: Building,
       color: 'bg-purple-500',
       features: [
-        { text: '10.000 transações/mês', included: true },
-        { text: '5 usuários', included: true },
-        { text: '500 clientes', included: true },
-        { text: 'Dashboard completo', included: true },
+        { text: 'Tudo do Starter +', included: true },
+        { text: 'Transações ilimitadas', included: true },
+        { text: 'Até 3 usuários', included: true },
+        { text: 'CRM completo (clientes ilimitados)', included: true },
+        { text: 'Sistema organizacional', included: true },
         { text: 'Relatórios avançados', included: true },
-        { text: 'Integrações bancárias', included: true },
-        { text: 'CRM completo', included: true },
-        { text: 'Suporte por chat', included: true },
-        { text: 'Relatórios personalizados', included: false },
-        { text: 'Suporte prioritário', included: false }
+        { text: 'Múltiplas contas financeiras', included: true }
       ],
       popular: true
-    },
-    {
-      id: 'unlimited',
-      name: 'Unlimited',
-      price: 'R$ 199',
-      period: '/mês',
-      description: 'Para grandes empresas',
-      icon: Crown,
-      color: 'bg-yellow-500',
-      features: [
-        { text: 'Transações ilimitadas', included: true },
-        { text: 'Usuários ilimitados', included: true },
-        { text: 'Clientes ilimitados', included: true },
-        { text: 'Dashboard personalizado', included: true },
-        { text: 'Relatórios personalizados', included: true },
-        { text: 'Todas as integrações', included: true },
-        { text: 'CRM avançado', included: true },
-        { text: 'Suporte prioritário 24/7', included: true },
-        { text: 'API personalizada', included: true },
-        { text: 'Consultoria dedicada', included: true }
-      ],
-      popular: false
     }
   ];
 
@@ -173,7 +144,7 @@ const UpgradePlan = () => {
         </div>
 
         {/* Plans Grid */}
-        <div className="grid md:grid-cols-3 gap-8 mb-12">
+        <div className="grid md:grid-cols-2 gap-8 mb-12 max-w-4xl mx-auto">
           {plans.map((plan) => {
             const IconComponent = plan.icon;
             const isSelected = selectedPlan === plan.id;
@@ -240,7 +211,7 @@ const UpgradePlan = () => {
                     disabled={isCurrentPlan || isLoading}
                     onClick={() => handlePlanSelect(plan.id)}
                   >
-                    {isCurrentPlan ? 'Plano Atual' : isSelected ? 'Selecionado' : 'Escolher Plano'}
+                    {isCurrentPlan ? 'Plano Atual' : isSelected ? 'Selecionado' : `Começar com ${plan.name}`}
                   </Button>
                 </CardContent>
               </Card>
