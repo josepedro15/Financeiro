@@ -18,6 +18,7 @@ const SubscriptionStatus = lazy(() => import("./pages/SubscriptionStatus"));
 const PlanSelection = lazy(() => import("./pages/PlanSelection"));
 const Checkout = lazy(() => import("./pages/Checkout"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const TestPage = lazy(() => import("./pages/TestPage"));
 
 // Loading component
 const PageLoader = () => (
@@ -61,6 +62,7 @@ const App = () => {
                 <Route path="/subscription" element={<SubscriptionStatus />} />
                 <Route path="/plans" element={<PlanSelection />} />
                 <Route path="/checkout" element={<Checkout />} />
+                <Route path="/test" element={<TestPage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
