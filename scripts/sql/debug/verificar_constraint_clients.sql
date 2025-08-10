@@ -13,7 +13,6 @@ ORDER BY ordinal_position;
 SELECT '=== CONSTRAINTS DA TABELA CLIENTS ===' as info;
 SELECT 
     constraint_name,
-    constraint_type,
     check_clause
 FROM information_schema.check_constraints
 WHERE constraint_name LIKE '%clients%'
