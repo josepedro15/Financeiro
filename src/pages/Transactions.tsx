@@ -77,38 +77,6 @@ export default function Transactions() {
 
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
 
-  // TESTE DIRETO: Verificar se a função RPC está disponível
-  useEffect(() => {
-    const testRPC = async () => {
-      if (user) {
-        try {
-          alert('🧪 TESTANDO FUNÇÃO RPC...');
-          const { data, error } = await supabase.rpc('insert_transaction_safe', {
-            p_user_id: user.id,
-            p_description: 'TESTE RPC FRONTEND',
-            p_amount: 1.00,
-            p_transaction_type: 'income',
-            p_category: 'teste',
-            p_transaction_date: '2025-08-10',
-            p_account_name: 'Conta PJ',
-            p_client_name: null
-          });
-          
-          if (error) {
-            alert('❌ ERRO RPC: ' + error.message);
-          } else {
-            alert('✅ RPC FUNCIONANDO: ' + JSON.stringify(data, null, 2));
-          }
-        } catch (err: any) {
-          alert('❌ ERRO AO TESTAR RPC: ' + err.message);
-        }
-      }
-    };
-    
-    // Executar teste após 2 segundos
-    setTimeout(testRPC, 2000);
-  }, [user]);
-
   // Debug logs (commented out for production)
   // console.log('=== TRANSACTIONS PAGE DEBUG ===');
   // console.log('User:', user);
@@ -256,14 +224,6 @@ export default function Transactions() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // TESTE DIRETO: Verificar exatamente o que está acontecendo
-    alert('🔍 TESTE DIRETO - Vamos investigar tudo:');
-    alert(`1. Data do form: "${formData.transaction_date}"`);
-    alert(`2. Tipo da data: ${typeof formData.transaction_date}`);
-    alert(`3. Data como Date: ${new Date(formData.transaction_date)}`);
-    alert(`4. Data ISO: ${new Date(formData.transaction_date).toISOString()}`);
-    alert(`5. Data local: ${new Date(formData.transaction_date).toLocaleDateString()}`);
-    
     // Validações básicas
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
       alert('Valor deve ser maior que zero');
@@ -281,13 +241,8 @@ export default function Transactions() {
     }
     
     try {
-      // SOLUÇÃO DEFINITIVA: Usar função RPC personalizada COM DEBUG
-      alert(`6. Usando função RPC personalizada COM DEBUG para evitar timezone`);
-      
-      // CORREÇÃO: Enviar a data exatamente como selecionada, sem conversões
-      const dataParaEnviar = formData.transaction_date; // Usar exatamente a data do form
-      
-      alert(`7. Data que será enviada: "${dataParaEnviar}"`);
+      // SOLUÇÃO DEFINITIVA: Enviar data exata sem conversões
+      const dataExata = formData.transaction_date;
       
       const { data, error } = await supabase.rpc('insert_transaction_safe_debug', {
         p_user_id: user.id,
@@ -295,7 +250,7 @@ export default function Transactions() {
         p_amount: parseFloat(formData.amount),
         p_transaction_type: formData.transaction_type,
         p_category: formData.category || '',
-        p_transaction_date: dataParaEnviar, // Usar data exata sem conversões
+        p_transaction_date: dataExata,
         p_account_name: formData.account_name,
         p_client_name: formData.client_name || null
       });
@@ -304,11 +259,8 @@ export default function Transactions() {
         throw new Error(error.message);
       }
 
-      alert(`8. Resposta da função RPC COM DEBUG:`);
-      alert(JSON.stringify(data, null, 2));
-
       if (data.success) {
-        alert(`✅ Transação criada com sucesso! Data: ${data.transaction_date}`);
+        alert(`✅ Transação criada! Data enviada: ${dataExata}, Data salva: ${data.transaction_date}`);
       } else {
         throw new Error(data.error || 'Erro desconhecido');
       }
