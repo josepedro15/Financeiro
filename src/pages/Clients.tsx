@@ -402,19 +402,36 @@ export default function Clients() {
   };
 
   const loadClients = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('❌ Usuário não autenticado');
+      return;
+    }
 
     try {
-      const { data: clientsData } = await supabase
+      console.log('🔄 Carregando clientes para usuário:', user.id);
+      console.log('🔑 Sessão atual:', await supabase.auth.getSession());
+      
+      const { data: clientsData, error } = await supabase
         .from('clients')
         .select('*')
         .eq('user_id', user.id)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
+      if (error) {
+        console.error('❌ Erro ao carregar clientes:', error);
+        toast({
+          title: "Erro",
+          description: `Erro ao carregar clientes: ${error.message}`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      console.log('✅ Clientes carregados:', clientsData?.length || 0);
       setClients(clientsData || []);
     } catch (error) {
-      console.error('Error loading clients:', error);
+      console.error('❌ Erro ao carregar clientes:', error);
       toast({
         title: "Erro",
         description: "Erro ao carregar clientes",
