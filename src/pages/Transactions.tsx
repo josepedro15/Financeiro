@@ -241,16 +241,12 @@ export default function Transactions() {
     }
     
     try {
-      // SOLUÇÃO DEFINITIVA: USAR EXATAMENTE O QUE É SELECIONADO
+      // SOLUÇÃO DEFINITIVA: USAR TABELA PRINCIPAL
       
       // 1. Usar a data exatamente como selecionada no modal
       const dataExata = formData.transaction_date;
       
-      // 2. Determinar tabela baseada na data
-      const [ano, mes] = dataExata.split('-');
-      const tableName = `transactions_${ano}_${mes}`;
-      
-      // 3. Dados da transação - SEM CONVERSÕES
+      // 2. Dados da transação - SEM CONVERSÕES
       const transactionData = {
         user_id: user.id,
         description: formData.description || '',
@@ -262,9 +258,9 @@ export default function Transactions() {
         client_name: formData.client_name || null
       };
       
-      // 4. Inserir diretamente na tabela - SEM INTERPRETAÇÕES
+      // 3. Inserir na tabela PRINCIPAL - SEM PARTICIONAMENTO
       const { data, error } = await supabase
-        .from(tableName)
+        .from('transactions')
         .insert([transactionData])
         .select();
 
