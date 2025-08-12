@@ -35,6 +35,15 @@ export async function insertTransactionInCorrectTable(
     console.log(`Tabela escolhida: ${tableName}`);
     console.log(`Usando tabela mensal: ${useMonthlyTable}`);
     
+    // CORREÇÃO: Forçar timezone correto para evitar conversões automáticas
+    const dataToInsert = {
+      ...transactionData,
+      // Forçar a data como DATE sem timezone
+      transaction_date: `${transactionData.transaction_date}::date`
+    };
+    
+    console.log(`Dados para inserção:`, dataToInsert);
+    
     // Inserir na tabela determinada
     const { data, error } = await supabase
       .from(tableName)

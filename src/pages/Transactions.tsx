@@ -249,48 +249,31 @@ export default function Transactions() {
     }
     
     try {
-      // TESTE: Vamos usar a data exatamente como vem do input
-      const dataOriginal = formData.transaction_date;
+      // SOLUÇÃO DEFINITIVA: Usar função RPC personalizada
+      alert(`6. Usando função RPC personalizada para evitar timezone`);
       
-      alert(`6. Data original: "${dataOriginal}"`);
-      alert(`7. Vamos usar exatamente esta data sem modificações`);
-      
-      const transactionData = {
-        user_id: user.id,
-        description: formData.description || '',
-        amount: parseFloat(formData.amount),
-        transaction_type: formData.transaction_type,
-        category: formData.category || '',
-        transaction_date: dataOriginal, // USAR EXATAMENTE A DATA ORIGINAL
-        account_name: formData.account_name,
-        client_name: formData.client_name || null
-      };
+      const { data, error } = await supabase.rpc('insert_transaction_safe', {
+        p_user_id: user.id,
+        p_description: formData.description || '',
+        p_amount: parseFloat(formData.amount),
+        p_transaction_type: formData.transaction_type,
+        p_category: formData.category || '',
+        p_transaction_date: formData.transaction_date,
+        p_account_name: formData.account_name,
+        p_client_name: formData.client_name || null
+      });
 
-      alert('8. Dados que serão enviados:');
-      alert(JSON.stringify(transactionData, null, 2));
+      if (error) {
+        throw new Error(error.message);
+      }
 
-      if (editingTransaction) {
-        // Atualizar transação existente
-        const result = await updateTransactionInCorrectTable(
-          editingTransaction.id,
-          editingTransaction,
-          transactionData
-        );
+      alert(`7. Resposta da função RPC:`);
+      alert(JSON.stringify(data, null, 2));
 
-        if (!result.success) {
-          throw new Error(result.error || 'Erro ao atualizar transação');
-        }
-
-        alert('✅ Transação atualizada com sucesso!');
+      if (data.success) {
+        alert(`✅ Transação criada com sucesso! Data: ${data.transaction_date}`);
       } else {
-        // Criar nova transação
-        const result = await insertTransactionInCorrectTable(transactionData);
-
-        if (!result.success) {
-          throw new Error(result.error || 'Erro ao criar transação');
-        }
-
-        alert(`✅ Transação criada com sucesso! Data: ${dataOriginal}`);
+        throw new Error(data.error || 'Erro desconhecido');
       }
 
       // Reset form
