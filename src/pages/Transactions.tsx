@@ -76,6 +76,8 @@ export default function Transactions() {
   });
 
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
+  const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
+  const [selectAll, setSelectAll] = useState(false);
 
   // Debug logs (commented out for production)
   // console.log('=== TRANSACTIONS PAGE DEBUG ===');
@@ -455,6 +457,108 @@ export default function Transactions() {
     setDialogOpen(true);
   };
 
+  // Funções para seleção múltipla
+  const handleSelectTransaction = (id: string) => {
+    const newSelected = new Set(selectedTransactions);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedTransactions(newSelected);
+    setSelectAll(newSelected.size === filteredTransactions.length);
+  };
+
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedTransactions(new Set());
+      setSelectAll(false);
+    } else {
+      const allIds = filteredTransactions.map(t => t.id);
+      setSelectedTransactions(new Set(allIds));
+      setSelectAll(true);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedTransactions.size === 0) {
+      toast({
+        title: "Aviso",
+        description: "Nenhuma transação selecionada para excluir",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const count = selectedTransactions.size;
+    const confirmMessage = count === 1 
+      ? 'Tem certeza que deseja excluir esta transação?' 
+      : `Tem certeza que deseja excluir ${count} transações?`;
+
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const id of selectedTransactions) {
+        try {
+          // Encontrar a transação para obter a data
+          const transactionToDelete = transactions.find(t => t.id === id);
+          
+          if (!transactionToDelete) {
+            console.error(`Transação ${id} não encontrada`);
+            errorCount++;
+            continue;
+          }
+
+          // Usar remoção inteligente da tabela correta
+          const result = await deleteTransactionFromCorrectTable(
+            id, 
+            transactionToDelete.transaction_date
+          );
+
+          if (result.success) {
+            successCount++;
+          } else {
+            console.error(`Erro ao excluir transação ${id}:`, result.error);
+            errorCount++;
+          }
+        } catch (error: any) {
+          console.error(`Erro ao excluir transação ${id}:`, error);
+          errorCount++;
+        }
+      }
+
+      // Limpar seleção
+      setSelectedTransactions(new Set());
+      setSelectAll(false);
+
+      // Mostrar resultado
+      if (successCount > 0) {
+        toast({
+          title: "Sucesso",
+          description: `${successCount} transação(ões) excluída(s) com sucesso${errorCount > 0 ? `, ${errorCount} erro(s)` : ''}`
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: `Nenhuma transação foi excluída. ${errorCount} erro(s) encontrado(s).`,
+          variant: "destructive"
+        });
+      }
+
+      loadData();
+    } catch (error: any) {
+      console.error('Erro na exclusão em lote:', error);
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao excluir transações",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir esta transação?')) return;
 
@@ -738,13 +842,14 @@ export default function Transactions() {
             </CardDescription>
           </CardHeader>
           
-          {/* Filtros */}
+          {/* Filtros e Seleção Múltipla */}
           <div className="px-6 pb-4 border-b">
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Filtros:</span>
-              </div>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Filtros:</span>
+                </div>
               
               {/* Filtro por Mês */}
               <div className="flex items-center gap-2">
@@ -835,9 +940,56 @@ export default function Transactions() {
                 {filteredTransactions.length} de {transactions.length} transações
               </div>
             </div>
+            
+            {/* Controles de Seleção Múltipla */}
+            {selectedTransactions.size > 0 && (
+              <div className="flex items-center gap-2 mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={selectAll}
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-blue-800">
+                    {selectedTransactions.size} transação(ões) selecionada(s)
+                  </span>
+                </div>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteSelected}
+                  className="ml-auto"
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Excluir Selecionadas
+                </Button>
+              </div>
+            )}
+            </div>
           </div>
 
           <CardContent>
+            {/* Cabeçalho com Seleção Múltipla */}
+            {filteredTransactions.length > 0 && (
+              <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
+                <input
+                  type="checkbox"
+                  checked={selectAll}
+                  onChange={handleSelectAll}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  {selectAll ? 'Desmarcar Todas' : 'Selecionar Todas'}
+                </span>
+                {selectedTransactions.size > 0 && (
+                  <span className="text-sm text-blue-600 ml-auto">
+                    {selectedTransactions.size} selecionada(s)
+                  </span>
+                )}
+              </div>
+            )}
+            
             {loading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
@@ -887,9 +1039,20 @@ export default function Transactions() {
                 {filteredTransactions.map((transaction) => (
                   <div 
                     key={transaction.id} 
-                    className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors"
+                    className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                      selectedTransactions.has(transaction.id) 
+                        ? 'bg-blue-50 border-blue-200' 
+                        : 'hover:bg-muted/50'
+                    }`}
                   >
                     <div className="flex items-center space-x-4">
+                      {/* Checkbox de seleção */}
+                      <input
+                        type="checkbox"
+                        checked={selectedTransactions.has(transaction.id)}
+                        onChange={() => handleSelectTransaction(transaction.id)}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                      />
                       <div className={`p-2 rounded-full ${
                         transaction.transaction_type === 'income' 
                           ? 'bg-success/10' 
