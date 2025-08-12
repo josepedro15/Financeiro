@@ -288,9 +288,23 @@ export default function Transactions() {
         console.log('📅 Data original:', editingTransaction.transaction_date);
         console.log('📅 Nova data:', dataCorrigida);
         
-        // LÓGICA SIMPLES: Criar nova e excluir anterior
+        // LÓGICA SIMPLES: Excluir anterior e criar nova
         try {
-          // 1. Criar nova transação
+          // 1. Primeiro, excluir transação anterior
+          console.log('🗑️ Excluindo transação anterior...');
+          const { error: deleteError } = await supabase
+            .from('transactions_2025_08')
+            .delete()
+            .eq('id', editingTransaction.id);
+          
+          if (deleteError) {
+            console.error('❌ Erro ao excluir transação anterior:', deleteError);
+            throw new Error(`Erro ao excluir transação anterior: ${deleteError.message}`);
+          }
+          
+          console.log('✅ Transação anterior excluída');
+          
+          // 2. Depois, criar nova transação
           console.log('📤 Criando nova transação...');
           const { data: newTransaction, error: insertError } = await supabase
             .from('transactions_2025_08') // Por enquanto fixo em agosto
@@ -304,25 +318,6 @@ export default function Transactions() {
           }
           
           console.log('✅ Nova transação criada:', newTransaction);
-          
-          // 2. Excluir transação anterior
-          console.log('🗑️ Excluindo transação anterior...');
-          const { error: deleteError } = await supabase
-            .from('transactions_2025_08')
-            .delete()
-            .eq('id', editingTransaction.id);
-          
-          if (deleteError) {
-            console.error('❌ Erro ao excluir transação anterior:', deleteError);
-            // Se falhar ao excluir, vamos excluir a nova transação criada
-            await supabase
-              .from('transactions_2025_08')
-              .delete()
-              .eq('id', newTransaction.id);
-            throw new Error(`Erro ao excluir transação anterior: ${deleteError.message}`);
-          }
-          
-          console.log('✅ Transação anterior excluída');
           console.log('✅ Edição concluída com sucesso!');
           
           const date = new Date(formData.transaction_date);
