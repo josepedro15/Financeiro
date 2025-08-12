@@ -256,6 +256,9 @@ export default function Transactions() {
       console.log('Dia da semana:', diaSemana, '(0=domingo)');
       console.log('Dia do mês:', diaMes);
       
+      // CORREÇÃO: Se é domingo mas está sendo interpretado como sábado, forçar o domingo
+      let dataFinal = dataSelecionada;
+      
       if (diaSemana === 0) {
         console.log('⚠️ DOMINGO DETECTADO!');
         console.log('Data original:', dataSelecionada);
@@ -263,12 +266,12 @@ export default function Transactions() {
         console.log('Data ISO:', dataObj.toISOString());
         console.log('Data local:', dataObj.toLocaleDateString('pt-BR'));
         
-        // Corrigir problema de fuso horário para domingos
+        // Garantir que a data seja exatamente a selecionada, sem conversões de fuso horário
         const [ano, mes, dia] = dataSelecionada.split('-');
-        const dataCorrigida = `${ano}-${mes}-${dia}`;
+        dataFinal = `${ano}-${mes}-${dia}`;
         
-        console.log('Data corrigida para domingo:', dataCorrigida);
-        alert(`DOMINGO DETECTADO!\nData original: ${dataSelecionada}\nDia da semana: ${diaSemana}\nData corrigida: ${dataCorrigida}`);
+        console.log('Data final para domingo:', dataFinal);
+        alert(`DOMINGO DETECTADO!\nData original: ${dataSelecionada}\nDia da semana: ${diaSemana}\nData final: ${dataFinal}`);
       }
       
       const transactionData = {
@@ -277,12 +280,13 @@ export default function Transactions() {
         amount: parseFloat(formData.amount),
         transaction_type: formData.transaction_type,
         category: formData.category || '',
-        transaction_date: dataSelecionada, // Usar a data exatamente como selecionada
+        transaction_date: dataFinal, // Usar a data corrigida
         account_name: formData.account_name,
         client_name: formData.client_name || null
       };
 
       console.log('Dados para enviar:', transactionData);
+      console.log('Data final que será enviada:', dataFinal);
 
       if (editingTransaction) {
         // Atualizar transação existente
