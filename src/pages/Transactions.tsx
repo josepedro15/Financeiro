@@ -281,44 +281,48 @@ export default function Transactions() {
       
       console.log('📤 Dados sendo enviados:', transactionData);
       
-      // 4. Inserir na tabela correta usando a data da transação
-      const result = await insertTransactionInCorrectTable(transactionData);
-
-      if (!result.success) {
-        console.error('❌ Erro na inserção inteligente:', result.error);
-        throw new Error(result.error || 'Erro ao inserir transação');
-      }
-
-      console.log('✅ Transação inserida com sucesso na tabela:', result.tableName);
-      console.log('✅ Dados inseridos:', result.data);
-      
-      // 5. Verificar o que foi salvo
-      if (result.data && result.data[0]) {
-        const transacaoSalva = result.data[0];
-        console.log('💾 Transação salva:', transacaoSalva);
-        console.log('📅 Data salva no banco:', transacaoSalva.transaction_date);
-        console.log('📊 Tabela utilizada:', result.tableName);
+      // 4. Verificar se é edição ou criação
+      if (editingTransaction) {
+        console.log('🔄 MODE: EDITANDO TRANSAÇÃO');
+        console.log('📝 ID da transação sendo editada:', editingTransaction.id);
+        console.log('📅 Data original:', editingTransaction.transaction_date);
+        console.log('📅 Nova data:', dataCorrigida);
         
-        // Verificar se a data salva é a correta
-        const dataSalva = new Date(transacaoSalva.transaction_date);
-        const dataEsperada = new Date(dataOriginal);
+        // Usar função de atualização inteligente
+        const result = await updateTransactionInCorrectTable(
+          editingTransaction.id,
+          {
+            user_id: user.id,
+            description: editingTransaction.description || '',
+            amount: editingTransaction.amount,
+            transaction_type: editingTransaction.transaction_type,
+            category: editingTransaction.category || '',
+            transaction_date: editingTransaction.transaction_date,
+            account_name: editingTransaction.account_name,
+            client_name: editingTransaction.client_name || null
+          },
+          transactionData
+        );
         
-        console.log('📅 Data esperada:', dataEsperada.toISOString().split('T')[0]);
-        console.log('📅 Data realmente salva:', dataSalva.toISOString().split('T')[0]);
-        console.log('✅ Datas coincidem?', dataEsperada.toISOString().split('T')[0] === dataSalva.toISOString().split('T')[0]);
-      }
-
-      const date = new Date(formData.transaction_date);
-      const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-      const monthName = monthNames[date.getMonth()];
-      
-      toast({
-        title: "✅ Transação criada!",
-        description: `${monthName} ${date.getFullYear()} | Tabela: ${result.tableName}`,
-        duration: 3000,
-      });
-
-              // Reset form
+        if (!result.success) {
+          console.error('❌ Erro na atualização inteligente:', result.error);
+          throw new Error(result.error || 'Erro ao atualizar transação');
+        }
+        
+        console.log('✅ Transação atualizada com sucesso!');
+        console.log('📊 Tabela final:', result.tableName);
+        
+        const date = new Date(formData.transaction_date);
+        const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        const monthName = monthNames[date.getMonth()];
+        
+        toast({
+          title: "✅ Transação atualizada!",
+          description: `${monthName} ${date.getFullYear()} | Tabela: ${result.tableName}`,
+          duration: 3000,
+        });
+        
+        // Reset form
         setFormData({
           description: '',
           amount: '',
@@ -328,9 +332,69 @@ export default function Transactions() {
           client_name: '',
           account_name: ''
         });
-      setEditingTransaction(null);
-      setDialogOpen(false);
-      loadData();
+        setEditingTransaction(null);
+        setDialogOpen(false);
+        loadData();
+        return;
+      } else {
+        console.log('🆕 MODE: CRIANDO NOVA TRANSAÇÃO');
+        
+        // 4. Inserir na tabela correta usando a data da transação
+        const result = await insertTransactionInCorrectTable(transactionData);
+
+      if (!result.success) {
+        console.error('❌ Erro na inserção inteligente:', result.error);
+        throw new Error(result.error || 'Erro ao inserir transação');
+      }
+
+        if (!result.success) {
+          console.error('❌ Erro na inserção inteligente:', result.error);
+          throw new Error(result.error || 'Erro ao inserir transação');
+        }
+
+        console.log('✅ Transação inserida com sucesso na tabela:', result.tableName);
+        console.log('✅ Dados inseridos:', result.data);
+        
+        // 5. Verificar o que foi salvo
+        if (result.data && result.data[0]) {
+          const transacaoSalva = result.data[0];
+          console.log('💾 Transação salva:', transacaoSalva);
+          console.log('📅 Data salva no banco:', transacaoSalva.transaction_date);
+          console.log('📊 Tabela utilizada:', result.tableName);
+          
+          // Verificar se a data salva é a correta
+          const dataSalva = new Date(transacaoSalva.transaction_date);
+          const dataEsperada = new Date(dataOriginal);
+          
+          console.log('📅 Data esperada:', dataEsperada.toISOString().split('T')[0]);
+          console.log('📅 Data realmente salva:', dataSalva.toISOString().split('T')[0]);
+          console.log('✅ Datas coincidem?', dataEsperada.toISOString().split('T')[0] === dataSalva.toISOString().split('T')[0]);
+        }
+
+        const date = new Date(formData.transaction_date);
+        const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        const monthName = monthNames[date.getMonth()];
+        
+        toast({
+          title: "✅ Transação criada!",
+          description: `${monthName} ${date.getFullYear()} | Tabela: ${result.tableName}`,
+          duration: 3000,
+        });
+
+        // Reset form
+        setFormData({
+          description: '',
+          amount: '',
+          transaction_type: 'income',
+          category: '',
+          transaction_date: new Date().toISOString().split('T')[0],
+          client_name: '',
+          account_name: ''
+        });
+        setEditingTransaction(null);
+        setDialogOpen(false);
+        loadData();
+      }
       
     } catch (error: any) {
       console.error('❌ Erro completo:', error);
