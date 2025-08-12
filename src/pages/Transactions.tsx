@@ -248,6 +248,29 @@ export default function Transactions() {
       const dataSelecionada = formData.transaction_date;
       console.log('Data selecionada:', dataSelecionada);
       
+      // Verificar se é domingo (dia da semana 0)
+      const dataObj = new Date(dataSelecionada);
+      const diaSemana = dataObj.getDay(); // 0 = domingo, 1 = segunda, etc.
+      const diaMes = dataObj.getDate();
+      
+      console.log('Dia da semana:', diaSemana, '(0=domingo)');
+      console.log('Dia do mês:', diaMes);
+      
+      if (diaSemana === 0) {
+        console.log('⚠️ DOMINGO DETECTADO!');
+        console.log('Data original:', dataSelecionada);
+        console.log('Data como objeto:', dataObj);
+        console.log('Data ISO:', dataObj.toISOString());
+        console.log('Data local:', dataObj.toLocaleDateString('pt-BR'));
+        
+        // Corrigir problema de fuso horário para domingos
+        const [ano, mes, dia] = dataSelecionada.split('-');
+        const dataCorrigida = `${ano}-${mes}-${dia}`;
+        
+        console.log('Data corrigida para domingo:', dataCorrigida);
+        alert(`DOMINGO DETECTADO!\nData original: ${dataSelecionada}\nDia da semana: ${diaSemana}\nData corrigida: ${dataCorrigida}`);
+      }
+      
       const transactionData = {
         user_id: user.id,
         description: formData.description || '',
