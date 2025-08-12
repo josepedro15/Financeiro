@@ -402,7 +402,10 @@ export default function Dashboard() {
         recentTransactions = recentTransactions.slice(0, 5);
         
         console.log('Total recent transactions loaded:', recentTransactions.length);
-        console.log('Recent transactions sample:', recentTransactions.slice(0, 3));
+        console.log('Recent transactions ordered by created_at:');
+        recentTransactions.forEach((transaction, index) => {
+          console.log(`${index + 1}. ${transaction.description || 'Sem descrição'} - Criado em: ${transaction.created_at} - Data transação: ${transaction.transaction_date}`);
+        });
         
       } catch (error) {
         console.error('Erro ao carregar transações recentes:', error);
