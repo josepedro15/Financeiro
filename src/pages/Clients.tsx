@@ -1,54 +1,32 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { useSubscription } from '@/hooks/useSubscription';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-  useDroppable,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { supabase } from '../integrations/supabase/client';
+import { useToast } from '../hooks/use-toast';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { 
   Users, 
   Plus, 
+  Settings, 
   Edit, 
   Trash2, 
-  Phone, 
   Mail, 
-  MapPin, 
-  Calendar,
-  DollarSign,
-  ArrowLeft,
-  User,
-  UserCheck,
-  Crown,
+  Phone, 
   Target,
-  Settings,
-  Save,
-  X
+  UserCheck,
+  UserX,
+  DollarSign,
+  CheckCircle,
+  Clock,
+  AlertCircle
 } from 'lucide-react';
 
+// Tipos
 interface Client {
   id: string;
   name: string;
@@ -59,357 +37,195 @@ interface Client {
   stage: string;
   notes?: string;
   is_active: boolean;
+  user_id: string;
   created_at: string;
+  updated_at: string;
 }
 
 interface Stage {
-  id?: string;
   key: string;
   name: string;
+  description?: string;
   icon: any;
   color: string;
-  description: string;
-  order_index?: number;
-  is_default?: boolean;
+  order_index: number;
+  is_default: boolean;
 }
 
-// Droppable Stage Column Component
-function DroppableStageColumn({ 
-  stageKey, 
-  stage, 
-  clients, 
-  onEdit, 
-  onDelete,
-  onEditStage,
-  onDeleteStage 
-}: {
-  stageKey: string;
-  stage: Stage;
-  clients: Client[];
-  onEdit: (client: Client) => void;
-  onDelete: (id: string) => void;
-  onEditStage: (stage: Stage) => void;
-  onDeleteStage: (stageKey: string) => void;
-}) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: stageKey,
-  });
+// Ícones dos estágios
+const iconMap = {
+  target: Target,
+  userCheck: UserCheck,
+  userX: UserX,
+  dollarSign: DollarSign,
+  checkCircle: CheckCircle,
+  clock: Clock,
+  alertCircle: AlertCircle
+};
 
-  const StageIcon = stage.icon;
-
-  return (
-    <div className="flex-shrink-0 w-80 space-y-4">
-      {/* Stage Header */}
-      <Card className="bg-gradient-to-r from-background to-muted/30 group">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <StageIcon className="w-5 h-5" />
-              <CardTitle className="text-lg">{stage.name}</CardTitle>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${stage.color}`}>
-                {clients.length}
-              </span>
-              
-              {/* Botões de ação do estágio */}
-              <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEditStage(stage);
-                  }}
-                  className="h-6 w-6 p-0 hover:bg-blue-100"
-                  title="Editar estágio"
-                >
-                  <Edit className="w-3 h-3" />
-                </Button>
-                
-                {!stage.is_default && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteStage(stageKey);
-                    }}
-                    className="h-6 w-6 p-0 hover:bg-red-100 text-red-600"
-                    title="Excluir estágio"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-          <CardDescription>{stage.description}</CardDescription>
-        </CardHeader>
-      </Card>
-
-      {/* Droppable area for this stage */}
-      <div 
-        ref={setNodeRef}
-        className={`space-y-3 min-h-[400px] border-2 border-dashed rounded-lg p-2 transition-all ${
-          isOver ? 'border-primary bg-primary/5 scale-105' : 'border-muted/30 hover:border-muted'
-        }`}
-        style={{ 
-          backgroundColor: clients.length === 0 && !isOver ? 'rgba(0,0,0,0.02)' : undefined
-        }}
-      >
-        <SortableContext items={clients.map(c => c.id)} strategy={verticalListSortingStrategy}>
-          {clients.map((client) => (
-            <DraggableClientCard
-              key={client.id}
-              client={client}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          ))}
-        </SortableContext>
-
-        {clients.length === 0 && (
-          <div className={`border-2 border-dashed rounded-lg p-6 text-center mt-4 transition-all ${
-            isOver ? 'border-primary bg-primary/10' : 'border-muted'
-          }`}>
-            <StageIcon className={`w-8 h-8 mx-auto mb-2 transition-colors ${
-              isOver ? 'text-primary' : 'text-muted-foreground'
-            }`} />
-            <p className={`text-sm transition-colors ${
-              isOver ? 'text-primary font-medium' : 'text-muted-foreground'
-            }`}>
-              {isOver ? 'Solte aqui!' : `Nenhum cliente em ${stage.name.toLowerCase()}`}
-            </p>
-            <p className={`text-xs mt-1 transition-colors ${
-              isOver ? 'text-primary' : 'text-muted-foreground'
-            }`}>
-              {isOver ? 'Cliente será movido para este estágio' : 'Arraste clientes para cá'}
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Draggable Client Card Component
-function DraggableClientCard({ client, onEdit, onDelete }: {
-  client: Client;
-  onEdit: (client: Client) => void;
-  onDelete: (id: string) => void;
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ 
-    id: client.id,
-    disabled: false // Garantir que não está desabilitado
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <Card 
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes} 
-      {...listeners}
-      className={`hover:shadow-lg transition-all duration-200 cursor-grab active:cursor-grabbing group ${
-        isDragging ? 'shadow-2xl z-50 rotate-3' : ''
-      }`}
-    >
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base group-hover:text-primary transition-colors">
-            {client.name}
-          </CardTitle>
-          <div className="flex space-x-1">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(client);
-              }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <Edit className="w-3 h-3" />
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={(e) => {
-                console.log('🗑️ Botão delete clicado para cliente:', client.id);
-                e.stopPropagation();
-                e.preventDefault();
-                onDelete(client.id);
-              }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 hover:text-red-600"
-              title="Excluir cliente"
-            >
-              <Trash2 className="w-3 h-3" />
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {client.email && (
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <Mail className="w-3 h-3" />
-            <span className="truncate">{client.email}</span>
-          </div>
-        )}
-        {client.phone && (
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <Phone className="w-3 h-3" />
-            <span>{client.phone}</span>
-          </div>
-        )}
-        {client.notes && (
-          <div className="text-sm text-muted-foreground">
-            <p className="line-clamp-2">{client.notes}</p>
-          </div>
-        )}
-        
-        <div className="pt-2 text-xs text-muted-foreground">
-          <div className="flex items-center space-x-2">
-            <Calendar className="w-3 h-3" />
-            <span>{new Date(client.created_at).toLocaleDateString('pt-BR')}</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-
+// Estágios padrão
+const defaultStages: Stage[] = [
+  {
+    key: 'lead',
+    name: 'Lead',
+    description: 'Contatos iniciais',
+    icon: Target,
+    color: 'bg-yellow-100 text-yellow-800',
+    order_index: 1,
+    is_default: true
+  },
+  {
+    key: 'prospect',
+    name: 'Prospecto',
+    description: 'Interessados',
+    icon: UserCheck,
+    color: 'bg-blue-100 text-blue-800',
+    order_index: 2,
+    is_default: false
+  },
+  {
+    key: 'negotiation',
+    name: 'Negociação',
+    description: 'Em negociação',
+    icon: DollarSign,
+    color: 'bg-purple-100 text-purple-800',
+    order_index: 3,
+    is_default: false
+  },
+  {
+    key: 'closed',
+    name: 'Fechado',
+    description: 'Venda realizada',
+    icon: CheckCircle,
+    color: 'bg-green-100 text-green-800',
+    order_index: 4,
+    is_default: false
+  }
+];
 
 export default function Clients() {
   const { user } = useAuth();
-  const { canPerformAction, incrementUsage, isMasterUser } = useSubscription();
-  const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Drag and Drop sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-  
+  // Estados
   const [clients, setClients] = useState<Client[]>([]);
+  const [stages, setStages] = useState<Record<string, Stage>>({});
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingClient, setEditingClient] = useState<Client | null>(null);
-  
-  // Stage management state
   const [stagesDialogOpen, setStagesDialogOpen] = useState(false);
-  const [stages, setStages] = useState<Record<string, Stage>>({});
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [editingStage, setEditingStage] = useState<Stage | null>(null);
-  const [stageFormData, setStageFormData] = useState({
-    key: '',
-    name: '',
-    description: '',
-    color: 'bg-gray-100 text-gray-800'
-  });
-
-  // Form state
+  
+  // Formulários
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     document: '',
     address: '',
-    stage: 'lead' as const,
+    stage: 'lead',
     notes: ''
   });
+  
+  const [stageFormData, setStageFormData] = useState({
+    key: '',
+    name: '',
+    description: '',
+    icon: 'target',
+    color: 'bg-yellow-100 text-yellow-800',
+    order_index: 1
+  });
 
+  // Carregar dados iniciais
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-      return;
+    if (user) {
+      loadStages();
+      loadClients();
     }
-    loadStages();
-    loadClients();
-  }, [user, navigate]);
+  }, [user]);
 
-  // Mapeamento de ícones
-  const iconMap: Record<string, any> = {
-    Target,
-    User,
-    UserCheck,
-    Crown,
-    Users,
-    Mail,
-    Phone,
-    DollarSign
-  };
-
+  // Carregar estágios
   const loadStages = async () => {
-    if (!user) return;
-
     try {
-      console.log('🔍 Carregando estágios do banco...');
-      const { data: stagesData, error } = await supabase
+      console.log('🔄 Carregando estágios...');
+      
+      // Primeiro, verificar se existem estágios no banco
+      const { data: existingStages, error } = await supabase
         .from('stages')
         .select('*')
-        .eq('user_id', user.id)
-        .order('order_index', { ascending: true });
+        .eq('user_id', user?.id)
+        .order('order_index');
 
       if (error) {
-        console.error('Erro ao carregar estágios:', error);
-        // Se não conseguir carregar, usar estágios padrão
-        setStages({
-          lead: { key: 'lead', name: 'Lead', icon: Target, color: 'bg-yellow-100 text-yellow-800', description: 'Interessados' },
-          prospect: { key: 'prospect', name: 'Prospect', icon: User, color: 'bg-blue-100 text-blue-800', description: 'Em negociação' },
-          client: { key: 'client', name: 'Cliente', icon: UserCheck, color: 'bg-green-100 text-green-800', description: 'Compraram' },
-          vip: { key: 'vip', name: 'VIP', icon: Crown, color: 'bg-purple-100 text-purple-800', description: 'Clientes premium' }
-        });
-        return;
+        console.error('❌ Erro ao carregar estágios:', error);
+        // Se não existem estágios, criar os padrões
+        await createDefaultStages();
+      } else if (!existingStages || existingStages.length === 0) {
+        console.log('📝 Nenhum estágio encontrado, criando padrões...');
+        await createDefaultStages();
+      } else {
+        console.log('✅ Estágios carregados:', existingStages.length);
+        const stagesObject = existingStages.reduce((acc, stage) => {
+          acc[stage.key] = {
+            ...stage,
+            icon: iconMap[stage.icon as keyof typeof iconMap] || Target
+          };
+          return acc;
+        }, {} as Record<string, Stage>);
+        setStages(stagesObject);
       }
-
-      console.log('✅ Estágios carregados:', stagesData);
-
-      // Converter array de estágios para objeto
-      const stagesObject: Record<string, Stage> = {};
-      stagesData?.forEach(stage => {
-        stagesObject[stage.key] = {
-          id: stage.id,
-          key: stage.key,
-          name: stage.name,
-          description: stage.description || '',
-          icon: iconMap[stage.icon] || Target,
-          color: stage.color,
-          order_index: stage.order_index,
-          is_default: stage.is_default
-        };
-      });
-
-      setStages(stagesObject);
     } catch (error) {
-      console.error('Erro ao carregar estágios:', error);
+      console.error('❌ Erro ao carregar estágios:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar estágios",
+        variant: "destructive"
+      });
     }
   };
 
-  const loadClients = async () => {
-    if (!user) {
-      console.log('❌ Usuário não autenticado');
-      return;
-    }
-
+  // Criar estágios padrão
+  const createDefaultStages = async () => {
     try {
-      console.log('🔄 Carregando clientes para usuário:', user.id);
-      console.log('🔑 Sessão atual:', await supabase.auth.getSession());
+      console.log('📝 Criando estágios padrão...');
+      
+      const stagesToCreate = defaultStages.map(stage => ({
+        ...stage,
+        user_id: user?.id,
+        icon: stage.icon.name.toLowerCase()
+      }));
+
+      const { error } = await supabase
+        .from('stages')
+        .insert(stagesToCreate);
+
+      if (error) {
+        console.error('❌ Erro ao criar estágios padrão:', error);
+        throw error;
+      }
+
+      console.log('✅ Estágios padrão criados');
+      
+      // Recarregar estágios
+      await loadStages();
+    } catch (error) {
+      console.error('❌ Erro ao criar estágios padrão:', error);
+      // Usar estágios padrão em memória
+      const stagesObject = defaultStages.reduce((acc, stage) => {
+        acc[stage.key] = stage;
+        return acc;
+      }, {} as Record<string, Stage>);
+      setStages(stagesObject);
+    }
+  };
+
+  // Carregar clientes
+  const loadClients = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      console.log('🔄 Carregando clientes...');
       
       const { data: clientsData, error } = await supabase
         .from('clients')
@@ -442,46 +258,33 @@ export default function Clients() {
     }
   };
 
+  // Obter clientes por estágio
+  const getClientsByStage = (stageKey: string) => {
+    return clients.filter(client => client.stage === stageKey);
+  };
+
+  // Handlers
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
     try {
-      // Verificar se pode criar cliente (apenas para novos clientes, não edições)
-      if (!editingClient) {
-        console.log('handleSubmit: verificando se pode criar cliente...');
-        const canCreate = await canPerformAction('client');
-        console.log('handleSubmit: pode criar cliente?', canCreate);
-        
-        if (!canCreate) {
-          toast({
-            title: "Limite Atingido",
-            description: "Você atingiu o limite de clientes para seu plano atual",
-            variant: "destructive"
-          });
-          return;
-        }
-      }
-
-      // Garantir que o stage tenha um valor válido e seguro
-      let safeStage = formData.stage || 'lead';
-      if (safeStage.length > 100) {
-        safeStage = safeStage.substring(0, 100);
-      }
-
+      console.log('🔄 Salvando cliente...');
+      
       const clientData = {
         user_id: user.id,
-        name: formData.name,
-        email: formData.email || null,
-        phone: formData.phone || null,
-        document: formData.document || null,
-        address: formData.address || null,
-        stage: safeStage,
-        notes: formData.notes || null,
+        name: formData.name.trim(),
+        email: formData.email.trim() || null,
+        phone: formData.phone.trim() || null,
+        document: formData.document.trim() || null,
+        address: formData.address.trim() || null,
+        stage: formData.stage,
+        notes: formData.notes.trim() || null,
         is_active: true
       };
 
       if (editingClient) {
+        console.log('✏️ Atualizando cliente:', editingClient.id);
         const { error } = await supabase
           .from('clients')
           .update(clientData)
@@ -494,16 +297,12 @@ export default function Clients() {
           description: "Cliente atualizado com sucesso"
         });
       } else {
+        console.log('➕ Criando novo cliente');
         const { error } = await supabase
           .from('clients')
           .insert([clientData]);
 
         if (error) throw error;
-
-        // Incrementar contador de uso apenas para novos clientes
-        console.log('handleSubmit: incrementando uso de cliente...');
-        await incrementUsage('client', 1);
-        console.log('handleSubmit: uso incrementado com sucesso');
 
         toast({
           title: "Sucesso",
@@ -511,11 +310,12 @@ export default function Clients() {
         });
       }
 
-      // Reset form and reload data
+      // Limpar formulário e recarregar
       resetForm();
-      loadClients();
+      await loadClients();
+      
     } catch (error: any) {
-      console.error('handleSubmit: erro:', error);
+      console.error('❌ Erro ao salvar cliente:', error);
       toast({
         title: "Erro",
         description: error.message || "Erro ao salvar cliente",
@@ -524,21 +324,8 @@ export default function Clients() {
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      document: '',
-      address: '',
-      stage: 'lead',
-      notes: ''
-    });
-    setEditingClient(null);
-    setDialogOpen(false);
-  };
-
   const handleEdit = (client: Client) => {
+    console.log('✏️ Editando cliente:', client);
     setEditingClient(client);
     setFormData({
       name: client.name,
@@ -553,65 +340,29 @@ export default function Clients() {
   };
 
   const handleDelete = async (id: string) => {
-    console.log('🗑️ Iniciando processo de delete para cliente:', id);
+    console.log('🗑️ Deletando cliente:', id);
     
     if (!confirm('Tem certeza que deseja excluir este cliente?')) {
-      console.log('❌ Usuário cancelou a exclusão');
       return;
     }
 
     try {
-      console.log('🔄 Tentando deletar cliente:', id);
-      
-      // Primeiro, vamos verificar o cliente antes de deletar
-      const { data: clientData, error: fetchError } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (fetchError) {
-        console.error('Erro ao buscar cliente:', fetchError);
-        throw fetchError;
-      }
-
-      console.log('📋 Dados do cliente antes do delete:', clientData);
-
-      // Preparar dados para update com valores seguros
-      const updateData = {
-        is_active: false,
-        updated_at: new Date().toISOString()
-      };
-
-      // Garantir que o stage não seja enviado se for problemático
-      if (clientData.stage && clientData.stage.length <= 100) {
-        updateData.stage = clientData.stage;
-      } else if (clientData.stage && clientData.stage.length > 100) {
-        updateData.stage = clientData.stage.substring(0, 100);
-      } else {
-        updateData.stage = 'lead';
-      }
-
-      console.log('📤 Dados para update:', updateData);
-
       const { error } = await supabase
         .from('clients')
-        .update(updateData)
+        .update({
+          is_active: false,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', id);
 
-      if (error) {
-        console.error('Erro no update:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       console.log('✅ Cliente deletado com sucesso');
-
       toast({
         title: "Sucesso",
         description: "Cliente excluído com sucesso"
       });
       
-      // Recarregar a lista de clientes
       await loadClients();
       
     } catch (error: any) {
@@ -624,78 +375,26 @@ export default function Clients() {
     }
   };
 
-  const handleStageChange = async (clientId: string, newStage: string) => {
-    try {
-      const { error } = await supabase
-        .from('clients')
-        .update({ stage: newStage })
-        .eq('id', clientId);
-
-      if (error) throw error;
-
-      // Verificar se o stage existe antes de acessar .name
-      const stageName = stages[newStage]?.name || newStage;
-      
-      toast({
-        title: "Sucesso",
-        description: `Cliente movido para ${stageName}`
-      });
-      loadClients();
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao atualizar estágio",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const getClientsByStage = (stage: string) => {
-    return clients.filter(client => client.stage === stage);
-  };
-
-  // Stage management functions
-  const handleEditStage = (stage: Stage) => {
-    setEditingStage(stage);
-    setStageFormData({
-      key: stage.key,
-      name: stage.name,
-      description: stage.description || '',
-      color: stage.color
-    });
-    setStagesDialogOpen(true);
-  };
-
-  const handleSaveStage = async () => {
-    if (!stageFormData.key || !stageFormData.name) {
-      toast({
-        title: "Erro",
-        description: "Chave e nome são obrigatórios",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Salvar no banco de dados
-    await saveStageToDatabase();
-  };
-
-  const saveStageToDatabase = async () => {
+  const handleStageSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!user) return;
 
     try {
-      if (editingStage?.id) {
-        // Updating existing stage
-        console.log('🔄 Atualizando estágio:', editingStage.id);
+      const stageData = {
+        user_id: user.id,
+        key: stageFormData.key.toLowerCase().replace(/\s+/g, '_'),
+        name: stageFormData.name,
+        description: stageFormData.description,
+        icon: stageFormData.icon,
+        color: stageFormData.color,
+        order_index: stageFormData.order_index
+      };
+
+      if (editingStage) {
         const { error } = await supabase
           .from('stages')
-          .update({
-            name: stageFormData.name,
-            description: stageFormData.description,
-            color: stageFormData.color,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', editingStage.id);
+          .update(stageData)
+          .eq('key', editingStage.key);
 
         if (error) throw error;
 
@@ -704,32 +403,9 @@ export default function Clients() {
           description: "Estágio atualizado com sucesso"
         });
       } else {
-        // Creating new stage
-        if (stages[stageFormData.key]) {
-          toast({
-            title: "Erro",
-            description: "Já existe um estágio com essa chave",
-            variant: "destructive"
-          });
-          return;
-        }
-
-        // Calcular próximo order_index
-        const maxOrder = Math.max(...Object.values(stages).map(s => s.order_index || 0));
-        
-        console.log('✨ Criando novo estágio:', stageFormData.key);
         const { error } = await supabase
           .from('stages')
-          .insert([{
-            user_id: user.id,
-            key: stageFormData.key,
-            name: stageFormData.name,
-            description: stageFormData.description,
-            icon: 'Target', // Default icon
-            color: stageFormData.color,
-            order_index: maxOrder + 1,
-            is_default: false
-          }]);
+          .insert([stageData]);
 
         if (error) throw error;
 
@@ -739,14 +415,9 @@ export default function Clients() {
         });
       }
 
-      // Recarregar estágios
-      console.log('🔄 Recarregando estágios...');
+      resetStageForm();
       await loadStages();
       
-      setEditingStage(null);
-      resetStageForm();
-      setStagesDialogOpen(false);
-
     } catch (error: any) {
       console.error('❌ Erro ao salvar estágio:', error);
       toast({
@@ -757,37 +428,41 @@ export default function Clients() {
     }
   };
 
+  const handleEditStage = (stage: Stage) => {
+    setEditingStage(stage);
+    setStageFormData({
+      key: stage.key,
+      name: stage.name,
+      description: stage.description || '',
+      icon: stage.icon.name.toLowerCase(),
+      color: stage.color,
+      order_index: stage.order_index
+    });
+    setStagesDialogOpen(true);
+  };
+
   const handleDeleteStage = async (stageKey: string) => {
-    const clientsInStage = getClientsByStage(stageKey);
-    const stageName = stages[stageKey]?.name || stageKey;
+    const stageClients = getClientsByStage(stageKey);
     
-    if (clientsInStage.length > 0) {
+    if (stageClients.length > 0) {
       toast({
         title: "Erro",
-        description: `Não é possível excluir o estágio "${stageName}" pois há ${clientsInStage.length} cliente(s) nele`,
+        description: "Não é possível excluir um estágio que contém clientes",
         variant: "destructive"
       });
       return;
     }
 
-    if (!confirm(`Tem certeza que deseja excluir o estágio "${stageName}"?`)) return;
-
-    const stage = stages[stageKey];
-    if (!stage?.id) {
-      toast({
-        title: "Erro",
-        description: "Estágio não encontrado",
-        variant: "destructive"
-      });
+    if (!confirm('Tem certeza que deseja excluir este estágio?')) {
       return;
     }
 
     try {
-      console.log('🗑️ Deletando estágio:', stage.id);
       const { error } = await supabase
         .from('stages')
         .delete()
-        .eq('id', stage.id);
+        .eq('key', stageKey)
+        .eq('user_id', user?.id);
 
       if (error) throw error;
 
@@ -795,9 +470,9 @@ export default function Clients() {
         title: "Sucesso",
         description: "Estágio excluído com sucesso"
       });
-
-      // Recarregar estágios
+      
       await loadStages();
+      
     } catch (error: any) {
       console.error('❌ Erro ao deletar estágio:', error);
       toast({
@@ -808,62 +483,162 @@ export default function Clients() {
     }
   };
 
+  // Resetar formulários
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      document: '',
+      address: '',
+      stage: 'lead',
+      notes: ''
+    });
+    setEditingClient(null);
+    setDialogOpen(false);
+  };
+
   const resetStageForm = () => {
-    setEditingStage(null);
     setStageFormData({
       key: '',
       name: '',
       description: '',
-      color: 'bg-gray-100 text-gray-800'
+      icon: 'target',
+      color: 'bg-yellow-100 text-yellow-800',
+      order_index: 1
     });
+    setEditingStage(null);
+    setStagesDialogOpen(false);
   };
 
-  // Handle drag end for moving clients between stages
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (!over) {
-      console.log('❌ Cliente arrastado para área inválida - cancelando movimento');
-      return;
-    }
-
-    const clientId = active.id as string;
-    const newStage = over.id as string;
-
-    // Find the client being dragged
-    const client = clients.find(c => c.id === clientId);
-    if (!client) {
-      console.log('❌ Cliente não encontrado - cancelando movimento');
-      return;
-    }
-
-    // Verificar se o destino é um estágio válido
-    if (!stages[newStage]) {
-      console.log('❌ Destino não é um estágio válido:', newStage);
-      toast({
-        title: "Movimento Inválido",
-        description: "Você só pode mover clientes para estágios válidos",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // If dropped on same stage, do nothing
-    if (client.stage === newStage) {
-      console.log('✅ Cliente movido para o mesmo estágio - ignorando');
-      return;
-    }
-
-    console.log(`🔄 Movendo cliente ${client.name} de ${client.stage} para ${newStage}`);
+  // Componente do Card do Cliente
+  const ClientCard = ({ client }: { client: Client }) => {
+    const StageIcon = stages[client.stage]?.icon || Target;
     
-    // Update client stage
-    handleStageChange(clientId, newStage);
+    return (
+      <Card className="mb-3 hover:shadow-md transition-shadow group">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-medium">
+              {client.name}
+            </CardTitle>
+            <div className="flex space-x-1 opacity-100">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEdit(client);
+                }}
+                className="h-8 w-8 p-0 hover:bg-blue-100"
+                title="Editar cliente"
+              >
+                <Edit className="w-3 h-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(client.id);
+                }}
+                className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600"
+                title="Excluir cliente"
+              >
+                <Trash2 className="w-3 h-3" />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {client.email && (
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <Mail className="w-3 h-3" />
+              <span className="truncate">{client.email}</span>
+            </div>
+          )}
+          {client.phone && (
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <Phone className="w-3 h-3" />
+              <span>{client.phone}</span>
+            </div>
+          )}
+          {client.notes && (
+            <div className="text-sm text-muted-foreground">
+              <p className="line-clamp-2">{client.notes}</p>
+            </div>
+          )}
+          <div className="pt-2 text-xs text-muted-foreground">
+            Criado em {new Date(client.created_at).toLocaleDateString('pt-BR')}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Componente da Coluna de Estágio
+  const StageColumn = ({ stageKey, stage }: { stageKey: string; stage: Stage }) => {
+    const stageClients = getClientsByStage(stageKey);
+    const StageIcon = stage.icon;
+    
+    return (
+      <div className="flex-shrink-0 w-80">
+        <div className="bg-muted/50 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <StageIcon className="w-5 h-5" />
+              <h3 className="font-semibold">{stage.name}</h3>
+              <span className="bg-background px-2 py-1 rounded-full text-xs font-medium">
+                {stageClients.length}
+              </span>
+            </div>
+            <div className="flex space-x-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => handleEditStage(stage)}
+                className="h-6 w-6 p-0"
+                title="Editar estágio"
+              >
+                <Edit className="w-3 h-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => handleDeleteStage(stageKey)}
+                className="h-6 w-6 p-0 hover:text-red-600"
+                title="Excluir estágio"
+                disabled={stageClients.length > 0}
+              >
+                <Trash2 className="w-3 h-3" />
+              </Button>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            {stageClients.map((client) => (
+              <ClientCard key={client.id} client={client} />
+            ))}
+            
+            {stageClients.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Nenhum cliente</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Carregando...</p>
+        </div>
       </div>
     );
   }
@@ -871,232 +646,291 @@ export default function Clients() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Button variant="ghost" onClick={() => navigate('/dashboard')}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Dashboard
-            </Button>
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <Users className="w-4 h-4 text-primary-foreground" />
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="sm" onClick={() => window.history.back()}>
+                ← Dashboard
+              </Button>
+              <div className="flex items-center space-x-2">
+                <Users className="w-6 h-6" />
+                <h1 className="text-2xl font-bold">CRM - Gestão de Clientes</h1>
+              </div>
             </div>
-            <h1 className="text-2xl font-bold">CRM - Gestão de Clientes</h1>
-          </div>
-          <div className="flex space-x-2">
-            <Dialog open={stagesDialogOpen} onOpenChange={setStagesDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" onClick={() => resetStageForm()}>
-                  <Settings className="w-4 h-4 mr-2" />
-                  Configurar Estágios
-                </Button>
-              </DialogTrigger>
-            </Dialog>
             
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => resetForm()}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Novo Cliente
-                </Button>
-              </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingClient ? 'Editar Cliente' : 'Novo Cliente'}
-                </DialogTitle>
-                <DialogDescription>
-                  {editingClient ? 'Edite os dados do cliente' : 'Adicione um novo cliente ao seu CRM'}
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => setStagesDialogOpen(true)}
+                className="flex items-center space-x-2"
+              >
+                <Settings className="w-4 h-4" />
+                Configurar Estágios
+              </Button>
+              <Button
+                onClick={() => setDialogOpen(true)}
+                className="flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                Novo Cliente
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Conteúdo Principal */}
+      <main className="container mx-auto px-4 py-8">
+        <div className="flex gap-6 overflow-x-auto pb-4">
+          {Object.entries(stages).map(([stageKey, stage]) => (
+            <StageColumn key={stageKey} stageKey={stageKey} stage={stage} />
+          ))}
+          
+          {/* Botão para adicionar estágios */}
+          <div className="flex-shrink-0 w-80 flex items-center justify-center">
+            <Button 
+              variant="outline" 
+              className="h-12 w-12 rounded-full border-dashed border-2 hover:border-solid"
+              onClick={() => setStagesDialogOpen(true)}
+            >
+              <Plus className="w-6 h-6" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Estado vazio */}
+        {Object.keys(stages).length === 0 && (
+          <div className="text-center py-12">
+            <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Nenhum estágio criado</h3>
+            <p className="text-muted-foreground mb-6">
+              Comece criando seu primeiro estágio para organizar os clientes
+            </p>
+            <Button onClick={() => setStagesDialogOpen(true)}>
+              <Settings className="w-4 h-4 mr-2" />
+              Criar Primeiro Estágio
+            </Button>
+          </div>
+        )}
+      </main>
+
+      {/* Modal de Cliente */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingClient ? 'Editar Cliente' : 'Novo Cliente'}
+            </DialogTitle>
+            <DialogDescription>
+              {editingClient ? 'Atualize as informações do cliente' : 'Adicione um novo cliente ao seu CRM'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome *</Label>
+              <Input
+                id="name"
+                placeholder="Nome completo"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="email@exemplo.com"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefone</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="(11) 99999-9999"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="document">CPF/CNPJ</Label>
+              <Input
+                id="document"
+                placeholder="000.000.000-00 ou 00.000.000/0001-00"
+                value={formData.document}
+                onChange={(e) => setFormData({ ...formData, document: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">Endereço</Label>
+              <Input
+                id="address"
+                placeholder="Endereço completo"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="stage">Estágio</Label>
+              <Select value={formData.stage} onValueChange={(value) => setFormData({ ...formData, stage: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um estágio" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(stages).map(([key, stage]) => (
+                    <SelectItem key={key} value={key}>
+                      {stage.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Observações</Label>
+              <Textarea
+                id="notes"
+                placeholder="Anotações sobre o cliente..."
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <Button type="button" variant="outline" onClick={resetForm}>
+                Cancelar
+              </Button>
+              <Button type="submit">
+                {editingClient ? 'Atualizar' : 'Criar Cliente'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Estágios */}
+      <Dialog open={stagesDialogOpen} onOpenChange={setStagesDialogOpen}>
+        <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Configurar Estágios do Kanban</DialogTitle>
+            <DialogDescription>
+              Gerencie os estágios do seu pipeline de vendas
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Estágios Atuais */}
+            <div>
+              <h3 className="text-lg font-medium mb-4">Estágios Atuais</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(stages).map(([key, stage]) => {
+                  const StageIcon = stage.icon;
+                  return (
+                    <Card key={key} className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <StageIcon className="w-5 h-5" />
+                          <div>
+                            <h4 className="font-medium">{stage.name}</h4>
+                            <p className="text-sm text-muted-foreground">{stage.description}</p>
+                            <span className={`inline-block px-2 py-1 rounded text-xs ${stage.color} mt-1`}>
+                              {getClientsByStage(key).length} clientes
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex space-x-1">
+                          <Button size="sm" variant="ghost" onClick={() => handleEditStage(stage)}>
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => handleDeleteStage(key)}
+                            disabled={getClientsByStage(key).length > 0}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Formulário de Estágio */}
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-medium mb-4">
+                {editingStage ? 'Editar Estágio' : 'Novo Estágio'}
+              </h3>
+              
+              <form onSubmit={handleStageSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Nome *</Label>
+                    <Label htmlFor="stage-key">Chave</Label>
                     <Input
-                      id="name"
-                      placeholder="Nome do cliente"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      id="stage-key"
+                      placeholder="lead, prospect, etc."
+                      value={stageFormData.key}
+                      onChange={(e) => setStageFormData({ ...stageFormData, key: e.target.value })}
+                      disabled={!!editingStage}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="stage-name">Nome</Label>
+                    <Input
+                      id="stage-name"
+                      placeholder="Nome do estágio"
+                      value={stageFormData.name}
+                      onChange={(e) => setStageFormData({ ...stageFormData, name: e.target.value })}
                       required
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="stage-description">Descrição</Label>
+                  <Input
+                    id="stage-description"
+                    placeholder="Descrição do estágio"
+                    value={stageFormData.description}
+                    onChange={(e) => setStageFormData({ ...stageFormData, description: e.target.value })}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="stage">Estágio *</Label>
-                    <Select value={formData.stage} onValueChange={(value: string) => setFormData({ ...formData, stage: value })}>
+                    <Label htmlFor="stage-icon">Ícone</Label>
+                    <Select value={stageFormData.icon} onValueChange={(value) => setStageFormData({ ...stageFormData, icon: value })}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione o estágio" />
+                        <SelectValue placeholder="Selecione um ícone" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.entries(stages).map(([key, stage]) => (
-                          <SelectItem key={key} value={key}>
-                            <div className="flex items-center space-x-2">
-                              <stage.icon className="w-4 h-4" />
-                              <span>{stage.name}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="target">🎯 Target</SelectItem>
+                        <SelectItem value="userCheck">✅ User Check</SelectItem>
+                        <SelectItem value="userX">❌ User X</SelectItem>
+                        <SelectItem value="dollarSign">💰 Dollar Sign</SelectItem>
+                        <SelectItem value="checkCircle">✅ Check Circle</SelectItem>
+                        <SelectItem value="clock">⏰ Clock</SelectItem>
+                        <SelectItem value="alertCircle">⚠️ Alert Circle</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="cliente@email.com"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Telefone</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="(11) 99999-9999"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="document">CPF/CNPJ</Label>
-                  <Input
-                    id="document"
-                    placeholder="000.000.000-00 ou 00.000.000/0001-00"
-                    value={formData.document}
-                    onChange={(e) => setFormData({ ...formData, document: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="address">Endereço</Label>
-                  <Input
-                    id="address"
-                    placeholder="Endereço completo"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Observações</Label>
-                  <Textarea
-                    id="notes"
-                    placeholder="Anotações sobre o cliente..."
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    rows={3}
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-2">
-                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit">
-                    {editingClient ? 'Atualizar' : 'Criar Cliente'}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-          </div>
-          
-          {/* Stage Management Dialog */}
-          <Dialog open={stagesDialogOpen} onOpenChange={setStagesDialogOpen}>
-            <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Configurar Estágios do Kanban</DialogTitle>
-                <DialogDescription>
-                  Gerencie os estágios do seu pipeline de vendas
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="space-y-6">
-                {/* Current Stages */}
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Estágios Atuais</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {Object.entries(stages).map(([key, stage]) => {
-                      const StageIcon = stage.icon;
-                      return (
-                        <Card key={key} className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <StageIcon className="w-5 h-5" />
-                              <div>
-                                <h4 className="font-medium">{stage.name}</h4>
-                                <p className="text-sm text-muted-foreground">{stage.description}</p>
-                                <span className={`inline-block px-2 py-1 rounded text-xs ${stage.color} mt-1`}>
-                                  {getClientsByStage(key).length} clientes
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex space-x-1">
-                              <Button size="sm" variant="ghost" onClick={() => handleEditStage(stages[key])}>
-                                <Edit className="w-3 h-3" />
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                onClick={() => handleDeleteStage(key)}
-                                disabled={getClientsByStage(key).length > 0}
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Stage Form */}
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-medium mb-4">
-                    {editingStage ? 'Editar Estágio' : 'Novo Estágio'}
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="stage-key">Chave do Estágio *</Label>
-                      <Input
-                        id="stage-key"
-                        placeholder="ex: negociacao"
-                        value={stageFormData.key}
-                        onChange={(e) => setStageFormData({ ...stageFormData, key: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
-                        disabled={!!editingStage}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="stage-name">Nome do Estágio *</Label>
-                      <Input
-                        id="stage-name"
-                        placeholder="ex: Negociação"
-                        value={stageFormData.name}
-                        onChange={(e) => setStageFormData({ ...stageFormData, name: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 mt-4">
-                    <Label htmlFor="stage-description">Descrição</Label>
-                    <Input
-                      id="stage-description"
-                      placeholder="ex: Clientes em processo de negociação"
-                      value={stageFormData.description}
-                      onChange={(e) => setStageFormData({ ...stageFormData, description: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2 mt-4">
-                    <Label htmlFor="stage-color">Cor do Badge</Label>
+                    <Label htmlFor="stage-color">Cor</Label>
                     <Select value={stageFormData.color} onValueChange={(value) => setStageFormData({ ...stageFormData, color: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione uma cor" />
@@ -1113,81 +947,21 @@ export default function Clients() {
                       </SelectContent>
                     </Select>
                   </div>
-
-                  <div className="flex justify-end space-x-2 mt-6">
-                    <Button variant="outline" onClick={resetStageForm}>
-                      <X className="w-4 h-4 mr-2" />
-                      Cancelar
-                    </Button>
-                    <Button onClick={handleSaveStage}>
-                      <Save className="w-4 h-4 mr-2" />
-                      {editingStage ? 'Atualizar' : 'Criar'} Estágio
-                    </Button>
-                  </div>
                 </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </header>
 
-      {/* Kanban Board */}
-      <main className="container mx-auto px-4 py-8">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="flex gap-4 overflow-x-auto pb-4" style={{ minWidth: 'fit-content' }}>
-            {Object.entries(stages).map(([stageKey, stage]) => {
-              const stageClients = getClientsByStage(stageKey);
-              
-              return (
-                <DroppableStageColumn
-                  key={stageKey}
-                  stageKey={stageKey}
-                  stage={stage}
-                  clients={stageClients}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onEditStage={handleEditStage}
-                  onDeleteStage={handleDeleteStage}
-                />
-              );
-            })}
-            
-            {/* Botão para adicionar mais estágios - Mostrar quando há estágios */}
-            {Object.keys(stages).length > 0 && (
-              <div className="flex-shrink-0 w-80 flex items-center justify-center">
-                <Button 
-                  variant="outline" 
-                  className="h-12 w-12 rounded-full border-dashed border-2 hover:border-solid"
-                  onClick={() => setStagesDialogOpen(true)}
-                >
-                  <Plus className="w-6 h-6" />
-                </Button>
-              </div>
-            )}
+                <div className="flex justify-end space-x-2">
+                  <Button type="button" variant="outline" onClick={resetStageForm}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit">
+                    {editingStage ? 'Atualizar' : 'Criar'} Estágio
+                  </Button>
+                </div>
+              </form>
+            </div>
           </div>
-        </DndContext>
-
-        {/* Empty State - Mostrar apenas quando não há estágios */}
-        {Object.keys(stages).length === 0 && (
-          <div className="text-center py-12">
-            <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Nenhum estágio criado</h3>
-            <p className="text-muted-foreground mb-6">
-              Comece criando seu primeiro estágio para organizar os clientes
-            </p>
-            <Button onClick={() => setStagesDialogOpen(true)}>
-              <Settings className="w-4 h-4 mr-2" />
-              Criar Primeiro Estágio
-            </Button>
-          </div>
-        )}
-
-        {/* Estado vazio quando há estágios mas não há clientes - REMOVIDO */}
-      </main>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
