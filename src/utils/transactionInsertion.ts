@@ -114,72 +114,37 @@ export async function updateTransactionInCorrectTable(
       };
     }
     
-    // Se a tabela mudou, usar abordagem mais simples
+    // Se a tabela mudou, usar abordagem simples: criar nova e excluir anterior
     console.log(`⚠️ Mudança de tabela detectada: ${originalTable} → ${newTable}`);
-    console.log(`🔄 Usando abordagem de recriação...`);
+    console.log(`🔄 Criando nova linha e excluindo anterior...`);
     
-    // 1. Buscar dados completos da transação original
-    const { data: originalTransaction, error: fetchError } = await supabase
-      .from(originalTable)
-      .select('*')
-      .eq('id', transactionId)
-      .single();
-    
-    if (fetchError) {
-      console.error(`❌ Erro ao buscar transação original: ${fetchError.message}`);
-      return {
-        success: false,
-        error: `Erro ao buscar transação original: ${fetchError.message}`,
-        tableName: originalTable
-      };
-    }
-    
-    console.log(`📋 Transação original encontrada:`, originalTransaction);
-    
-    // 2. Preparar dados para inserção na nova tabela
-    const newTransactionData = {
-      user_id: originalTransaction.user_id,
-      description: updatedData.description || originalTransaction.description,
-      amount: updatedData.amount,
-      transaction_type: updatedData.transaction_type,
-      category: updatedData.category || originalTransaction.category,
-      transaction_date: updatedData.transaction_date,
-      account_name: updatedData.account_name,
-      client_name: updatedData.client_name || originalTransaction.client_name,
-      created_at: originalTransaction.created_at, // Manter data de criação original
-      updated_at: new Date().toISOString()
-    };
-    
-    console.log(`📤 Dados para nova tabela:`, newTransactionData);
-    
-    // 3. Inserir na nova tabela
+    // 1. Criar nova transação na tabela correta
     const { data: newTransaction, error: insertError } = await supabase
       .from(newTable)
-      .insert([newTransactionData])
+      .insert([updatedData])
       .select()
       .single();
     
     if (insertError) {
-      console.error(`❌ Erro ao inserir na nova tabela: ${insertError.message}`);
+      console.error(`❌ Erro ao criar nova transação: ${insertError.message}`);
       return {
         success: false,
-        error: `Erro ao inserir na nova tabela: ${insertError.message}`,
+        error: `Erro ao criar nova transação: ${insertError.message}`,
         tableName: newTable
       };
     }
     
-    console.log(`✅ Transação inserida na nova tabela:`, newTransaction);
+    console.log(`✅ Nova transação criada:`, newTransaction);
     
-    // 4. Remover da tabela original
+    // 2. Excluir transação anterior
     const { error: deleteError } = await supabase
       .from(originalTable)
       .delete()
       .eq('id', transactionId);
     
     if (deleteError) {
-      console.error(`❌ Erro ao remover da tabela original: ${deleteError.message}`);
-      // A transação foi inserida na nova tabela, mas não removida da original
-      // Vamos remover a nova transação para evitar duplicação
+      console.error(`❌ Erro ao excluir transação anterior: ${deleteError.message}`);
+      // Se falhar ao excluir, vamos excluir a nova transação criada
       await supabase
         .from(newTable)
         .delete()
@@ -187,12 +152,12 @@ export async function updateTransactionInCorrectTable(
       
       return {
         success: false,
-        error: `Erro ao remover da tabela original: ${deleteError.message}`,
+        error: `Erro ao excluir transação anterior: ${deleteError.message}`,
         tableName: originalTable
       };
     }
     
-    console.log(`✅ Transação removida da tabela original`);
+    console.log(`✅ Transação anterior excluída`);
     console.log(`✅ Transação movida com sucesso: ${originalTable} → ${newTable}`);
     
     return {
