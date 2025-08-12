@@ -30,9 +30,9 @@ BEGIN
             ORDER BY ordinal_position
         LOOP
             RAISE NOTICE '  - %: % (nullable: %)', 
-                test_result->>'column_name', 
-                test_result->>'data_type', 
-                test_result->>'is_nullable';
+                test_result.column_name, 
+                test_result.data_type, 
+                test_result.is_nullable;
         END LOOP;
     ELSE
         RAISE NOTICE '❌ Tabela clients NÃO existe';
@@ -53,10 +53,10 @@ BEGIN
         FROM pg_policies 
         WHERE tablename = 'clients'
     LOOP
-        RAISE NOTICE '  Política: %', test_result->>'policyname';
-        RAISE NOTICE '    - Permissiva: %', test_result->>'permissive';
-        RAISE NOTICE '    - Comando: %', test_result->>'cmd';
-        RAISE NOTICE '    - Condição: %', test_result->>'qual';
+        RAISE NOTICE '  Política: %', test_result.policyname;
+        RAISE NOTICE '    - Permissiva: %', test_result.permissive;
+        RAISE NOTICE '    - Comando: %', test_result.cmd;
+        RAISE NOTICE '    - Condição: %', test_result.qual;
     END LOOP;
     
     -- 4. Verificar se RLS está habilitado
@@ -88,9 +88,9 @@ BEGIN
         LIMIT 5
     LOOP
         RAISE NOTICE 'Usuário: % - Email: % - Criado: %', 
-            test_result->>'id', 
-            test_result->>'email', 
-            test_result->>'created_at';
+            test_result.id, 
+            test_result.email, 
+            test_result.created_at;
     END LOOP;
     
     RAISE NOTICE '=== DIAGNÓSTICO CONCLUÍDO ===';
@@ -177,9 +177,9 @@ BEGIN
           AND tc.table_name = 'clients'
     LOOP
         RAISE NOTICE 'FK: % -> %.%', 
-            test_result->>'constraint_name',
-            test_result->>'foreign_table_name',
-            test_result->>'foreign_column_name';
+            test_result.constraint_name,
+            test_result.foreign_table_name,
+            test_result.foreign_column_name;
     END LOOP;
     
     RAISE NOTICE '=== CORREÇÕES APLICADAS COM SUCESSO ===';
@@ -220,9 +220,9 @@ BEGIN
         ORDER BY ordinal_position
     LOOP
         RAISE NOTICE '  - %: % (nullable: %)', 
-            test_result->>'column_name', 
-            test_result->>'data_type', 
-            test_result->>'is_nullable';
+            test_result.column_name, 
+            test_result.data_type, 
+            test_result.is_nullable;
     END LOOP;
     
     -- Teste 4: Verificar se há usuários válidos
