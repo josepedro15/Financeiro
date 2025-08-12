@@ -284,13 +284,18 @@ export default function Transactions() {
       // SOLUÇÃO DEFINITIVA: Usar função RPC personalizada COM DEBUG
       alert(`6. Usando função RPC personalizada COM DEBUG para evitar timezone`);
       
+      // CORREÇÃO: Enviar a data exatamente como selecionada, sem conversões
+      const dataParaEnviar = formData.transaction_date; // Usar exatamente a data do form
+      
+      alert(`7. Data que será enviada: "${dataParaEnviar}"`);
+      
       const { data, error } = await supabase.rpc('insert_transaction_safe_debug', {
         p_user_id: user.id,
         p_description: formData.description || '',
         p_amount: parseFloat(formData.amount),
         p_transaction_type: formData.transaction_type,
         p_category: formData.category || '',
-        p_transaction_date: formData.transaction_date,
+        p_transaction_date: dataParaEnviar, // Usar data exata sem conversões
         p_account_name: formData.account_name,
         p_client_name: formData.client_name || null
       });
@@ -299,7 +304,7 @@ export default function Transactions() {
         throw new Error(error.message);
       }
 
-      alert(`7. Resposta da função RPC COM DEBUG:`);
+      alert(`8. Resposta da função RPC COM DEBUG:`);
       alert(JSON.stringify(data, null, 2));
 
       if (data.success) {
