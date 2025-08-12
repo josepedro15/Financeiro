@@ -241,24 +241,33 @@ export default function Transactions() {
     }
     
     try {
-      // SOLUÇÃO DEFINITIVA: USAR TABELA PRINCIPAL
+      // SOLUÇÃO DEFINITIVA: COMPENSAR FUSO HORÁRIO
       
-      // 1. Usar a data exatamente como selecionada no modal
-      const dataExata = formData.transaction_date;
+      // 1. Pegar a data selecionada
+      const dataSelecionada = formData.transaction_date;
       
-      // 2. Dados da transação - SEM CONVERSÕES
+      // 2. Criar data e adicionar 1 dia para compensar timezone
+      const [ano, mes, dia] = dataSelecionada.split('-');
+      const dataOriginal = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+      const dataCompensada = new Date(dataOriginal);
+      dataCompensada.setDate(dataCompensada.getDate() + 1);
+      
+      // 3. Formatar como YYYY-MM-DD
+      const dataCorrigida = dataCompensada.toISOString().split('T')[0];
+      
+      // 4. Dados da transação
       const transactionData = {
         user_id: user.id,
         description: formData.description || '',
         amount: parseFloat(formData.amount),
         transaction_type: formData.transaction_type,
         category: formData.category || '',
-        transaction_date: dataExata, // DATA EXATA DO MODAL
+        transaction_date: dataCorrigida, // DATA COMPENSADA
         account_name: formData.account_name,
         client_name: formData.client_name || null
       };
       
-      // 3. Inserir na tabela PRINCIPAL - SEM PARTICIONAMENTO
+      // 5. Inserir na tabela principal
       const { data, error } = await supabase
         .from('transactions')
         .insert([transactionData])
@@ -268,7 +277,7 @@ export default function Transactions() {
         throw new Error(error.message);
       }
 
-      alert(`✅ Transação criada! Data: ${dataExata}`);
+      alert(`✅ Transação criada! Data selecionada: ${dataSelecionada}, Data corrigida: ${dataCorrigida}`);
 
       // Reset form
       setFormData({
