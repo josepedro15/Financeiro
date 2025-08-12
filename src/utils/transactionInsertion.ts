@@ -113,32 +113,46 @@ export async function updateTransactionInCorrectTable(
     // Se a tabela mudou, precisamos mover a transação
     console.log(`⚠️ Mudança de tabela detectada: ${originalTable} → ${newTable}`);
     
-    // 1. Inserir na nova tabela
-    const insertResult = await insertTransactionInCorrectTable({
-      ...updatedData,
-      // Manter o mesmo ID se possível, senão gerar novo
-    });
-    
-    if (!insertResult.success) {
-      return insertResult;
-    }
-    
-    // 2. Remover da tabela original
+    // 1. Primeiro, remover da tabela original
     const { error: deleteError } = await supabase
       .from(originalTable)
       .delete()
       .eq('id', transactionId);
     
     if (deleteError) {
-      console.error(`Erro ao remover da tabela original ${originalTable}:`, deleteError);
-      // A transação foi inserida na nova tabela, mas não removida da original
-      // Isso pode causar duplicação, mas é melhor que perda de dados
-    } else {
-      console.log(`✅ Transação removida da tabela original ${originalTable}`);
+      console.error(`❌ Erro ao remover da tabela original ${originalTable}:`, deleteError);
+      return {
+        success: false,
+        error: `Erro ao remover da tabela original: ${deleteError.message}`,
+        tableName: originalTable
+      };
     }
     
+    console.log(`✅ Transação removida da tabela original ${originalTable}`);
+    
+    // 2. Inserir na nova tabela com os dados atualizados
+    const { data, error: insertError } = await supabase
+      .from(newTable)
+      .insert([updatedData])
+      .select();
+    
+    if (insertError) {
+      console.error(`❌ Erro ao inserir na nova tabela ${newTable}:`, insertError);
+      return {
+        success: false,
+        error: `Erro ao inserir na nova tabela: ${insertError.message}`,
+        tableName: newTable
+      };
+    }
+    
+    console.log(`✅ Transação inserida na nova tabela ${newTable}`);
     console.log(`✅ Transação movida com sucesso: ${originalTable} → ${newTable}`);
-    return insertResult;
+    
+    return {
+      success: true,
+      tableName: newTable,
+      data: data
+    };
     
   } catch (error: any) {
     console.error('Erro na atualização inteligente:', error);
