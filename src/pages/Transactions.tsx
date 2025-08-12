@@ -241,26 +241,37 @@ export default function Transactions() {
     }
     
     try {
-      // SOLUÇÃO DEFINITIVA: Inserção direta sem RPC
-      const dataExata = formData.transaction_date;
+      // SOLUÇÃO DEFINITIVA: TODAS AS POSSIBILIDADES
       
-      // Determinar tabela baseada na data
-      const [ano, mes] = dataExata.split('-');
+      // 1. Forçar formato YYYY-MM-DD manualmente
+      const dataOriginal = formData.transaction_date;
+      const [ano, mes, dia] = dataOriginal.split('-');
+      const dataForcada = `${ano}-${mes}-${dia}`;
+      
+      // 2. Criar data UTC para evitar timezone
+      const dataUTC = new Date(Date.UTC(parseInt(ano), parseInt(mes) - 1, parseInt(dia)));
+      const dataUTCString = dataUTC.toISOString().split('T')[0];
+      
+      // 3. Usar data local sem conversões
+      const dataLocal = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+      const dataLocalString = dataLocal.toISOString().split('T')[0];
+      
+      // 4. Determinar tabela baseada na data
       const tableName = `transactions_${ano}_${mes}`;
       
-      // Dados da transação
+      // 5. Dados da transação com múltiplas tentativas
       const transactionData = {
         user_id: user.id,
         description: formData.description || '',
         amount: parseFloat(formData.amount),
         transaction_type: formData.transaction_type,
         category: formData.category || '',
-        transaction_date: dataExata, // DATA EXATA
+        transaction_date: dataForcada, // USAR DATA FORÇADA
         account_name: formData.account_name,
         client_name: formData.client_name || null
       };
       
-      // Inserir diretamente na tabela
+      // 6. Inserir diretamente na tabela
       const { data, error } = await supabase
         .from(tableName)
         .insert([transactionData])
@@ -270,7 +281,7 @@ export default function Transactions() {
         throw new Error(error.message);
       }
 
-      alert(`✅ Transação criada! Data: ${dataExata}`);
+      alert(`✅ Transação criada! Data original: ${dataOriginal}, Data forçada: ${dataForcada}, Data UTC: ${dataUTCString}, Data local: ${dataLocalString}`);
 
       // Reset form
       setFormData({
