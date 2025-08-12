@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { testDatabasePermissions, testClientIdNull } from '@/utils/testAuth';
 import { insertTransactionInCorrectTable, updateTransactionInCorrectTable, deleteTransactionFromCorrectTable } from '@/utils/transactionInsertion';
-import TableIndicator from '@/components/TableIndicator';
 import { getAllMonthlyTables } from '@/utils/monthlyTableUtils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -596,11 +595,6 @@ export default function Transactions() {
                       value={formData.transaction_date}
                       onChange={(e) => setFormData({ ...formData, transaction_date: e.target.value })}
                       required
-                    />
-                    {/* Indicador da tabela que será usada */}
-                    <TableIndicator 
-                      transactionDate={formData.transaction_date}
-                      className="mt-2"
                     />
                   </div>
                 </div>
