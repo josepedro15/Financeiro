@@ -648,6 +648,7 @@ export default function Clients() {
           // Permitir que botões funcionem mesmo durante drag
           if (e.target instanceof HTMLButtonElement) {
             e.stopPropagation();
+            e.preventDefault();
           }
         }}
       >
@@ -662,7 +663,13 @@ export default function Clients() {
                 variant="ghost"
                 onClick={(e) => {
                   e.stopPropagation();
+                  e.preventDefault();
+                  console.log('✏️ Botão editar clicado para cliente:', client.id);
                   handleEdit(client);
+                }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
                 }}
                 className="h-8 w-8 p-0 hover:bg-blue-100"
                 title="Editar cliente"
@@ -674,7 +681,13 @@ export default function Clients() {
                 variant="ghost"
                 onClick={(e) => {
                   e.stopPropagation();
+                  e.preventDefault();
+                  console.log('🗑️ Botão delete clicado para cliente:', client.id);
                   handleDelete(client.id);
+                }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
                 }}
                 className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600"
                 title="Excluir cliente"
