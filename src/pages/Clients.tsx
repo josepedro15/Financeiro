@@ -206,7 +206,10 @@ function DraggableClientCard({ client, onEdit, onDelete }: {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: client.id });
+  } = useSortable({ 
+    id: client.id,
+    disabled: false // Garantir que não está desabilitado
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -245,10 +248,13 @@ function DraggableClientCard({ client, onEdit, onDelete }: {
               size="sm"
               variant="ghost"
               onClick={(e) => {
+                console.log('🗑️ Botão delete clicado para cliente:', client.id);
                 e.stopPropagation();
+                e.preventDefault();
                 onDelete(client.id);
               }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 hover:text-red-600"
+              title="Excluir cliente"
             >
               <Trash2 className="w-3 h-3" />
             </Button>
@@ -530,12 +536,15 @@ export default function Clients() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este cliente?')) return;
+    console.log('🗑️ Iniciando processo de delete para cliente:', id);
+    
+    if (!confirm('Tem certeza que deseja excluir este cliente?')) {
+      console.log('❌ Usuário cancelou a exclusão');
+      return;
+    }
 
     try {
       console.log('🔄 Tentando deletar cliente:', id);
-      console.log('📊 Stages disponíveis:', Object.keys(stages));
-      console.log('📊 Clients disponíveis:', clients.length);
       
       // Primeiro, vamos verificar o cliente antes de deletar
       const { data: clientData, error: fetchError } = await supabase
@@ -584,7 +593,10 @@ export default function Clients() {
         title: "Sucesso",
         description: "Cliente excluído com sucesso"
       });
-      loadClients();
+      
+      // Recarregar a lista de clientes
+      await loadClients();
+      
     } catch (error: any) {
       console.error('❌ Erro ao deletar cliente:', error);
       toast({
