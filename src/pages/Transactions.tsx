@@ -480,6 +480,7 @@ export default function Transactions() {
                     transaction_type: 'income',
                     category: '',
                     transaction_date: new Date().toISOString().split('T')[0],
+                    selected_month: new Date().getMonth() + 1,
                     client_name: '',
                     account_name: ''
                   });
@@ -581,7 +582,7 @@ export default function Transactions() {
                   <div className="space-y-2">
                     <Label htmlFor="selected_month">Mês da Transação</Label>
                     <Select 
-                      value={formData.selected_month.toString()} 
+                      value={formData.selected_month?.toString() || '8'} 
                       onValueChange={(value) => {
                         console.log('📅 MÊS SELECIONADO:', value);
                         setFormData({ ...formData, selected_month: parseInt(value) });
