@@ -83,11 +83,14 @@ export async function updateTransactionInCorrectTable(
     const newTable = getTableNameForInsertion(updatedData.transaction_date);
     
     console.log(`=== ATUALIZAÇÃO INTELIGENTE ===`);
+    console.log(`ID da transação: ${transactionId}`);
     console.log(`Data original: ${originalData.transaction_date} (tabela: ${originalTable})`);
     console.log(`Nova data: ${updatedData.transaction_date} (tabela: ${newTable})`);
     
     // Se a tabela não mudou, fazer update simples
     if (originalTable === newTable) {
+      console.log(`🔄 Atualizando na mesma tabela: ${originalTable}`);
+      
       const { data, error } = await supabase
         .from(originalTable)
         .update(updatedData)
@@ -95,6 +98,7 @@ export async function updateTransactionInCorrectTable(
         .select();
       
       if (error) {
+        console.error(`❌ Erro no update: ${error.message}`);
         return {
           success: false,
           error: error.message,
@@ -110,34 +114,53 @@ export async function updateTransactionInCorrectTable(
       };
     }
     
-    // Se a tabela mudou, precisamos mover a transação
+    // Se a tabela mudou, usar abordagem mais simples
     console.log(`⚠️ Mudança de tabela detectada: ${originalTable} → ${newTable}`);
+    console.log(`🔄 Usando abordagem de recriação...`);
     
-    // 1. Primeiro, remover da tabela original
-    const { error: deleteError } = await supabase
+    // 1. Buscar dados completos da transação original
+    const { data: originalTransaction, error: fetchError } = await supabase
       .from(originalTable)
-      .delete()
-      .eq('id', transactionId);
+      .select('*')
+      .eq('id', transactionId)
+      .single();
     
-    if (deleteError) {
-      console.error(`❌ Erro ao remover da tabela original ${originalTable}:`, deleteError);
+    if (fetchError) {
+      console.error(`❌ Erro ao buscar transação original: ${fetchError.message}`);
       return {
         success: false,
-        error: `Erro ao remover da tabela original: ${deleteError.message}`,
+        error: `Erro ao buscar transação original: ${fetchError.message}`,
         tableName: originalTable
       };
     }
     
-    console.log(`✅ Transação removida da tabela original ${originalTable}`);
+    console.log(`📋 Transação original encontrada:`, originalTransaction);
     
-    // 2. Inserir na nova tabela com os dados atualizados
-    const { data, error: insertError } = await supabase
+    // 2. Preparar dados para inserção na nova tabela
+    const newTransactionData = {
+      user_id: originalTransaction.user_id,
+      description: updatedData.description || originalTransaction.description,
+      amount: updatedData.amount,
+      transaction_type: updatedData.transaction_type,
+      category: updatedData.category || originalTransaction.category,
+      transaction_date: updatedData.transaction_date,
+      account_name: updatedData.account_name,
+      client_name: updatedData.client_name || originalTransaction.client_name,
+      created_at: originalTransaction.created_at, // Manter data de criação original
+      updated_at: new Date().toISOString()
+    };
+    
+    console.log(`📤 Dados para nova tabela:`, newTransactionData);
+    
+    // 3. Inserir na nova tabela
+    const { data: newTransaction, error: insertError } = await supabase
       .from(newTable)
-      .insert([updatedData])
-      .select();
+      .insert([newTransactionData])
+      .select()
+      .single();
     
     if (insertError) {
-      console.error(`❌ Erro ao inserir na nova tabela ${newTable}:`, insertError);
+      console.error(`❌ Erro ao inserir na nova tabela: ${insertError.message}`);
       return {
         success: false,
         error: `Erro ao inserir na nova tabela: ${insertError.message}`,
@@ -145,17 +168,41 @@ export async function updateTransactionInCorrectTable(
       };
     }
     
-    console.log(`✅ Transação inserida na nova tabela ${newTable}`);
+    console.log(`✅ Transação inserida na nova tabela:`, newTransaction);
+    
+    // 4. Remover da tabela original
+    const { error: deleteError } = await supabase
+      .from(originalTable)
+      .delete()
+      .eq('id', transactionId);
+    
+    if (deleteError) {
+      console.error(`❌ Erro ao remover da tabela original: ${deleteError.message}`);
+      // A transação foi inserida na nova tabela, mas não removida da original
+      // Vamos remover a nova transação para evitar duplicação
+      await supabase
+        .from(newTable)
+        .delete()
+        .eq('id', newTransaction.id);
+      
+      return {
+        success: false,
+        error: `Erro ao remover da tabela original: ${deleteError.message}`,
+        tableName: originalTable
+      };
+    }
+    
+    console.log(`✅ Transação removida da tabela original`);
     console.log(`✅ Transação movida com sucesso: ${originalTable} → ${newTable}`);
     
     return {
       success: true,
       tableName: newTable,
-      data: data
+      data: [newTransaction]
     };
     
   } catch (error: any) {
-    console.error('Erro na atualização inteligente:', error);
+    console.error('❌ Erro na atualização inteligente:', error);
     return {
       success: false,
       error: error.message,
