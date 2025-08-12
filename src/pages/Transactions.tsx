@@ -292,17 +292,28 @@ export default function Transactions() {
         try {
           // 1. Primeiro, excluir transação anterior
           console.log('🗑️ Excluindo transação anterior...');
-          const { error: deleteError } = await supabase
+          console.log('📝 ID da transação a ser excluída:', editingTransaction.id);
+          
+          const { data: deleteResult, error: deleteError } = await supabase
             .from('transactions_2025_08')
             .delete()
-            .eq('id', editingTransaction.id);
+            .eq('id', editingTransaction.id)
+            .select();
           
           if (deleteError) {
             console.error('❌ Erro ao excluir transação anterior:', deleteError);
             throw new Error(`Erro ao excluir transação anterior: ${deleteError.message}`);
           }
           
-          console.log('✅ Transação anterior excluída');
+          console.log('🗑️ Resultado da exclusão:', deleteResult);
+          
+          // Verificar se realmente foi excluída
+          if (!deleteResult || deleteResult.length === 0) {
+            console.error('❌ Transação não foi excluída - nenhuma linha afetada');
+            throw new Error('Transação não foi excluída - verifique se o ID está correto');
+          }
+          
+          console.log('✅ Transação anterior excluída com sucesso');
           
           // 2. Depois, criar nova transação
           console.log('📤 Criando nova transação...');
@@ -318,6 +329,25 @@ export default function Transactions() {
           }
           
           console.log('✅ Nova transação criada:', newTransaction);
+          
+          // 3. Verificar se não há duplicatas
+          console.log('🔍 Verificando se não há duplicatas...');
+          const { data: checkResult, error: checkError } = await supabase
+            .from('transactions_2025_08')
+            .select('id, description, transaction_date, amount')
+            .eq('user_id', user.id)
+            .eq('description', transactionData.description)
+            .eq('amount', transactionData.amount);
+          
+          if (checkError) {
+            console.error('❌ Erro ao verificar duplicatas:', checkError);
+          } else {
+            console.log('🔍 Transações encontradas com mesmo descrição/valor:', checkResult);
+            if (checkResult && checkResult.length > 1) {
+              console.warn('⚠️ ATENÇÃO: Possível duplicação detectada!');
+            }
+          }
+          
           console.log('✅ Edição concluída com sucesso!');
           
           const date = new Date(formData.transaction_date);
