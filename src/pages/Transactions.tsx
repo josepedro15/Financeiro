@@ -241,37 +241,39 @@ export default function Transactions() {
     }
     
     try {
-      // SOLUÇÃO DEFINITIVA: TODAS AS POSSIBILIDADES
+      // SOLUÇÃO DEFINITIVA: CORRIGIR PROBLEMA DE TIMEZONE
       
-      // 1. Forçar formato YYYY-MM-DD manualmente
-      const dataOriginal = formData.transaction_date;
-      const [ano, mes, dia] = dataOriginal.split('-');
-      const dataForcada = `${ano}-${mes}-${dia}`;
+      // 1. Pegar a data selecionada
+      const dataSelecionada = formData.transaction_date;
       
-      // 2. Criar data UTC para evitar timezone
-      const dataUTC = new Date(Date.UTC(parseInt(ano), parseInt(mes) - 1, parseInt(dia)));
-      const dataUTCString = dataUTC.toISOString().split('T')[0];
+      // 2. Criar data no horário de Brasília (UTC-3)
+      const [ano, mes, dia] = dataSelecionada.split('-');
       
-      // 3. Usar data local sem conversões
-      const dataLocal = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
-      const dataLocalString = dataLocal.toISOString().split('T')[0];
+      // 3. Criar data no horário de Brasília às 12:00 (meio-dia) para evitar problemas de timezone
+      const dataBrasilia = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia), 12, 0, 0);
       
-      // 4. Determinar tabela baseada na data
+      // 4. Converter para UTC mantendo a data correta
+      const dataUTC = new Date(dataBrasilia.getTime() - (3 * 60 * 60 * 1000)); // -3 horas para UTC
+      
+      // 5. Formatar como YYYY-MM-DD
+      const dataCorrigida = dataUTC.toISOString().split('T')[0];
+      
+      // 6. Determinar tabela baseada na data original
       const tableName = `transactions_${ano}_${mes}`;
       
-      // 5. Dados da transação com múltiplas tentativas
+      // 7. Dados da transação
       const transactionData = {
         user_id: user.id,
         description: formData.description || '',
         amount: parseFloat(formData.amount),
         transaction_type: formData.transaction_type,
         category: formData.category || '',
-        transaction_date: dataForcada, // USAR DATA FORÇADA
+        transaction_date: dataCorrigida, // USAR DATA CORRIGIDA
         account_name: formData.account_name,
         client_name: formData.client_name || null
       };
       
-      // 6. Inserir diretamente na tabela
+      // 8. Inserir diretamente na tabela
       const { data, error } = await supabase
         .from(tableName)
         .insert([transactionData])
@@ -281,7 +283,7 @@ export default function Transactions() {
         throw new Error(error.message);
       }
 
-      alert(`✅ Transação criada! Data original: ${dataOriginal}, Data forçada: ${dataForcada}, Data UTC: ${dataUTCString}, Data local: ${dataLocalString}`);
+      alert(`✅ Transação criada! Data selecionada: ${dataSelecionada}, Data corrigida: ${dataCorrigida}`);
 
       // Reset form
       setFormData({
