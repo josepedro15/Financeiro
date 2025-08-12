@@ -224,64 +224,29 @@ export default function Transactions() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('🚀 INICIANDO SUBMIT DO FORMULÁRIO');
-    console.log('FormData completo:', formData);
-    console.log('Evento:', e);
-    console.log('User:', user);
+    // Log direto e simples
+    alert('SUBMIT INICIADO - Data: ' + formData.transaction_date);
     
-    // Verificar se o usuário pode realizar a ação
-    if (!isMasterUser) {
-      const canPerform = await canPerformAction('transaction');
-      if (!canPerform) {
-        toast({
-          title: "Limite Atingido",
-          description: "Você atingiu o limite de transações do seu plano. Faça upgrade para continuar.",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      console.log('Limite OK - permitindo criação');
+    // Validações básicas
+    if (!formData.amount || parseFloat(formData.amount) <= 0) {
+      alert('Valor deve ser maior que zero');
+      return;
+    }
+
+    if (!formData.account_name) {
+      alert('Selecione uma conta');
+      return;
+    }
+
+    if (!formData.transaction_date) {
+      alert('Selecione uma data');
+      return;
     }
 
     try {
-      console.log('=== DEBUG DATA DA TRANSAÇÃO ===');
-      console.log('Data selecionada no formulário:', formData.transaction_date);
-      console.log('Tipo da data:', typeof formData.transaction_date);
-      console.log('FormData completo:', formData);
-      
-      // Validações adicionais
-      if (!formData.amount || parseFloat(formData.amount) <= 0) {
-        console.error('❌ Valor inválido:', formData.amount);
-        toast({
-          title: "Erro",
-          description: "O valor deve ser maior que zero",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      if (!formData.account_name) {
-        console.error('❌ Conta não selecionada');
-        toast({
-          title: "Erro",
-          description: "Selecione uma conta",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // O input type="date" já retorna no formato ISO (YYYY-MM-DD)
-      // Mas pode haver problemas de fuso horário
-      let transactionDate = formData.transaction_date;
-      
-      // Garantir que a data seja tratada como UTC para evitar problemas de fuso horário
-      if (transactionDate) {
-        const [year, month, day] = transactionDate.split('-');
-        // Criar data UTC para evitar conversões de fuso horário
-        transactionDate = `${year}-${month}-${day}`;
-        console.log('Data formatada para UTC:', transactionDate);
-      }
+      // Garantir que a data está no formato correto
+      const dataSelecionada = formData.transaction_date;
+      console.log('Data selecionada:', dataSelecionada);
       
       const transactionData = {
         user_id: user.id,
@@ -289,34 +254,18 @@ export default function Transactions() {
         amount: parseFloat(formData.amount),
         transaction_type: formData.transaction_type,
         category: formData.category || '',
-        transaction_date: transactionDate,
+        transaction_date: dataSelecionada, // Usar a data exatamente como selecionada
         account_name: formData.account_name,
         client_name: formData.client_name || null
       };
 
-      console.log('=== DADOS FINAIS PARA ENVIAR ===');
-      console.log('TransactionData:', transactionData);
-      console.log('Data que será enviada para o banco:', transactionData.transaction_date);
-      console.log('Data como objeto Date:', new Date(transactionData.transaction_date));
-      console.log('Data local:', new Date(transactionData.transaction_date).toLocaleDateString('pt-BR'));
-      console.log('Data UTC:', new Date(transactionData.transaction_date + 'T00:00:00.000Z').toISOString());
-      
-      if (editingTransaction) {
-        // Usar atualização inteligente que pode mover entre tabelas
-        const originalData = {
-          user_id: editingTransaction.user_id || user.id,
-          description: editingTransaction.description,
-          amount: editingTransaction.amount,
-          transaction_type: editingTransaction.transaction_type,
-          category: editingTransaction.category,
-          transaction_date: editingTransaction.transaction_date,
-          account_name: editingTransaction.account_name,
-          client_name: editingTransaction.client_name
-        };
+      console.log('Dados para enviar:', transactionData);
 
+      if (editingTransaction) {
+        // Atualizar transação existente
         const result = await updateTransactionInCorrectTable(
           editingTransaction.id,
-          originalData,
+          editingTransaction,
           transactionData
         );
 
@@ -324,30 +273,19 @@ export default function Transactions() {
           throw new Error(result.error || 'Erro ao atualizar transação');
         }
 
-        toast({
-          title: "Sucesso",
-          description: `Transação atualizada com sucesso na tabela ${result.tableName}`
-        });
+        alert('Transação atualizada com sucesso!');
       } else {
-        // Usar inserção inteligente na tabela correta
+        // Criar nova transação
         const result = await insertTransactionInCorrectTable(transactionData);
 
         if (!result.success) {
           throw new Error(result.error || 'Erro ao criar transação');
         }
 
-        toast({
-          title: "Sucesso",
-          description: `Transação criada com sucesso na tabela ${result.tableName}`
-        });
-
-        // Incrementar uso apenas para novos usuários
-        if (!isMasterUser) {
-          await incrementUsage('transaction', 1);
-        }
+        alert('Transação criada com sucesso! Data: ' + dataSelecionada);
       }
 
-      // Reset form and reload data
+      // Reset form
       setFormData({
         description: '',
         amount: '',
@@ -360,23 +298,10 @@ export default function Transactions() {
       setEditingTransaction(null);
       setDialogOpen(false);
       loadData();
-    } catch (error: any) {
-      console.error('Transaction error:', error);
       
-      // Verificar se é um erro de autorização
-      if (error.code === 'PGRST116' || error.message?.includes('permission')) {
-        toast({
-          title: "Erro de Autorização",
-          description: "Você não tem permissão para realizar esta ação. Verifique se está logado corretamente.",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Erro",
-          description: error.message || "Erro desconhecido ao processar transação",
-          variant: "destructive"
-        });
-      }
+    } catch (error: any) {
+      console.error('Erro:', error);
+      alert('Erro: ' + error.message);
     }
   };
 
@@ -518,8 +443,8 @@ export default function Transactions() {
                     transaction_type: 'income',
                     category: '',
                     transaction_date: new Date().toISOString().split('T')[0],
-                    client_id: '',
-                    account_id: ''
+                    client_name: '',
+                    account_name: ''
                   });
                   console.log('Form data reset, opening dialog');
                 }}>
