@@ -288,64 +288,77 @@ export default function Transactions() {
         console.log('📅 Data original:', editingTransaction.transaction_date);
         console.log('📅 Nova data:', dataCorrigida);
         
-        // Usar função de atualização inteligente
-        const result = await updateTransactionInCorrectTable(
-          editingTransaction.id,
-          {
-            user_id: user.id,
-            description: editingTransaction.description || '',
-            amount: editingTransaction.amount,
-            transaction_type: editingTransaction.transaction_type,
-            category: editingTransaction.category || '',
-            transaction_date: editingTransaction.transaction_date,
-            account_name: editingTransaction.account_name,
-            client_name: editingTransaction.client_name || null
-          },
-          transactionData
-        );
-        
-        if (!result.success) {
-          console.error('❌ Erro na atualização inteligente:', result.error);
-          throw new Error(result.error || 'Erro ao atualizar transação');
+        // LÓGICA SIMPLES: Criar nova e excluir anterior
+        try {
+          // 1. Criar nova transação
+          console.log('📤 Criando nova transação...');
+          const { data: newTransaction, error: insertError } = await supabase
+            .from('transactions_2025_08') // Por enquanto fixo em agosto
+            .insert([transactionData])
+            .select()
+            .single();
+          
+          if (insertError) {
+            console.error('❌ Erro ao criar nova transação:', insertError);
+            throw new Error(`Erro ao criar nova transação: ${insertError.message}`);
+          }
+          
+          console.log('✅ Nova transação criada:', newTransaction);
+          
+          // 2. Excluir transação anterior
+          console.log('🗑️ Excluindo transação anterior...');
+          const { error: deleteError } = await supabase
+            .from('transactions_2025_08')
+            .delete()
+            .eq('id', editingTransaction.id);
+          
+          if (deleteError) {
+            console.error('❌ Erro ao excluir transação anterior:', deleteError);
+            // Se falhar ao excluir, vamos excluir a nova transação criada
+            await supabase
+              .from('transactions_2025_08')
+              .delete()
+              .eq('id', newTransaction.id);
+            throw new Error(`Erro ao excluir transação anterior: ${deleteError.message}`);
+          }
+          
+          console.log('✅ Transação anterior excluída');
+          console.log('✅ Edição concluída com sucesso!');
+          
+          const date = new Date(formData.transaction_date);
+          const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+          const monthName = monthNames[date.getMonth()];
+          
+          toast({
+            title: "✅ Transação atualizada!",
+            description: `${monthName} ${date.getFullYear()} | Nova data: ${formData.transaction_date}`,
+            duration: 3000,
+          });
+          
+          // Reset form
+          setFormData({
+            description: '',
+            amount: '',
+            transaction_type: 'income',
+            category: '',
+            transaction_date: new Date().toISOString().split('T')[0],
+            client_name: '',
+            account_name: ''
+          });
+          setEditingTransaction(null);
+          setDialogOpen(false);
+          loadData();
+          return;
+          
+        } catch (error: any) {
+          console.error('❌ Erro na edição:', error);
+          throw new Error(error.message || 'Erro ao editar transação');
         }
-        
-        console.log('✅ Transação atualizada com sucesso!');
-        console.log('📊 Tabela final:', result.tableName);
-        
-        const date = new Date(formData.transaction_date);
-        const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-        const monthName = monthNames[date.getMonth()];
-        
-        toast({
-          title: "✅ Transação atualizada!",
-          description: `${monthName} ${date.getFullYear()} | Tabela: ${result.tableName}`,
-          duration: 3000,
-        });
-        
-        // Reset form
-        setFormData({
-          description: '',
-          amount: '',
-          transaction_type: 'income',
-          category: '',
-          transaction_date: new Date().toISOString().split('T')[0],
-          client_name: '',
-          account_name: ''
-        });
-        setEditingTransaction(null);
-        setDialogOpen(false);
-        loadData();
-        return;
       } else {
         console.log('🆕 MODE: CRIANDO NOVA TRANSAÇÃO');
         
         // 4. Inserir na tabela correta usando a data da transação
         const result = await insertTransactionInCorrectTable(transactionData);
-
-      if (!result.success) {
-        console.error('❌ Erro na inserção inteligente:', result.error);
-        throw new Error(result.error || 'Erro ao inserir transação');
-      }
 
         if (!result.success) {
           console.error('❌ Erro na inserção inteligente:', result.error);
