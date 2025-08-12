@@ -622,7 +622,11 @@ export default function Transactions() {
                       id="transaction_date"
                       type="date"
                       value={formData.transaction_date}
-                      onChange={(e) => setFormData({ ...formData, transaction_date: e.target.value })}
+                      onChange={(e) => {
+                        console.log('📅 DATA ALTERADA:', e.target.value);
+                        console.log('Data anterior:', formData.transaction_date);
+                        setFormData({ ...formData, transaction_date: e.target.value });
+                      }}
                       required
                     />
                   </div>
@@ -632,7 +636,14 @@ export default function Transactions() {
                   <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                     Cancelar
                   </Button>
-                  <Button type="submit">
+                  <Button 
+                    type="submit"
+                    onClick={() => {
+                      console.log('🔘 BOTÃO SUBMIT CLICADO');
+                      console.log('FormData atual:', formData);
+                      console.log('Data atual:', formData.transaction_date);
+                    }}
+                  >
                     {editingTransaction ? 'Atualizar' : 'Criar'}
                   </Button>
                 </div>
