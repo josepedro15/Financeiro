@@ -241,43 +241,66 @@ export default function Transactions() {
     }
     
     try {
-      // SOLUÇÃO DEFINITIVA: COMPENSAR FUSO HORÁRIO
+      // DEBUG DETALHADO - LOGS COMPLETOS
       
-      // 1. Pegar a data selecionada
-      const dataSelecionada = formData.transaction_date;
+      // 1. Data original do modal
+      const dataOriginal = formData.transaction_date;
+      console.log('🔍 DEBUG TIMEZONE:');
+      console.log('📅 Data original do modal:', dataOriginal);
       
-      // 2. Criar data e adicionar 1 dia para compensar timezone
-      const [ano, mes, dia] = dataSelecionada.split('-');
-      const dataOriginal = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
-      const dataCompensada = new Date(dataOriginal);
+      // 2. Criar data e adicionar 1 dia
+      const [ano, mes, dia] = dataOriginal.split('-');
+      console.log('📊 Componentes:', { ano, mes, dia });
+      
+      const dataOriginalObj = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+      console.log('📅 Data original (Date):', dataOriginalObj);
+      console.log('📅 Data original (ISO):', dataOriginalObj.toISOString());
+      console.log('📅 Data original (Local):', dataOriginalObj.toLocaleDateString());
+      
+      const dataCompensada = new Date(dataOriginalObj);
       dataCompensada.setDate(dataCompensada.getDate() + 1);
+      console.log('📅 Data compensada (Date):', dataCompensada);
+      console.log('📅 Data compensada (ISO):', dataCompensada.toISOString());
+      console.log('📅 Data compensada (Local):', dataCompensada.toLocaleDateString());
       
-      // 3. Formatar como YYYY-MM-DD
       const dataCorrigida = dataCompensada.toISOString().split('T')[0];
+      console.log('📅 Data corrigida (YYYY-MM-DD):', dataCorrigida);
       
-      // 4. Dados da transação
+      // 3. Dados da transação
       const transactionData = {
         user_id: user.id,
         description: formData.description || '',
         amount: parseFloat(formData.amount),
         transaction_type: formData.transaction_type,
         category: formData.category || '',
-        transaction_date: dataCorrigida, // DATA COMPENSADA
+        transaction_date: dataCorrigida,
         account_name: formData.account_name,
         client_name: formData.client_name || null
       };
       
-      // 5. Inserir na tabela principal
+      console.log('📤 Dados sendo enviados:', transactionData);
+      
+      // 4. Inserir na tabela principal
       const { data, error } = await supabase
         .from('transactions')
         .insert([transactionData])
         .select();
 
       if (error) {
+        console.error('❌ Erro Supabase:', error);
         throw new Error(error.message);
       }
 
-      alert(`✅ Transação criada! Data selecionada: ${dataSelecionada}, Data corrigida: ${dataCorrigida}`);
+      console.log('✅ Resposta Supabase:', data);
+      
+      // 5. Verificar o que foi salvo
+      if (data && data[0]) {
+        const transacaoSalva = data[0];
+        console.log('💾 Transação salva:', transacaoSalva);
+        console.log('📅 Data salva no banco:', transacaoSalva.transaction_date);
+      }
+
+      alert(`✅ Transação criada!\nData selecionada: ${dataOriginal}\nData corrigida: ${dataCorrigida}\nVerifique o console para logs detalhados`);
 
       // Reset form
       setFormData({
@@ -294,6 +317,7 @@ export default function Transactions() {
       loadData();
       
     } catch (error: any) {
+      console.error('❌ Erro completo:', error);
       alert('❌ ERRO: ' + error.message);
     }
   };
