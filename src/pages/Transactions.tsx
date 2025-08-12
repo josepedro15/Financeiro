@@ -241,39 +241,28 @@ export default function Transactions() {
     }
     
     try {
-      // SOLUÇÃO DEFINITIVA: CORRIGIR PROBLEMA DE TIMEZONE
+      // SOLUÇÃO DEFINITIVA: USAR EXATAMENTE O QUE É SELECIONADO
       
-      // 1. Pegar a data selecionada
-      const dataSelecionada = formData.transaction_date;
+      // 1. Usar a data exatamente como selecionada no modal
+      const dataExata = formData.transaction_date;
       
-      // 2. Criar data no horário de Brasília (UTC-3)
-      const [ano, mes, dia] = dataSelecionada.split('-');
-      
-      // 3. Criar data no horário de Brasília às 12:00 (meio-dia) para evitar problemas de timezone
-      const dataBrasilia = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia), 12, 0, 0);
-      
-      // 4. Converter para UTC mantendo a data correta
-      const dataUTC = new Date(dataBrasilia.getTime() - (3 * 60 * 60 * 1000)); // -3 horas para UTC
-      
-      // 5. Formatar como YYYY-MM-DD
-      const dataCorrigida = dataUTC.toISOString().split('T')[0];
-      
-      // 6. Determinar tabela baseada na data original
+      // 2. Determinar tabela baseada na data
+      const [ano, mes] = dataExata.split('-');
       const tableName = `transactions_${ano}_${mes}`;
       
-      // 7. Dados da transação
+      // 3. Dados da transação - SEM CONVERSÕES
       const transactionData = {
         user_id: user.id,
         description: formData.description || '',
         amount: parseFloat(formData.amount),
         transaction_type: formData.transaction_type,
         category: formData.category || '',
-        transaction_date: dataCorrigida, // USAR DATA CORRIGIDA
+        transaction_date: dataExata, // DATA EXATA DO MODAL
         account_name: formData.account_name,
         client_name: formData.client_name || null
       };
       
-      // 8. Inserir diretamente na tabela
+      // 4. Inserir diretamente na tabela - SEM INTERPRETAÇÕES
       const { data, error } = await supabase
         .from(tableName)
         .insert([transactionData])
@@ -283,7 +272,7 @@ export default function Transactions() {
         throw new Error(error.message);
       }
 
-      alert(`✅ Transação criada! Data selecionada: ${dataSelecionada}, Data corrigida: ${dataCorrigida}`);
+      alert(`✅ Transação criada! Data: ${dataExata}`);
 
       // Reset form
       setFormData({
