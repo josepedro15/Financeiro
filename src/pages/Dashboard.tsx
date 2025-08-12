@@ -345,14 +345,68 @@ export default function Dashboard() {
         }
       }
 
-      // Buscar transações recentes da tabela principal (fallback para novas transações)
-      const { data: recentData, error: recentError } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', selectedDataSource)
-        .order('created_at', { ascending: false })
-        .limit(5);
+      // Buscar transações recentes de todas as tabelas (principal + mensais)
+      let recentTransactions: any[] = [];
+      
+      try {
+        // Buscar da tabela principal
+        const { data: mainRecentData, error: mainRecentError } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('user_id', dataSourceToUse)
+          .order('created_at', { ascending: false })
+          .limit(10);
 
+        if (mainRecentError) {
+          console.warn('Erro ao carregar transações recentes da tabela principal:', mainRecentError);
+        } else if (mainRecentData) {
+          recentTransactions = [...recentTransactions, ...mainRecentData];
+        }
+
+        // Buscar das tabelas mensais (últimos 3 meses)
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth() + 1;
+        const currentYear = currentDate.getFullYear();
+        
+        // Buscar dos últimos 3 meses
+        for (let i = 0; i < 3; i++) {
+          const targetMonth = currentMonth - i;
+          const targetYear = targetMonth <= 0 ? currentYear - 1 : currentYear;
+          const actualMonth = targetMonth <= 0 ? targetMonth + 12 : targetMonth;
+          
+          const monthTable = `transactions_${targetYear}_${String(actualMonth).padStart(2, '0')}`;
+          
+          try {
+            const { data: monthRecentData, error: monthRecentError } = await supabase
+              .from(monthTable)
+              .select('*')
+              .eq('user_id', dataSourceToUse)
+              .order('created_at', { ascending: false })
+              .limit(5);
+
+            if (monthRecentError) {
+              console.warn(`Erro ao carregar transações recentes de ${monthTable}:`, monthRecentError);
+            } else if (monthRecentData) {
+              recentTransactions = [...recentTransactions, ...monthRecentData];
+            }
+          } catch (error) {
+            console.warn(`Erro ao consultar tabela ${monthTable}:`, error);
+          }
+        }
+
+        // Ordenar por data de criação (mais recentes primeiro) e pegar apenas as 5 mais recentes
+        recentTransactions.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        
+        recentTransactions = recentTransactions.slice(0, 5);
+        
+        console.log('Total recent transactions loaded:', recentTransactions.length);
+        console.log('Recent transactions sample:', recentTransactions.slice(0, 3));
+        
+      } catch (error) {
+        console.error('Erro ao carregar transações recentes:', error);
+      }
 
 
       // DEBUG: Verificar dados carregados das tabelas mensais
@@ -524,7 +578,7 @@ export default function Dashboard() {
         totalExpenses,
         balancePJ,
         balanceCheckout,
-        recentTransactions: recentData || [],
+        recentTransactions: recentTransactions,
         monthlyRevenue,
         dailyRevenue,
         currentMonth: currentMonthName,
