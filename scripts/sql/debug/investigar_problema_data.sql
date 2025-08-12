@@ -43,9 +43,3 @@ LIMIT 10;
 
 -- 4. Verificar configuração de timezone do banco
 SHOW timezone;
-
--- 5. Testar inserção de uma data específica
--- (Este é apenas um teste, não executar em produção)
--- INSERT INTO transactions_2025_08 (user_id, description, amount, transaction_type, category, transaction_date, account_name)
--- VALUES ('2dc520e3-5f19-4dfe-838b-1aca7238ae36', 'TESTE DATA', 100.00, 'income', 'teste', '2025-08-10', 'Conta PJ')
--- RETURNING id, transaction_date, created_at;

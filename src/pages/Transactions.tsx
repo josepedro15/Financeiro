@@ -224,8 +224,13 @@ export default function Transactions() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // SOLUÇÃO DIRETA: Usar alert para garantir que funciona
-    alert('INICIANDO - Data: ' + formData.transaction_date);
+    // TESTE DIRETO: Verificar exatamente o que está acontecendo
+    alert('🔍 TESTE DIRETO - Vamos investigar tudo:');
+    alert(`1. Data do form: "${formData.transaction_date}"`);
+    alert(`2. Tipo da data: ${typeof formData.transaction_date}`);
+    alert(`3. Data como Date: ${new Date(formData.transaction_date)}`);
+    alert(`4. Data ISO: ${new Date(formData.transaction_date).toISOString()}`);
+    alert(`5. Data local: ${new Date(formData.transaction_date).toLocaleDateString()}`);
     
     // Validações básicas
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
@@ -242,15 +247,13 @@ export default function Transactions() {
       alert('Selecione uma data');
       return;
     }
-
+    
     try {
-      // SOLUÇÃO DEFINITIVA: Criar data UTC manualmente
-      const [ano, mes, dia] = formData.transaction_date.split('-');
+      // TESTE: Vamos usar a data exatamente como vem do input
+      const dataOriginal = formData.transaction_date;
       
-      // Garantir que é exatamente a data selecionada
-      const dataCorrigida = `${ano}-${mes}-${dia}`;
-      
-      alert(`Data selecionada: ${formData.transaction_date}\nData corrigida: ${dataCorrigida}`);
+      alert(`6. Data original: "${dataOriginal}"`);
+      alert(`7. Vamos usar exatamente esta data sem modificações`);
       
       const transactionData = {
         user_id: user.id,
@@ -258,12 +261,13 @@ export default function Transactions() {
         amount: parseFloat(formData.amount),
         transaction_type: formData.transaction_type,
         category: formData.category || '',
-        transaction_date: dataCorrigida, // SEMPRE usar a data corrigida
+        transaction_date: dataOriginal, // USAR EXATAMENTE A DATA ORIGINAL
         account_name: formData.account_name,
         client_name: formData.client_name || null
       };
 
-      alert('Enviando dados: ' + JSON.stringify(transactionData, null, 2));
+      alert('8. Dados que serão enviados:');
+      alert(JSON.stringify(transactionData, null, 2));
 
       if (editingTransaction) {
         // Atualizar transação existente
@@ -277,7 +281,7 @@ export default function Transactions() {
           throw new Error(result.error || 'Erro ao atualizar transação');
         }
 
-        alert('Transação atualizada com sucesso!');
+        alert('✅ Transação atualizada com sucesso!');
       } else {
         // Criar nova transação
         const result = await insertTransactionInCorrectTable(transactionData);
@@ -286,7 +290,7 @@ export default function Transactions() {
           throw new Error(result.error || 'Erro ao criar transação');
         }
 
-        alert('Transação criada com sucesso! Data: ' + dataCorrigida);
+        alert(`✅ Transação criada com sucesso! Data: ${dataOriginal}`);
       }
 
       // Reset form
@@ -304,7 +308,7 @@ export default function Transactions() {
       loadData();
       
     } catch (error: any) {
-      alert('ERRO: ' + error.message);
+      alert('❌ ERRO: ' + error.message);
     }
   };
 
