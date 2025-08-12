@@ -77,6 +77,38 @@ export default function Transactions() {
 
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
 
+  // TESTE DIRETO: Verificar se a função RPC está disponível
+  useEffect(() => {
+    const testRPC = async () => {
+      if (user) {
+        try {
+          alert('🧪 TESTANDO FUNÇÃO RPC...');
+          const { data, error } = await supabase.rpc('insert_transaction_safe', {
+            p_user_id: user.id,
+            p_description: 'TESTE RPC FRONTEND',
+            p_amount: 1.00,
+            p_transaction_type: 'income',
+            p_category: 'teste',
+            p_transaction_date: '2025-08-10',
+            p_account_name: 'Conta PJ',
+            p_client_name: null
+          });
+          
+          if (error) {
+            alert('❌ ERRO RPC: ' + error.message);
+          } else {
+            alert('✅ RPC FUNCIONANDO: ' + JSON.stringify(data, null, 2));
+          }
+        } catch (err: any) {
+          alert('❌ ERRO AO TESTAR RPC: ' + err.message);
+        }
+      }
+    };
+    
+    // Executar teste após 2 segundos
+    setTimeout(testRPC, 2000);
+  }, [user]);
+
   // Debug logs (commented out for production)
   // console.log('=== TRANSACTIONS PAGE DEBUG ===');
   // console.log('User:', user);
