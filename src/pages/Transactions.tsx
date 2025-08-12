@@ -241,29 +241,36 @@ export default function Transactions() {
     }
     
     try {
-      // SOLUÇÃO DEFINITIVA: Enviar data exata sem conversões
+      // SOLUÇÃO DEFINITIVA: Inserção direta sem RPC
       const dataExata = formData.transaction_date;
       
-      const { data, error } = await supabase.rpc('insert_transaction_safe_final', {
-        p_user_id: user.id,
-        p_description: formData.description || '',
-        p_amount: parseFloat(formData.amount),
-        p_transaction_type: formData.transaction_type,
-        p_category: formData.category || '',
-        p_transaction_date: dataExata,
-        p_account_name: formData.account_name,
-        p_client_name: formData.client_name || null
-      });
+      // Determinar tabela baseada na data
+      const [ano, mes] = dataExata.split('-');
+      const tableName = `transactions_${ano}_${mes}`;
+      
+      // Dados da transação
+      const transactionData = {
+        user_id: user.id,
+        description: formData.description || '',
+        amount: parseFloat(formData.amount),
+        transaction_type: formData.transaction_type,
+        category: formData.category || '',
+        transaction_date: dataExata, // DATA EXATA
+        account_name: formData.account_name,
+        client_name: formData.client_name || null
+      };
+      
+      // Inserir diretamente na tabela
+      const { data, error } = await supabase
+        .from(tableName)
+        .insert([transactionData])
+        .select();
 
       if (error) {
         throw new Error(error.message);
       }
 
-      if (data.success) {
-        alert(`✅ Transação criada! Data enviada: ${dataExata}, Data salva: ${data.transaction_date}`);
-      } else {
-        throw new Error(data.error || 'Erro desconhecido');
-      }
+      alert(`✅ Transação criada! Data: ${dataExata}`);
 
       // Reset form
       setFormData({
