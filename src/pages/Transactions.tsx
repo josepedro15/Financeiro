@@ -226,6 +226,8 @@ export default function Transactions() {
     
     console.log('🚀 INICIANDO SUBMIT DO FORMULÁRIO');
     console.log('FormData completo:', formData);
+    console.log('Evento:', e);
+    console.log('User:', user);
     
     // Verificar se o usuário pode realizar a ação
     if (!isMasterUser) {
