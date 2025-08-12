@@ -147,46 +147,51 @@ export default function Transactions() {
 
     try {
       setLoading(true);
+      console.log('🔄 Iniciando carregamento de dados...');
+      console.log('👤 User ID:', user.id);
       let allTransactions: Transaction[] = [];
 
       // Carregar dados das tabelas mensais de 2025
       const monthlyTables = getAllMonthlyTables(2025);
+      console.log('📊 Tabelas mensais a consultar:', monthlyTables.map(t => t.table));
       
       for (const tableInfo of monthlyTables) {
         try {
+          console.log(`🔍 Consultando tabela: ${tableInfo.table}`);
           const { data: monthData, error: monthError } = await supabase
             .from(tableInfo.table)
             .select('*')
             .eq('user_id', user.id);
 
           if (monthError) {
-            console.warn(`Erro ao carregar ${tableInfo.month}:`, monthError);
+            console.warn(`❌ Erro ao carregar ${tableInfo.month}:`, monthError);
           } else {
             const monthTransactions = monthData || [];
             allTransactions = [...allTransactions, ...monthTransactions];
-            console.log(`${tableInfo.month}: ${monthTransactions.length} transações`);
+            console.log(`✅ ${tableInfo.month}: ${monthTransactions.length} transações`);
           }
         } catch (error) {
-          console.warn(`Erro na consulta ${tableInfo.month}:`, error);
+          console.warn(`❌ Erro na consulta ${tableInfo.month}:`, error);
         }
       }
 
       // Carregar também da tabela principal (fallback e outras datas)
       try {
+        console.log('🔍 Consultando tabela principal: transactions');
         const { data: mainTableData, error: mainTableError } = await supabase
           .from('transactions')
           .select('*')
           .eq('user_id', user.id);
 
         if (mainTableError) {
-          console.warn('Erro ao carregar tabela principal:', mainTableError);
+          console.warn('❌ Erro ao carregar tabela principal:', mainTableError);
         } else {
           const mainTransactions = mainTableData || [];
           allTransactions = [...allTransactions, ...mainTransactions];
-          console.log(`Tabela principal: ${mainTransactions.length} transações`);
+          console.log(`✅ Tabela principal: ${mainTransactions.length} transações`);
         }
       } catch (error) {
-        console.warn('Erro na consulta tabela principal:', error);
+        console.warn('❌ Erro na consulta tabela principal:', error);
       }
 
       // Remover duplicatas (caso existam) e ordenar
@@ -198,12 +203,13 @@ export default function Transactions() {
         new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
       );
 
-      console.log('Total transações carregadas:', sortedTransactions.length);
+      console.log('📈 Total transações carregadas:', sortedTransactions.length);
+      console.log('📋 Primeiras 3 transações:', sortedTransactions.slice(0, 3));
       setTransactions(sortedTransactions);
       setFilteredTransactions(sortedTransactions);
 
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('❌ Error loading data:', error);
       toast({
         title: "Erro",
         description: "Erro inesperado ao carregar dados",
@@ -211,6 +217,7 @@ export default function Transactions() {
       });
     } finally {
       setLoading(false);
+      console.log('✅ Carregamento finalizado');
     }
   };
 

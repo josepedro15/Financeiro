@@ -152,7 +152,7 @@ function DroppableStageColumn({
       <div 
         ref={setNodeRef}
         className={`space-y-3 min-h-[400px] border-2 border-dashed rounded-lg p-2 transition-all ${
-          isOver ? 'border-primary bg-primary/5' : 'border-transparent hover:border-muted'
+          isOver ? 'border-primary bg-primary/5 scale-105' : 'border-muted/30 hover:border-muted'
         }`}
         style={{ 
           backgroundColor: clients.length === 0 && !isOver ? 'rgba(0,0,0,0.02)' : undefined
@@ -170,13 +170,21 @@ function DroppableStageColumn({
         </SortableContext>
 
         {clients.length === 0 && (
-          <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center mt-4">
-            <StageIcon className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">
-              Nenhum cliente em {stage.name.toLowerCase()}
+          <div className={`border-2 border-dashed rounded-lg p-6 text-center mt-4 transition-all ${
+            isOver ? 'border-primary bg-primary/10' : 'border-muted'
+          }`}>
+            <StageIcon className={`w-8 h-8 mx-auto mb-2 transition-colors ${
+              isOver ? 'text-primary' : 'text-muted-foreground'
+            }`} />
+            <p className={`text-sm transition-colors ${
+              isOver ? 'text-primary font-medium' : 'text-muted-foreground'
+            }`}>
+              {isOver ? 'Solte aqui!' : `Nenhum cliente em ${stage.name.toLowerCase()}`}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Arraste clientes para cá
+            <p className={`text-xs mt-1 transition-colors ${
+              isOver ? 'text-primary' : 'text-muted-foreground'
+            }`}>
+              {isOver ? 'Cliente será movido para este estágio' : 'Arraste clientes para cá'}
             </p>
           </div>
         )}
@@ -785,18 +793,40 @@ export default function Clients() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (!over) return;
+    if (!over) {
+      console.log('❌ Cliente arrastado para área inválida - cancelando movimento');
+      return;
+    }
 
     const clientId = active.id as string;
     const newStage = over.id as string;
 
     // Find the client being dragged
     const client = clients.find(c => c.id === clientId);
-    if (!client) return;
+    if (!client) {
+      console.log('❌ Cliente não encontrado - cancelando movimento');
+      return;
+    }
+
+    // Verificar se o destino é um estágio válido
+    if (!stages[newStage]) {
+      console.log('❌ Destino não é um estágio válido:', newStage);
+      toast({
+        title: "Movimento Inválido",
+        description: "Você só pode mover clientes para estágios válidos",
+        variant: "destructive"
+      });
+      return;
+    }
 
     // If dropped on same stage, do nothing
-    if (client.stage === newStage) return;
+    if (client.stage === newStage) {
+      console.log('✅ Cliente movido para o mesmo estágio - ignorando');
+      return;
+    }
 
+    console.log(`🔄 Movendo cliente ${client.name} de ${client.stage} para ${newStage}`);
+    
     // Update client stage
     handleStageChange(clientId, newStage);
   };
