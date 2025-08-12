@@ -281,10 +281,10 @@ export default function Transactions() {
     }
     
     try {
-      // SOLUÇÃO DEFINITIVA: Usar função RPC personalizada
-      alert(`6. Usando função RPC personalizada para evitar timezone`);
+      // SOLUÇÃO DEFINITIVA: Usar função RPC personalizada COM DEBUG
+      alert(`6. Usando função RPC personalizada COM DEBUG para evitar timezone`);
       
-      const { data, error } = await supabase.rpc('insert_transaction_safe', {
+      const { data, error } = await supabase.rpc('insert_transaction_safe_debug', {
         p_user_id: user.id,
         p_description: formData.description || '',
         p_amount: parseFloat(formData.amount),
@@ -299,7 +299,7 @@ export default function Transactions() {
         throw new Error(error.message);
       }
 
-      alert(`7. Resposta da função RPC:`);
+      alert(`7. Resposta da função RPC COM DEBUG:`);
       alert(JSON.stringify(data, null, 2));
 
       if (data.success) {
