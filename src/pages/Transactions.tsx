@@ -223,39 +223,24 @@ export default function Transactions() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-
-          // Verificar limites de assinatura (apenas para novos usuários)
-      if (!isMasterUser && !editingTransaction) {
-        console.log('=== DEBUG LIMITES ===');
-        console.log('isMasterUser:', isMasterUser);
-        console.log('editingTransaction:', editingTransaction);
-        console.log('user.id:', user?.id);
-        
-        const canCreate = await canPerformAction('transaction');
-        console.log('canCreate:', canCreate);
-        
-        // Debug adicional - verificar limites diretamente
-        const limits = await checkPlanLimits('transaction');
-        console.log('Limits:', limits);
-        
-        // Debug adicional - verificar subscription e usage
-        console.log('Subscription:', subscription);
-        console.log('Usage:', usage);
-        
-        if (!canCreate) {
-          console.log('Limite atingido - bloqueando criação');
-          console.log('Motivo: canPerformAction retornou false');
-          toast({
-            title: "Limite Atingido",
-            description: "Você atingiu o limite de transações do seu plano. Faça upgrade para continuar.",
-            variant: "destructive"
-          });
-          return;
-        }
-        
-        console.log('Limite OK - permitindo criação');
+    
+    console.log('🚀 INICIANDO SUBMIT DO FORMULÁRIO');
+    console.log('FormData completo:', formData);
+    
+    // Verificar se o usuário pode realizar a ação
+    if (!isMasterUser) {
+      const canPerform = await canPerformAction('transaction');
+      if (!canPerform) {
+        toast({
+          title: "Limite Atingido",
+          description: "Você atingiu o limite de transações do seu plano. Faça upgrade para continuar.",
+          variant: "destructive"
+        });
+        return;
       }
+      
+      console.log('Limite OK - permitindo criação');
+    }
 
     // Validação adicional
     if (!formData.account_name) {
@@ -268,17 +253,38 @@ export default function Transactions() {
     }
 
     try {
+      console.log('=== DEBUG DATA DA TRANSAÇÃO ===');
+      console.log('Data selecionada no formulário:', formData.transaction_date);
+      console.log('Tipo da data:', typeof formData.transaction_date);
+      
+      // O input type="date" já retorna no formato ISO (YYYY-MM-DD)
+      // Mas pode haver problemas de fuso horário
+      let transactionDate = formData.transaction_date;
+      
+      // Garantir que a data seja tratada como UTC para evitar problemas de fuso horário
+      if (transactionDate) {
+        const [year, month, day] = transactionDate.split('-');
+        // Criar data UTC para evitar conversões de fuso horário
+        transactionDate = `${year}-${month}-${day}`;
+        console.log('Data formatada para UTC:', transactionDate);
+      }
+      
       const transactionData = {
         user_id: user.id,
         description: formData.description,
         amount: parseFloat(formData.amount),
         transaction_type: formData.transaction_type,
         category: formData.category,
-        transaction_date: formData.transaction_date,
+        transaction_date: transactionDate,
         account_name: formData.account_name,
         client_name: formData.client_name || null
       };
 
+      console.log('Data que será enviada para o banco:', transactionData.transaction_date);
+      console.log('Data como objeto Date:', new Date(transactionData.transaction_date));
+      console.log('Data local:', new Date(transactionData.transaction_date).toLocaleDateString('pt-BR'));
+      console.log('Data UTC:', new Date(transactionData.transaction_date + 'T00:00:00.000Z').toISOString());
+      
       if (editingTransaction) {
         // Usar atualização inteligente que pode mover entre tabelas
         const originalData = {
