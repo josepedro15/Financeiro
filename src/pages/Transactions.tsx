@@ -244,7 +244,7 @@ export default function Transactions() {
       // SOLUÇÃO DEFINITIVA: Enviar data exata sem conversões
       const dataExata = formData.transaction_date;
       
-      const { data, error } = await supabase.rpc('insert_transaction_safe_debug', {
+      const { data, error } = await supabase.rpc('insert_transaction_safe_final', {
         p_user_id: user.id,
         p_description: formData.description || '',
         p_amount: parseFloat(formData.amount),
