@@ -241,28 +241,29 @@ export default function Transactions() {
     }
     
     try {
-      // DEBUG DETALHADO - LOGS COMPLETOS
+      // SOLUÇÃO DEFINITIVA: COMPENSAÇÃO AGRESSIVA DE TIMEZONE
       
       // 1. Data original do modal
       const dataOriginal = formData.transaction_date;
       console.log('🔍 DEBUG TIMEZONE:');
       console.log('📅 Data original do modal:', dataOriginal);
       
-      // 2. Criar data e adicionar 1 dia
+      // 2. LÓGICA REVISADA: Forçar compensação de 2 dias
       const [ano, mes, dia] = dataOriginal.split('-');
       console.log('📊 Componentes:', { ano, mes, dia });
       
-      const dataOriginalObj = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+      // Criar data no meio-dia para evitar problemas de timezone
+      const dataOriginalObj = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia), 12, 0, 0);
       console.log('📅 Data original (Date):', dataOriginalObj);
       console.log('📅 Data original (ISO):', dataOriginalObj.toISOString());
-      console.log('📅 Data original (Local):', dataOriginalObj.toLocaleDateString());
       
+      // COMPENSAÇÃO AGRESSIVA: Adicionar 2 dias para garantir
       const dataCompensada = new Date(dataOriginalObj);
-      dataCompensada.setDate(dataCompensada.getDate() + 1);
-      console.log('📅 Data compensada (Date):', dataCompensada);
-      console.log('📅 Data compensada (ISO):', dataCompensada.toISOString());
-      console.log('📅 Data compensada (Local):', dataCompensada.toLocaleDateString());
+      dataCompensada.setDate(dataCompensada.getDate() + 2);
+      console.log('📅 Data compensada +2 dias (Date):', dataCompensada);
+      console.log('📅 Data compensada +2 dias (ISO):', dataCompensada.toISOString());
       
+      // Formatar como YYYY-MM-DD
       const dataCorrigida = dataCompensada.toISOString().split('T')[0];
       console.log('📅 Data corrigida (YYYY-MM-DD):', dataCorrigida);
       
@@ -273,7 +274,7 @@ export default function Transactions() {
         amount: parseFloat(formData.amount),
         transaction_type: formData.transaction_type,
         category: formData.category || '',
-        transaction_date: dataCorrigida,
+        transaction_date: dataCorrigida, // DATA COMPENSADA +2 DIAS
         account_name: formData.account_name,
         client_name: formData.client_name || null
       };
@@ -298,9 +299,17 @@ export default function Transactions() {
         const transacaoSalva = data[0];
         console.log('💾 Transação salva:', transacaoSalva);
         console.log('📅 Data salva no banco:', transacaoSalva.transaction_date);
+        
+        // Verificar se a data salva é a correta
+        const dataSalva = new Date(transacaoSalva.transaction_date);
+        const dataEsperada = new Date(dataOriginal);
+        
+        console.log('📅 Data esperada:', dataEsperada.toISOString().split('T')[0]);
+        console.log('📅 Data realmente salva:', dataSalva.toISOString().split('T')[0]);
+        console.log('✅ Datas coincidem?', dataEsperada.toISOString().split('T')[0] === dataSalva.toISOString().split('T')[0]);
       }
 
-      alert(`✅ Transação criada!\nData selecionada: ${dataOriginal}\nData corrigida: ${dataCorrigida}\nVerifique o console para logs detalhados`);
+      alert(`✅ Transação criada!\nData selecionada: ${dataOriginal}\nData compensada: ${dataCorrigida}\nVerifique o console para logs detalhados`);
 
       // Reset form
       setFormData({
