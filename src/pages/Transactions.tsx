@@ -313,7 +313,11 @@ export default function Transactions() {
       const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
       const selectedMonthName = monthNames[formData.selected_month - 1];
       
-      alert(`✅ Transação criada!\nData selecionada: ${dataOriginal}\nMês selecionado: ${selectedMonthName}\nTabela: ${result.tableName}\nVerifique o console para logs detalhados`);
+      toast({
+        title: "✅ Transação criada!",
+        description: `Mês: ${selectedMonthName} | Tabela: ${result.tableName}`,
+        duration: 3000,
+      });
 
       // Reset form
       setFormData({
