@@ -281,24 +281,23 @@ export default function Transactions() {
       
       console.log('📤 Dados sendo enviados:', transactionData);
       
-      // 4. Inserir na tabela principal
-      const { data, error } = await supabase
-        .from('transactions')
-        .insert([transactionData])
-        .select();
+      // 4. Inserir na tabela correta usando função inteligente
+      const result = await insertTransactionInCorrectTable(transactionData);
 
-      if (error) {
-        console.error('❌ Erro Supabase:', error);
-        throw new Error(error.message);
+      if (!result.success) {
+        console.error('❌ Erro na inserção inteligente:', result.error);
+        throw new Error(result.error || 'Erro ao inserir transação');
       }
 
-      console.log('✅ Resposta Supabase:', data);
+      console.log('✅ Transação inserida com sucesso na tabela:', result.tableName);
+      console.log('✅ Dados inseridos:', result.data);
       
       // 5. Verificar o que foi salvo
-      if (data && data[0]) {
-        const transacaoSalva = data[0];
+      if (result.data && result.data[0]) {
+        const transacaoSalva = result.data[0];
         console.log('💾 Transação salva:', transacaoSalva);
         console.log('📅 Data salva no banco:', transacaoSalva.transaction_date);
+        console.log('📊 Tabela utilizada:', result.tableName);
         
         // Verificar se a data salva é a correta
         const dataSalva = new Date(transacaoSalva.transaction_date);
@@ -309,7 +308,7 @@ export default function Transactions() {
         console.log('✅ Datas coincidem?', dataEsperada.toISOString().split('T')[0] === dataSalva.toISOString().split('T')[0]);
       }
 
-      alert(`✅ Transação criada!\nData selecionada: ${dataOriginal}\nData compensada: ${dataCorrigida}\nVerifique o console para logs detalhados`);
+      alert(`✅ Transação criada!\nData selecionada: ${dataOriginal}\nData compensada: ${dataCorrigida}\nTabela: ${result.tableName}\nVerifique o console para logs detalhados`);
 
       // Reset form
       setFormData({

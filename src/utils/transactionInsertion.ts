@@ -35,14 +35,7 @@ export async function insertTransactionInCorrectTable(
     console.log(`Tabela escolhida: ${tableName}`);
     console.log(`Usando tabela mensal: ${useMonthlyTable}`);
     
-    // CORREÇÃO: Forçar timezone correto para evitar conversões automáticas
-    const dataToInsert = {
-      ...transactionData,
-      // Forçar a data como DATE sem timezone
-      transaction_date: `${transactionData.transaction_date}::date`
-    };
-    
-    console.log(`Dados para inserção:`, dataToInsert);
+    console.log(`Dados para inserção:`, transactionData);
     
     // Inserir na tabela determinada
     const { data, error } = await supabase
@@ -170,18 +163,52 @@ export async function deleteTransactionFromCorrectTable(
     console.log(`=== REMOÇÃO INTELIGENTE ===`);
     console.log(`Data: ${transactionDate}`);
     console.log(`Tabela: ${tableName}`);
+    console.log(`ID: ${transactionId}`);
     
+    // Primeiro, tentar delete direto
     const { error } = await supabase
       .from(tableName)
       .delete()
       .eq('id', transactionId);
     
     if (error) {
-      return {
-        success: false,
-        error: error.message,
-        tableName: tableName
-      };
+      console.log(`❌ Erro no delete direto: ${error.message}`);
+      console.log(`🔄 Tentando função RPC como fallback...`);
+      
+      // Se falhar, tentar função RPC
+      const { data: rpcResult, error: rpcError } = await supabase.rpc(
+        'delete_transaction_safe',
+        {
+          p_transaction_id: transactionId,
+          p_user_id: (await supabase.auth.getUser()).data.user?.id,
+          p_transaction_date: transactionDate
+        }
+      );
+      
+      if (rpcError) {
+        console.error(`❌ Erro na função RPC: ${rpcError.message}`);
+        return {
+          success: false,
+          error: rpcError.message,
+          tableName: tableName
+        };
+      }
+      
+      console.log(`✅ Delete via RPC:`, rpcResult);
+      
+      if (rpcResult && rpcResult.success) {
+        return {
+          success: true,
+          tableName: rpcResult.table_name || tableName,
+          data: rpcResult
+        };
+      } else {
+        return {
+          success: false,
+          error: 'Transação não encontrada ou não pode ser deletada',
+          tableName: tableName
+        };
+      }
     }
     
     console.log(`✅ Transação removida da tabela ${tableName}`);
