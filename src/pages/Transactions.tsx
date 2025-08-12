@@ -63,7 +63,6 @@ export default function Transactions() {
     transaction_type: 'income' as 'income' | 'expense' | 'transfer',
     category: '',
     transaction_date: new Date().toISOString().split('T')[0],
-    selected_month: new Date().getMonth() + 1, // Mês atual (1-12)
     client_name: '',
     account_name: ''
   });
@@ -281,10 +280,9 @@ export default function Transactions() {
       };
       
       console.log('📤 Dados sendo enviados:', transactionData);
-      console.log('📅 Mês selecionado:', formData.selected_month);
       
-      // 4. Inserir na tabela correta usando o mês selecionado
-      const result = await insertTransactionInSelectedMonthTable(transactionData, formData.selected_month);
+      // 4. Inserir na tabela correta usando a data da transação
+      const result = await insertTransactionInCorrectTable(transactionData);
 
       if (!result.success) {
         console.error('❌ Erro na inserção inteligente:', result.error);
@@ -310,26 +308,26 @@ export default function Transactions() {
         console.log('✅ Datas coincidem?', dataEsperada.toISOString().split('T')[0] === dataSalva.toISOString().split('T')[0]);
       }
 
+      const date = new Date(formData.transaction_date);
       const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-      const selectedMonthName = monthNames[formData.selected_month - 1];
+      const monthName = monthNames[date.getMonth()];
       
       toast({
         title: "✅ Transação criada!",
-        description: `Mês: ${selectedMonthName} | Tabela: ${result.tableName}`,
+        description: `${monthName} ${date.getFullYear()} | Tabela: ${result.tableName}`,
         duration: 3000,
       });
 
-      // Reset form
-      setFormData({
-        description: '',
-        amount: '',
-        transaction_type: 'income',
-        category: '',
-        transaction_date: new Date().toISOString().split('T')[0],
-        selected_month: new Date().getMonth() + 1,
-        client_name: '',
-        account_name: ''
-      });
+              // Reset form
+        setFormData({
+          description: '',
+          amount: '',
+          transaction_type: 'income',
+          category: '',
+          transaction_date: new Date().toISOString().split('T')[0],
+          client_name: '',
+          account_name: ''
+        });
       setEditingTransaction(null);
       setDialogOpen(false);
       loadData();
@@ -343,17 +341,12 @@ export default function Transactions() {
   const handleEdit = (transaction: Transaction) => {
     setEditingTransaction(transaction);
     
-    // Extrair mês da data da transação
-    const transactionDate = new Date(transaction.transaction_date);
-    const selectedMonth = transactionDate.getMonth() + 1;
-    
     setFormData({
       description: transaction.description,
       amount: transaction.amount.toString(),
       transaction_type: transaction.transaction_type,
       category: transaction.category || '',
       transaction_date: transaction.transaction_date,
-      selected_month: selectedMonth,
       client_name: transaction.client_name || '',
       account_name: transaction.account_name
     });
@@ -484,7 +477,6 @@ export default function Transactions() {
                     transaction_type: 'income',
                     category: '',
                     transaction_date: new Date().toISOString().split('T')[0],
-                    selected_month: new Date().getMonth() + 1,
                     client_name: '',
                     account_name: ''
                   });
@@ -585,31 +577,15 @@ export default function Transactions() {
 
                   <div className="space-y-2">
                     <Label htmlFor="selected_month">Mês da Transação</Label>
-                    <Select 
-                      value={formData.selected_month?.toString() || '8'} 
-                      onValueChange={(value) => {
-                        console.log('📅 MÊS SELECIONADO:', value);
-                        setFormData({ ...formData, selected_month: parseInt(value) });
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">Janeiro</SelectItem>
-                        <SelectItem value="2">Fevereiro</SelectItem>
-                        <SelectItem value="3">Março</SelectItem>
-                        <SelectItem value="4">Abril</SelectItem>
-                        <SelectItem value="5">Maio</SelectItem>
-                        <SelectItem value="6">Junho</SelectItem>
-                        <SelectItem value="7">Julho</SelectItem>
-                        <SelectItem value="8">Agosto</SelectItem>
-                        <SelectItem value="9">Setembro</SelectItem>
-                        <SelectItem value="10">Outubro</SelectItem>
-                        <SelectItem value="11">Novembro</SelectItem>
-                        <SelectItem value="12">Dezembro</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
+                      {(() => {
+                        const date = new Date(formData.transaction_date);
+                        const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+                        const monthName = monthNames[date.getMonth()];
+                        const year = date.getFullYear();
+                        return `Tabela: transactions_${year}_${String(date.getMonth() + 1).padStart(2, '0')} (${monthName} ${year})`;
+                      })()}
+                    </div>
                   </div>
 
                   <div className="space-y-2">
