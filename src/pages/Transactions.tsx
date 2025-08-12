@@ -4,7 +4,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { testDatabasePermissions, testClientIdNull } from '@/utils/testAuth';
-import { insertTransactionInCorrectTable, updateTransactionInCorrectTable, deleteTransactionFromCorrectTable } from '@/utils/transactionInsertion';
+import { insertTransactionInCorrectTable, insertTransactionInSelectedMonthTable, updateTransactionInCorrectTable, deleteTransactionFromCorrectTable } from '@/utils/transactionInsertion';
 import { getAllMonthlyTables } from '@/utils/monthlyTableUtils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -63,6 +63,7 @@ export default function Transactions() {
     transaction_type: 'income' as 'income' | 'expense' | 'transfer',
     category: '',
     transaction_date: new Date().toISOString().split('T')[0],
+    selected_month: new Date().getMonth() + 1, // Mês atual (1-12)
     client_name: '',
     account_name: ''
   });
@@ -280,9 +281,10 @@ export default function Transactions() {
       };
       
       console.log('📤 Dados sendo enviados:', transactionData);
+      console.log('📅 Mês selecionado:', formData.selected_month);
       
-      // 4. Inserir na tabela correta usando função inteligente
-      const result = await insertTransactionInCorrectTable(transactionData);
+      // 4. Inserir na tabela correta usando o mês selecionado
+      const result = await insertTransactionInSelectedMonthTable(transactionData, formData.selected_month);
 
       if (!result.success) {
         console.error('❌ Erro na inserção inteligente:', result.error);
@@ -308,7 +310,10 @@ export default function Transactions() {
         console.log('✅ Datas coincidem?', dataEsperada.toISOString().split('T')[0] === dataSalva.toISOString().split('T')[0]);
       }
 
-      alert(`✅ Transação criada!\nData selecionada: ${dataOriginal}\nData compensada: ${dataCorrigida}\nTabela: ${result.tableName}\nVerifique o console para logs detalhados`);
+      const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+      const selectedMonthName = monthNames[formData.selected_month - 1];
+      
+      alert(`✅ Transação criada!\nData selecionada: ${dataOriginal}\nMês selecionado: ${selectedMonthName}\nTabela: ${result.tableName}\nVerifique o console para logs detalhados`);
 
       // Reset form
       setFormData({
@@ -317,6 +322,7 @@ export default function Transactions() {
         transaction_type: 'income',
         category: '',
         transaction_date: new Date().toISOString().split('T')[0],
+        selected_month: new Date().getMonth() + 1,
         client_name: '',
         account_name: ''
       });
@@ -332,12 +338,18 @@ export default function Transactions() {
 
   const handleEdit = (transaction: Transaction) => {
     setEditingTransaction(transaction);
+    
+    // Extrair mês da data da transação
+    const transactionDate = new Date(transaction.transaction_date);
+    const selectedMonth = transactionDate.getMonth() + 1;
+    
     setFormData({
       description: transaction.description,
       amount: transaction.amount.toString(),
       transaction_type: transaction.transaction_type,
       category: transaction.category || '',
       transaction_date: transaction.transaction_date,
+      selected_month: selectedMonth,
       client_name: transaction.client_name || '',
       account_name: transaction.account_name
     });
@@ -555,7 +567,7 @@ export default function Transactions() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="category">Categoria</Label>
                     <Input
@@ -564,6 +576,35 @@ export default function Transactions() {
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="selected_month">Mês da Transação</Label>
+                    <Select 
+                      value={formData.selected_month.toString()} 
+                      onValueChange={(value) => {
+                        console.log('📅 MÊS SELECIONADO:', value);
+                        setFormData({ ...formData, selected_month: parseInt(value) });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">Janeiro</SelectItem>
+                        <SelectItem value="2">Fevereiro</SelectItem>
+                        <SelectItem value="3">Março</SelectItem>
+                        <SelectItem value="4">Abril</SelectItem>
+                        <SelectItem value="5">Maio</SelectItem>
+                        <SelectItem value="6">Junho</SelectItem>
+                        <SelectItem value="7">Julho</SelectItem>
+                        <SelectItem value="8">Agosto</SelectItem>
+                        <SelectItem value="9">Setembro</SelectItem>
+                        <SelectItem value="10">Outubro</SelectItem>
+                        <SelectItem value="11">Novembro</SelectItem>
+                        <SelectItem value="12">Dezembro</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">

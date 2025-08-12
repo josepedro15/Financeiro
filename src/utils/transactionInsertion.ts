@@ -226,3 +226,55 @@ export async function deleteTransactionFromCorrectTable(
     };
   }
 }
+
+/**
+ * Insere uma transação na tabela correta baseada no mês selecionado
+ */
+export async function insertTransactionInSelectedMonthTable(
+  transactionData: TransactionData,
+  selectedMonth: number
+): Promise<InsertResult> {
+  try {
+    // Determinar tabela baseada no mês selecionado
+    const year = 2025; // Por enquanto fixo em 2025
+    const tableName = `transactions_${year}_${String(selectedMonth).padStart(2, '0')}`;
+    
+    console.log(`=== INSERÇÃO POR MÊS SELECIONADO ===`);
+    console.log(`Mês selecionado: ${selectedMonth}`);
+    console.log(`Tabela escolhida: ${tableName}`);
+    console.log(`Data da transação: ${transactionData.transaction_date}`);
+    
+    console.log(`Dados para inserção:`, transactionData);
+    
+    // Inserir na tabela determinada
+    const { data, error } = await supabase
+      .from(tableName)
+      .insert([transactionData])
+      .select();
+    
+    if (error) {
+      console.error(`Erro ao inserir na tabela ${tableName}:`, error);
+      return {
+        success: false,
+        error: error.message,
+        tableName: tableName
+      };
+    }
+    
+    console.log(`✅ Transação inserida com sucesso na tabela ${tableName}`);
+    
+    return {
+      success: true,
+      tableName: tableName,
+      data: data
+    };
+    
+  } catch (error: any) {
+    console.error('Erro na inserção por mês selecionado:', error);
+    return {
+      success: false,
+      error: error.message,
+      tableName: 'unknown'
+    };
+  }
+}
