@@ -224,8 +224,8 @@ export default function Transactions() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Log direto e simples
-    alert('SUBMIT INICIADO - Data: ' + formData.transaction_date);
+    // SOLUÇÃO DIRETA: Usar alert para garantir que funciona
+    alert('INICIANDO - Data: ' + formData.transaction_date);
     
     // Validações básicas
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
@@ -244,35 +244,13 @@ export default function Transactions() {
     }
 
     try {
-      // Garantir que a data está no formato correto
-      const dataSelecionada = formData.transaction_date;
-      console.log('Data selecionada:', dataSelecionada);
+      // SOLUÇÃO DEFINITIVA: Criar data UTC manualmente
+      const [ano, mes, dia] = formData.transaction_date.split('-');
       
-      // Verificar se é domingo (dia da semana 0)
-      const dataObj = new Date(dataSelecionada);
-      const diaSemana = dataObj.getDay(); // 0 = domingo, 1 = segunda, etc.
-      const diaMes = dataObj.getDate();
+      // Garantir que é exatamente a data selecionada
+      const dataCorrigida = `${ano}-${mes}-${dia}`;
       
-      console.log('Dia da semana:', diaSemana, '(0=domingo)');
-      console.log('Dia do mês:', diaMes);
-      
-      // CORREÇÃO: Se é domingo mas está sendo interpretado como sábado, forçar o domingo
-      let dataFinal = dataSelecionada;
-      
-      if (diaSemana === 0) {
-        console.log('⚠️ DOMINGO DETECTADO!');
-        console.log('Data original:', dataSelecionada);
-        console.log('Data como objeto:', dataObj);
-        console.log('Data ISO:', dataObj.toISOString());
-        console.log('Data local:', dataObj.toLocaleDateString('pt-BR'));
-        
-        // Garantir que a data seja exatamente a selecionada, sem conversões de fuso horário
-        const [ano, mes, dia] = dataSelecionada.split('-');
-        dataFinal = `${ano}-${mes}-${dia}`;
-        
-        console.log('Data final para domingo:', dataFinal);
-        alert(`DOMINGO DETECTADO!\nData original: ${dataSelecionada}\nDia da semana: ${diaSemana}\nData final: ${dataFinal}`);
-      }
+      alert(`Data selecionada: ${formData.transaction_date}\nData corrigida: ${dataCorrigida}`);
       
       const transactionData = {
         user_id: user.id,
@@ -280,13 +258,12 @@ export default function Transactions() {
         amount: parseFloat(formData.amount),
         transaction_type: formData.transaction_type,
         category: formData.category || '',
-        transaction_date: dataFinal, // Usar a data corrigida
+        transaction_date: dataCorrigida, // SEMPRE usar a data corrigida
         account_name: formData.account_name,
         client_name: formData.client_name || null
       };
 
-      console.log('Dados para enviar:', transactionData);
-      console.log('Data final que será enviada:', dataFinal);
+      alert('Enviando dados: ' + JSON.stringify(transactionData, null, 2));
 
       if (editingTransaction) {
         // Atualizar transação existente
@@ -309,7 +286,7 @@ export default function Transactions() {
           throw new Error(result.error || 'Erro ao criar transação');
         }
 
-        alert('Transação criada com sucesso! Data: ' + dataSelecionada);
+        alert('Transação criada com sucesso! Data: ' + dataCorrigida);
       }
 
       // Reset form
@@ -327,8 +304,7 @@ export default function Transactions() {
       loadData();
       
     } catch (error: any) {
-      console.error('Erro:', error);
-      alert('Erro: ' + error.message);
+      alert('ERRO: ' + error.message);
     }
   };
 
