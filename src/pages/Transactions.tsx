@@ -242,21 +242,33 @@ export default function Transactions() {
       console.log('Limite OK - permitindo criação');
     }
 
-    // Validação adicional
-    if (!formData.account_name) {
-      toast({
-        title: "Erro",
-        description: "Selecione uma conta para a transação",
-        variant: "destructive"
-      });
-      return;
-    }
-
     try {
       console.log('=== DEBUG DATA DA TRANSAÇÃO ===');
       console.log('Data selecionada no formulário:', formData.transaction_date);
       console.log('Tipo da data:', typeof formData.transaction_date);
+      console.log('FormData completo:', formData);
       
+      // Validações adicionais
+      if (!formData.amount || parseFloat(formData.amount) <= 0) {
+        console.error('❌ Valor inválido:', formData.amount);
+        toast({
+          title: "Erro",
+          description: "O valor deve ser maior que zero",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (!formData.account_name) {
+        console.error('❌ Conta não selecionada');
+        toast({
+          title: "Erro",
+          description: "Selecione uma conta",
+          variant: "destructive"
+        });
+        return;
+      }
+
       // O input type="date" já retorna no formato ISO (YYYY-MM-DD)
       // Mas pode haver problemas de fuso horário
       let transactionDate = formData.transaction_date;
@@ -271,15 +283,17 @@ export default function Transactions() {
       
       const transactionData = {
         user_id: user.id,
-        description: formData.description,
+        description: formData.description || '',
         amount: parseFloat(formData.amount),
         transaction_type: formData.transaction_type,
-        category: formData.category,
+        category: formData.category || '',
         transaction_date: transactionDate,
         account_name: formData.account_name,
         client_name: formData.client_name || null
       };
 
+      console.log('=== DADOS FINAIS PARA ENVIAR ===');
+      console.log('TransactionData:', transactionData);
       console.log('Data que será enviada para o banco:', transactionData.transaction_date);
       console.log('Data como objeto Date:', new Date(transactionData.transaction_date));
       console.log('Data local:', new Date(transactionData.transaction_date).toLocaleDateString('pt-BR'));
