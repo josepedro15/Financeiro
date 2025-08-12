@@ -14,7 +14,6 @@ ORDER BY trigger_name;
 -- 2. Verificar constraints na tabela
 SELECT 
     constraint_name,
-    constraint_type,
     check_clause
 FROM information_schema.check_constraints 
 WHERE constraint_name IN (
