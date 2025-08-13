@@ -27,7 +27,7 @@ import {
   GripVertical
 } from 'lucide-react';
 
-// DND Kit imports
+// DND Kit imports - versão simplificada
 import {
   DndContext,
   DragEndEvent,
@@ -164,11 +164,11 @@ export default function Clients() {
     order_index: 1
   });
 
-  // Sensores para Drag and Drop
+  // Sensores para Drag and Drop - versão simplificada
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 5, // Reduzido para ser mais responsivo
       },
     })
   );
@@ -548,16 +548,18 @@ export default function Clients() {
     setStagesDialogOpen(false);
   };
 
-  // Handlers para Drag and Drop
+  // Handlers para Drag and Drop - versão simplificada
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     const draggedClient = clients.find(client => client.id === active.id);
     setActiveClient(draggedClient || null);
-    console.log('🔄 Drag iniciado:', draggedClient?.name);
+    console.log('🔄 Drag iniciado:', draggedClient?.name, 'ID:', active.id);
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
+    
+    console.log('🔄 Drag end - Active:', active?.id, 'Over:', over?.id);
     
     setActiveClient(null);
     
@@ -630,7 +632,7 @@ export default function Clients() {
     }
   };
 
-  // Componente do Card do Cliente com Drag and Drop
+  // Componente do Card do Cliente com Drag and Drop - versão simplificada
   const SortableClientCard = ({ client }: { client: Client }) => {
     const {
       attributes,
@@ -649,15 +651,16 @@ export default function Clients() {
 
     return (
       <div ref={setNodeRef} style={style} className="mb-3">
-        <Card className="hover:shadow-md transition-shadow group cursor-grab active:cursor-grabbing">
+        <Card className="hover:shadow-md transition-shadow group">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 flex-1">
                 <div
                   {...attributes}
                   {...listeners}
-                  className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted/50 rounded"
+                  className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted/50 rounded touch-none"
                   title="Arrastar para mover"
+                  style={{ touchAction: 'none' }}
                 >
                   <GripVertical className="w-4 h-4 text-muted-foreground" />
                 </div>
@@ -784,7 +787,7 @@ export default function Clients() {
     );
   };
 
-  // Componente da Coluna de Estágio com Drag and Drop
+  // Componente da Coluna de Estágio com Drag and Drop - versão simplificada
   const StageColumn = ({ stageKey, stage }: { stageKey: string; stage: Stage }) => {
     const stageClients = getClientsByStage(stageKey);
     const StageIcon = stage.icon;

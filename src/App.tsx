@@ -26,6 +26,7 @@ const Privacy = lazy(() => import("./pages/Privacy"));
 const InvoiceHistory = lazy(() => import("./pages/InvoiceHistory"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TestPage = lazy(() => import("./pages/TestPage"));
+const TestDndWorking = lazy(() => import("./test-dnd-working"));
 
 // Loading component
 const PageLoader = () => (
@@ -77,6 +78,7 @@ const App = () => {
                             <Route path="/invoices" element={<InvoiceHistory />} />
                             <Route path="/checkout" element={<Checkout />} />
                 <Route path="/test" element={<TestPage />} />
+                <Route path="/test-dnd" element={<TestDndWorking />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
