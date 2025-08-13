@@ -710,41 +710,10 @@ export default function Clients() {
       
       // Se não é um estágio direto, tentar encontrar o estágio mais próximo
       if (!stages[overId]) {
-        // Verificar se é uma zona entre estágios
-        if (overId.startsWith('stage-zone-')) {
-          const zoneIndex = parseInt(overId.replace('stage-zone-', ''));
-          const stageEntries = Object.entries(stages).sort((a, b) => a[1].order_index - b[1].order_index);
-          if (stageEntries[zoneIndex]) {
-            targetStageKey = stageEntries[zoneIndex][0];
-          }
-        } else {
-          // Procurar por elementos com data-stage
-          const stageElement = (over as any).closest?.('[data-stage]');
-          if (stageElement) {
-            targetStageKey = stageElement.getAttribute('data-stage');
-          } else {
-            // Procurar por qualquer elemento que contenha um estágio
-            const allStageElements = document.querySelectorAll('[data-stage]');
-            if (allStageElements.length > 0) {
-              // Encontrar o estágio mais próximo baseado na posição
-              const overRect = (over as any).getBoundingClientRect();
-              let closestStage = null;
-              let minDistance = Infinity;
-              
-              allStageElements.forEach((element) => {
-                const rect = element.getBoundingClientRect();
-                const distance = Math.abs(rect.left - overRect.left);
-                if (distance < minDistance) {
-                  minDistance = distance;
-                  closestStage = element;
-                }
-              });
-              
-              if (closestStage) {
-                targetStageKey = closestStage.getAttribute('data-stage');
-              }
-            }
-          }
+        // Procurar por elementos com data-stage
+        const stageElement = (over as any).closest?.('[data-stage]');
+        if (stageElement) {
+          targetStageKey = stageElement.getAttribute('data-stage');
         }
       }
       
@@ -775,36 +744,10 @@ export default function Clients() {
     else if (overId.startsWith('client-area-')) {
       targetStageKey = overId.replace('client-area-', '');
     }
-    // Verificar se é uma zona entre cards (formato: card-zone-{stageKey}-{index})
-    else if (overId.startsWith('card-zone-')) {
-      const parts = overId.split('-');
-      if (parts.length >= 3) {
-        targetStageKey = parts[2]; // stageKey está na posição 2
-      }
-    }
-    // Verificar se é uma área completa do estágio (formato: full-stage-{stageKey})
-    else if (overId.startsWith('full-stage-')) {
-      targetStageKey = overId.replace('full-stage-', '');
-    }
     // Se o over não é um estágio, verificar se é um elemento dentro de um estágio
     else if (!stages[overId]) {
-      // Tentar encontrar o estágio de várias formas
-      let stageElement = (over as any).closest?.('[data-stage]');
-      
-      if (!stageElement) {
-        // Procurar em elementos pais
-        let parent = (over as any).parentElement;
-        while (parent && !stageElement) {
-          stageElement = parent.querySelector?.('[data-stage]');
-          parent = parent.parentElement;
-        }
-      }
-      
-      if (!stageElement) {
-        // Procurar por qualquer elemento com data-stage
-        stageElement = document.querySelector(`[data-stage]`);
-      }
-      
+      // Procurar por elementos com data-stage
+      const stageElement = (over as any).closest?.('[data-stage]');
       if (stageElement) {
         targetStageKey = stageElement.getAttribute('data-stage');
       }
@@ -858,37 +801,9 @@ export default function Clients() {
     );
   };
 
-  // Componente Droppable para Zonas entre Cards
-  const DroppableCardZone = ({ stageKey, index }: { stageKey: string; index: number }) => {
-    const { setNodeRef, isOver } = useDroppable({
-      id: `card-zone-${stageKey}-${index}`,
-    });
 
-    return (
-      <div 
-        ref={setNodeRef}
-        className={`h-2 transition-all duration-200 ${
-          isOver ? 'bg-blue-200 border border-blue-300 rounded' : ''
-        }`}
-      />
-    );
-  };
 
-  // Componente Droppable para Área Completa do Estágio
-  const DroppableFullStage = ({ stageKey, children }: { stageKey: string; children: React.ReactNode }) => {
-    const { setNodeRef, isOver } = useDroppable({
-      id: `full-stage-${stageKey}`,
-    });
 
-    return (
-      <div 
-        ref={setNodeRef}
-        className={`absolute inset-0 transition-colors duration-200 pointer-events-none ${
-          isOver ? 'bg-blue-100/50 border-2 border-blue-300 rounded-lg' : ''
-        }`}
-      />
-    );
-  };
 
   // Componente Sortable para Drag and Drop de Estágios
   const SortableStageColumn = ({ stageKey, stage }: { stageKey: string; stage: Stage }) => {
@@ -916,21 +831,7 @@ export default function Clients() {
     );
   };
 
-  // Componente Droppable para Zonas entre Estágios
-  const DroppableStageZone = ({ index }: { index: number }) => {
-    const { setNodeRef, isOver } = useDroppable({
-      id: `stage-zone-${index}`,
-    });
 
-    return (
-      <div 
-        ref={setNodeRef}
-        className={`w-4 h-32 transition-all duration-200 ${
-          isOver ? 'bg-blue-200 border-2 border-blue-400 rounded' : ''
-        }`}
-      />
-    );
-  };
 
   // Componente Sortable para Drag and Drop
   const SortableClientCard = ({ client }: { client: Client }) => {
@@ -1052,10 +953,8 @@ export default function Clients() {
     const StageIcon = stage.icon;
     
     return (
-      <div className="flex-shrink-0 w-80 relative">
+      <div className="flex-shrink-0 w-80">
         <div className="bg-muted/50 rounded-lg p-4">
-          {/* Área completa de drop */}
-          <DroppableFullStage stageKey={stageKey} />
           <div className="flex items-center justify-between mb-4 cursor-grab active:cursor-grabbing">
             <div className="flex items-center space-x-2">
               <Move className="w-4 h-4 text-muted-foreground" />
@@ -1096,19 +995,12 @@ export default function Clients() {
           
           <DroppableClientArea stageKey={stageKey}>
             <div 
-              className="min-h-[200px] border-2 border-dashed border-muted/30 rounded-lg p-2 hover:border-primary/50 transition-colors"
+              className="space-y-2 min-h-[200px] border-2 border-dashed border-muted/30 rounded-lg p-2 hover:border-primary/50 transition-colors"
               data-stage={stageKey}
             >
-              {/* Zona de drop no topo */}
-              <DroppableCardZone stageKey={stageKey} index={0} />
-              
               <SortableContext items={stageClients.map(c => c.id)} strategy={verticalListSortingStrategy}>
-                {stageClients.map((client, index) => (
-                  <div key={client.id}>
-                    <SortableClientCard client={client} />
-                    {/* Zona de drop entre cards */}
-                    <DroppableCardZone stageKey={stageKey} index={index + 1} />
-                  </div>
+                {stageClients.map((client) => (
+                  <SortableClientCard key={client.id} client={client} />
                 ))}
               </SortableContext>
               
@@ -1190,19 +1082,12 @@ export default function Clients() {
           onDragEnd={handleDragEnd}
         >
           <div className="flex gap-6 overflow-x-auto pb-4">
-            {/* Zona de drop antes do primeiro estágio */}
-            <DroppableStageZone index={0} />
-            
             <SortableContext 
               items={Object.keys(stages)} 
               strategy={horizontalListSortingStrategy}
             >
-              {Object.entries(stages).map(([stageKey, stage], index) => (
-                <div key={stageKey} className="flex items-center">
-                  <SortableStageColumn stageKey={stageKey} stage={stage} />
-                  {/* Zona de drop entre estágios */}
-                  <DroppableStageZone index={index + 1} />
-                </div>
+              {Object.entries(stages).map(([stageKey, stage]) => (
+                <SortableStageColumn key={stageKey} stageKey={stageKey} stage={stage} />
               ))}
             </SortableContext>
             
