@@ -14,13 +14,33 @@ export interface Client {
   created_at: string;
   updated_at: string;
   
-  // Novos campos CRM
-  source?: string;
+  // Perfil e classificação
+  contact_type?: 'lead' | 'client' | 'partner';
+  lead_source?: string;
+  
+  // Dados complementares estratégicos
+  job_title?: string;
+  company?: string;
   industry?: string;
-  company_size?: string;
-  budget_range?: string;
+  estimated_ticket?: number;
+  clv?: number;
+  purchase_history?: any;
+  
+  // Histórico de interações
   last_contact_date?: string;
   next_follow_up?: string;
+  days_since_last_contact?: number;
+  
+  // Customizações para negócio
+  payment_method?: string;
+  delivery_deadline?: string;
+  technical_contact?: string;
+  contract_type?: string;
+  
+  // Campos legados (mantidos para compatibilidade)
+  source?: string;
+  company_size?: string;
+  budget_range?: string;
   assigned_to?: string;
   tags?: string[];
   social_media?: Record<string, string>;

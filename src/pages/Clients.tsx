@@ -160,11 +160,35 @@ export default function Clients() {
   
   // Formulários
   const [formData, setFormData] = useState({
+    // Informações principais (identidade)
     name: '',
     email: '',
     phone: '',
     document: '',
     address: '',
+    
+    // Perfil e classificação
+    contact_type: 'lead' as 'lead' | 'client' | 'partner',
+    lead_source: '',
+    
+    // Dados complementares estratégicos
+    job_title: '',
+    company: '',
+    industry: '',
+    estimated_ticket: 0,
+    clv: 0,
+    
+    // Histórico de interações
+    last_contact_date: '',
+    next_follow_up: '',
+    
+    // Customizações para negócio
+    payment_method: '',
+    delivery_deadline: '',
+    technical_contact: '',
+    contract_type: '',
+    
+    // Campos existentes
     stage: 'lead',
     notes: ''
   });
@@ -947,6 +971,7 @@ export default function Clients() {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
+          {/* Informações de contato */}
           {client.email && (
             <div className="flex items-center space-x-2 text-sm text-slate-600">
               <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center">
@@ -963,11 +988,82 @@ export default function Clients() {
               <span className="font-medium">{client.phone}</span>
             </div>
           )}
+
+          {/* Perfil e classificação */}
+          <div className="flex flex-wrap gap-1">
+            {client.contact_type && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                {client.contact_type === 'lead' ? 'Lead' : client.contact_type === 'client' ? 'Cliente' : 'Parceiro'}
+              </span>
+            )}
+            {client.lead_source && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {client.lead_source}
+              </span>
+            )}
+          </div>
+
+          {/* Dados complementares */}
+          {(client.company || client.job_title || client.industry) && (
+            <div className="space-y-1">
+              {client.company && (
+                <div className="text-sm text-slate-600">
+                  <span className="font-medium">Empresa:</span> {client.company}
+                </div>
+              )}
+              {client.job_title && (
+                <div className="text-sm text-slate-600">
+                  <span className="font-medium">Cargo:</span> {client.job_title}
+                </div>
+              )}
+              {client.industry && (
+                <div className="text-sm text-slate-600">
+                  <span className="font-medium">Setor:</span> {client.industry}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Valores financeiros */}
+          {(client.estimated_ticket || client.clv) && (
+            <div className="space-y-1">
+              {client.estimated_ticket && client.estimated_ticket > 0 && (
+                <div className="text-sm text-slate-600">
+                  <span className="font-medium">Ticket:</span> R$ {client.estimated_ticket.toLocaleString('pt-BR')}
+                </div>
+              )}
+              {client.clv && client.clv > 0 && (
+                <div className="text-sm text-slate-600">
+                  <span className="font-medium">CLV:</span> R$ {client.clv.toLocaleString('pt-BR')}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Histórico de interações */}
+          {(client.last_contact_date || client.next_follow_up) && (
+            <div className="space-y-1">
+              {client.last_contact_date && (
+                <div className="text-sm text-slate-600">
+                  <span className="font-medium">Último contato:</span> {new Date(client.last_contact_date).toLocaleDateString('pt-BR')}
+                </div>
+              )}
+              {client.next_follow_up && (
+                <div className="text-sm text-slate-600">
+                  <span className="font-medium">Próximo follow-up:</span> {new Date(client.next_follow_up).toLocaleDateString('pt-BR')}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Observações */}
           {client.notes && (
             <div className="text-sm text-slate-600 bg-slate-50 rounded-lg p-2">
               <p className="line-clamp-2">{client.notes}</p>
             </div>
           )}
+
+          {/* Data de criação */}
           <div className="pt-2 text-xs text-slate-400 border-t border-slate-100">
             Criado em {new Date(client.created_at).toLocaleDateString('pt-BR')}
           </div>
@@ -1182,7 +1278,7 @@ export default function Clients() {
 
       {/* Modal de Cliente */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingClient ? 'Editar Cliente' : 'Novo Cliente'}
@@ -1192,94 +1288,287 @@ export default function Clients() {
             </DialogDescription>
           </DialogHeader>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome *</Label>
-              <Input
-                id="name"
-                placeholder="Nome completo"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Informações principais (identidade) */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Informações Principais</h3>
+              
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="name">Nome completo *</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="email@exemplo.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  id="name"
+                  placeholder="Nome completo"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
                 />
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="email@exemplo.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Telefone</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="(11) 99999-9999"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="document">CPF/CNPJ</Label>
+                  <Input
+                    id="document"
+                    placeholder="000.000.000-00 ou 00.000.000/0001-00"
+                    value={formData.document}
+                    onChange={(e) => setFormData({ ...formData, document: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address">Endereço completo</Label>
+                  <Input
+                    id="address"
+                    placeholder="Endereço completo"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Perfil e classificação */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Perfil e Classificação</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="contact_type">Tipo de contato</Label>
+                  <Select value={formData.contact_type} onValueChange={(value) => setFormData({ ...formData, contact_type: value as 'lead' | 'client' | 'partner' })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="lead">Lead</SelectItem>
+                      <SelectItem value="client">Cliente</SelectItem>
+                      <SelectItem value="partner">Parceiro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lead_source">Fonte do lead</Label>
+                  <Select value={formData.lead_source} onValueChange={(value) => setFormData({ ...formData, lead_source: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a fonte" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="campaign">Campanha</SelectItem>
+                      <SelectItem value="referral">Indicação</SelectItem>
+                      <SelectItem value="organic">Orgânico</SelectItem>
+                      <SelectItem value="social">Redes Sociais</SelectItem>
+                      <SelectItem value="website">Website</SelectItem>
+                      <SelectItem value="event">Evento</SelectItem>
+                      <SelectItem value="other">Outro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="phone">Telefone</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="(11) 99999-9999"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                <Label htmlFor="stage">Estágio atual</Label>
+                <Select value={formData.stage} onValueChange={(value) => setFormData({ ...formData, stage: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um estágio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(stages).map(([key, stage]) => (
+                      <SelectItem key={key} value={key}>
+                        {stage.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Dados complementares estratégicos */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Dados Complementares</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="job_title">Cargo</Label>
+                  <Input
+                    id="job_title"
+                    placeholder="Cargo do contato"
+                    value={formData.job_title}
+                    onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="company">Empresa</Label>
+                  <Input
+                    id="company"
+                    placeholder="Nome da empresa"
+                    value={formData.company}
+                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="industry">Indústria</Label>
+                  <Input
+                    id="industry"
+                    placeholder="Setor/Indústria"
+                    value={formData.industry}
+                    onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="estimated_ticket">Ticket médio estimado (R$)</Label>
+                  <Input
+                    id="estimated_ticket"
+                    type="number"
+                    placeholder="0,00"
+                    value={formData.estimated_ticket}
+                    onChange={(e) => setFormData({ ...formData, estimated_ticket: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="clv">CLV - Valor do cliente (R$)</Label>
+                  <Input
+                    id="clv"
+                    type="number"
+                    placeholder="0,00"
+                    value={formData.clv}
+                    onChange={(e) => setFormData({ ...formData, clv: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Histórico de interações */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Histórico de Interações</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="last_contact_date">Data do último contato</Label>
+                  <Input
+                    id="last_contact_date"
+                    type="date"
+                    value={formData.last_contact_date}
+                    onChange={(e) => setFormData({ ...formData, last_contact_date: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="next_follow_up">Próximo follow-up</Label>
+                  <Input
+                    id="next_follow_up"
+                    type="date"
+                    value={formData.next_follow_up}
+                    onChange={(e) => setFormData({ ...formData, next_follow_up: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Customizações para negócio */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Customizações</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="payment_method">Forma de pagamento</Label>
+                  <Select value={formData.payment_method} onValueChange={(value) => setFormData({ ...formData, payment_method: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pix">PIX</SelectItem>
+                      <SelectItem value="credit_card">Cartão de Crédito</SelectItem>
+                      <SelectItem value="debit_card">Cartão de Débito</SelectItem>
+                      <SelectItem value="bank_transfer">Transferência</SelectItem>
+                      <SelectItem value="cash">Dinheiro</SelectItem>
+                      <SelectItem value="boleto">Boleto</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contract_type">Tipo de contrato</Label>
+                  <Select value={formData.contract_type} onValueChange={(value) => setFormData({ ...formData, contract_type: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Mensal</SelectItem>
+                      <SelectItem value="quarterly">Trimestral</SelectItem>
+                      <SelectItem value="annual">Anual</SelectItem>
+                      <SelectItem value="one_time">Única vez</SelectItem>
+                      <SelectItem value="custom">Personalizado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="delivery_deadline">Prazo de entrega</Label>
+                  <Input
+                    id="delivery_deadline"
+                    placeholder="Ex: 15 dias úteis"
+                    value={formData.delivery_deadline}
+                    onChange={(e) => setFormData({ ...formData, delivery_deadline: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="technical_contact">Responsável técnico</Label>
+                  <Input
+                    id="technical_contact"
+                    placeholder="Nome do responsável"
+                    value={formData.technical_contact}
+                    onChange={(e) => setFormData({ ...formData, technical_contact: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Observações */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Observações</h3>
+              
+              <div className="space-y-2">
+                <Label htmlFor="notes">Observações e notas</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Anotações sobre o cliente, preferências, objeções, resultados de reuniões, próximos passos..."
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  rows={4}
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="document">CPF/CNPJ</Label>
-              <Input
-                id="document"
-                placeholder="000.000.000-00 ou 00.000.000/0001-00"
-                value={formData.document}
-                onChange={(e) => setFormData({ ...formData, document: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="address">Endereço</Label>
-              <Input
-                id="address"
-                placeholder="Endereço completo"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="stage">Estágio</Label>
-              <Select value={formData.stage} onValueChange={(value) => setFormData({ ...formData, stage: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um estágio" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(stages).map(([key, stage]) => (
-                    <SelectItem key={key} value={key}>
-                      {stage.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="notes">Observações</Label>
-              <Textarea
-                id="notes"
-                placeholder="Anotações sobre o cliente..."
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                rows={3}
-              />
-            </div>
-
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end space-x-2 pt-4 border-t">
               <Button type="button" variant="outline" onClick={resetForm}>
                 Cancelar
               </Button>
               <Button type="submit">
-                {editingClient ? 'Atualizar' : 'Criar Cliente'}
+                {editingClient ? 'Atualizar Cliente' : 'Criar Cliente'}
               </Button>
             </div>
           </form>
