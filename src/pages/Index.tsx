@@ -24,7 +24,7 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
-import '@/styles/landing.css';
+import '../styles/landing.css';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -34,6 +34,14 @@ const Index = () => {
   const [animatedElements, setAnimatedElements] = useState<Set<string>>(new Set());
   const [counters, setCounters] = useState<{ [key: string]: number | boolean }>({});
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // Definir metrics antes do useEffect para evitar erro de referência
+  const metrics = useMemo(() => [
+    { number: '500+', label: 'Empresas Atendidas', icon: Users },
+    { number: '15h', label: 'Economia Semanal', icon: Clock },
+    { number: '25%', label: 'Aumento de Lucro', icon: TrendingUp },
+    { number: '99.9%', label: 'Uptime Garantido', icon: Shield }
+  ], []);
 
   // Removido redirecionamento automático para permitir acesso à página inicial mesmo logado
 
@@ -308,13 +316,6 @@ const Index = () => {
       question: 'Oferecem suporte técnico?',
       answer: 'Sim! Oferecemos suporte por email, chat e telefone para todos os planos.'
     }
-  ], []);
-
-  const metrics = useMemo(() => [
-    { number: '500+', label: 'Empresas Atendidas', icon: Users },
-    { number: '15h', label: 'Economia Semanal', icon: Clock },
-    { number: '25%', label: 'Aumento de Lucro', icon: TrendingUp },
-    { number: '99.9%', label: 'Uptime Garantido', icon: Shield }
   ], []);
 
   // Removido integrations para reduzir peso da página
