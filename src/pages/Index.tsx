@@ -8,37 +8,23 @@ import {
   Check, 
   DollarSign, 
   TrendingUp, 
-  BarChart3, 
   Shield, 
   Users, 
   Zap, 
   Star, 
-  Crown, 
-  CreditCard, 
-  FileText, 
-  Mail, 
   ArrowRight, 
   Play, 
   Clock, 
-  Award, 
-  Lock, 
-  Database, 
-  Headphones, 
   MessageCircle, 
   ChevronDown,
   ChevronUp,
-  Target,
-  PieChart,
-  Calendar,
-  Smartphone,
-  Globe,
   Sparkles,
   Rocket,
-  ThumbsUp,
   AlertTriangle,
   CheckCircle,
   XCircle
 } from 'lucide-react';
+import '@/styles/landing.css';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -51,73 +37,142 @@ const Index = () => {
 
   // Removido redirecionamento automático para permitir acesso à página inicial mesmo logado
 
-  // Throttle function para otimizar performance
-  const throttle = useCallback((func: Function, limit: number) => {
-    let inThrottle: boolean;
-    return function() {
-      const args = arguments;
-      const context = this;
-      if (!inThrottle) {
-        func.apply(context, args);
-        inThrottle = true;
-        setTimeout(() => inThrottle = false, limit);
-      }
-    }
-  }, []);
-
+  // Otimização de performance com Intersection Observer
   useEffect(() => {
-    const handleScroll = throttle(() => {
+    const handleNavbarScroll = () => {
       setIsNavbarScrolled(window.scrollY > 50);
-      
-      // Animações de scroll otimizadas
-      const keys = Object.keys(sectionRefs.current);
-      for (let i = 0; i < keys.length; i++) {
-        const key = keys[i];
-        const element = sectionRefs.current[key];
-        if (element && !animatedElements.has(key)) {
-          const rect = element.getBoundingClientRect();
-          const isVisible = rect.top < window.innerHeight * 0.8 && rect.bottom > 0;
-          
-          if (isVisible) {
-            setAnimatedElements(prev => new Set([...prev, key]));
-            
-            // Animar contadores apenas uma vez
-            if (key === 'metrics' && !counters.initialized) {
-              metrics.forEach((metric, index) => {
-                const target = parseInt(metric.number.replace(/\D/g, ''));
-                const duration = 1500; // Reduzido para 1.5 segundos
-                const steps = 30; // Reduzido para 30 steps
-                const increment = target / steps;
-                let current = 0;
-                
-                const timer = setInterval(() => {
-                  current += increment;
-                  if (current >= target) {
-                    current = target;
-                    clearInterval(timer);
-                  }
-                  setCounters(prev => ({
-                    ...prev,
-                    [metric.number]: Math.floor(current)
-                  }));
-                }, duration / steps);
-              });
-              setCounters(prev => ({ ...prev, initialized: true }));
+    };
+
+    // Throttle para navbar scroll
+    let ticking = false;
+    const throttledNavbarScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          handleNavbarScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    // Intersection Observer para animações
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const key = entry.target.getAttribute('data-section');
+            if (key && !animatedElements.has(key)) {
+              setAnimatedElements(prev => new Set([...prev, key]));
+              
+              // Animar contadores apenas uma vez
+              if (key === 'metrics' && !counters.initialized) {
+                metrics.forEach((metric) => {
+                  const target = parseInt(metric.number.replace(/\D/g, ''));
+                  const duration = 1000; // Reduzido para 1 segundo
+                  const steps = 20; // Reduzido para 20 steps
+                  const increment = target / steps;
+                  let current = 0;
+                  
+                  const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                      current = target;
+                      clearInterval(timer);
+                    }
+                    setCounters(prev => ({
+                      ...prev,
+                      [metric.number]: Math.floor(current)
+                    }));
+                  }, duration / steps);
+                });
+                setCounters(prev => ({ ...prev, initialized: true }));
+              }
             }
           }
-        }
+        });
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '0px 0px -10% 0px'
       }
-    }, 16); // ~60fps
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Executar uma vez para elementos já visíveis
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [animatedElements, counters.initialized]);
+    );
+
+    // Observar elementos
+    Object.keys(sectionRefs.current).forEach(key => {
+      const element = sectionRefs.current[key];
+      if (element) {
+        element.setAttribute('data-section', key);
+        observer.observe(element);
+      }
+    });
+
+    window.addEventListener('scroll', throttledNavbarScroll, { passive: true });
+    handleNavbarScroll(); // Executar uma vez
+
+    return () => {
+      window.removeEventListener('scroll', throttledNavbarScroll);
+      observer.disconnect();
+    };
+  }, [animatedElements, counters.initialized, metrics]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
+        {/* Skeleton Header */}
+        <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b shadow-lg">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gray-200 rounded-xl animate-pulse"></div>
+                <div className="w-32 h-8 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-8 bg-gray-200 rounded animate-pulse"></div>
+                <div className="w-16 h-8 bg-gray-200 rounded animate-pulse"></div>
+                <div className="w-32 h-8 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Skeleton Hero */}
+        <main className="pt-20">
+          <section className="container mx-auto px-4 py-20">
+            <div className="text-center max-w-4xl mx-auto mb-16">
+              <div className="w-48 h-6 bg-gray-200 rounded mx-auto mb-4 animate-pulse"></div>
+              <div className="w-96 h-16 bg-gray-200 rounded mx-auto mb-6 animate-pulse"></div>
+              <div className="w-80 h-8 bg-gray-200 rounded mx-auto mb-8 animate-pulse"></div>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+                <div className="w-48 h-12 bg-gray-200 rounded animate-pulse"></div>
+                <div className="w-32 h-12 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div className="flex items-center justify-center space-x-8">
+                <div className="w-24 h-4 bg-gray-200 rounded animate-pulse"></div>
+                <div className="w-32 h-4 bg-gray-200 rounded animate-pulse"></div>
+                <div className="w-28 h-4 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            </div>
+          </section>
+
+          {/* Skeleton Benefits */}
+          <section className="py-20">
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-16">
+                <div className="w-64 h-8 bg-gray-200 rounded mx-auto mb-4 animate-pulse"></div>
+                <div className="w-80 h-6 bg-gray-200 rounded mx-auto animate-pulse"></div>
+              </div>
+              <div className="grid md:grid-cols-3 gap-8">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="text-center p-6">
+                    <div className="w-16 h-16 bg-gray-200 rounded-xl mx-auto mb-4 animate-pulse"></div>
+                    <div className="w-48 h-6 bg-gray-200 rounded mx-auto mb-2 animate-pulse"></div>
+                    <div className="w-64 h-4 bg-gray-200 rounded mx-auto animate-pulse"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        </main>
       </div>
     );
   }
@@ -270,167 +325,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
-      <style>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes fadeInLeft {
-          from {
-            opacity: 0;
-            transform: translateX(-30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        
-        @keyframes fadeInRight {
-          from {
-            opacity: 0;
-            transform: translateX(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        
-        @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.9);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-        
-        @keyframes slideInUp {
-          from {
-            opacity: 0;
-            transform: translateY(50px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes pulse {
-          0%, 100% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.05);
-          }
-        }
-        
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-10px);
-          }
-        }
-        
-        @keyframes gradient {
-          0% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-          100% {
-            background-position: 0% 50%;
-          }
-        }
-        
-        .animate-fade-in-up {
-          animation: fadeInUp 0.8s ease-out forwards;
-        }
-        
-        .animate-fade-in-left {
-          animation: fadeInLeft 0.8s ease-out forwards;
-        }
-        
-        .animate-fade-in-right {
-          animation: fadeInRight 0.8s ease-out forwards;
-        }
-        
-        .animate-scale-in {
-          animation: scaleIn 0.6s ease-out forwards;
-        }
-        
-        .animate-slide-in-up {
-          animation: slideInUp 0.8s ease-out forwards;
-        }
-        
-        .animate-pulse-slow {
-          animation: pulse 3s ease-in-out infinite;
-        }
-        
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
-        
-        .animate-gradient {
-          background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-          background-size: 400% 400%;
-          animation: gradient 15s ease infinite;
-        }
-        
-        .opacity-0 {
-          opacity: 0;
-        }
-        
-        .opacity-1 {
-          opacity: 1;
-        }
-        
-        .transition-all {
-          transition: all 0.3s ease;
-        }
-        
-        .hover-scale:hover {
-          transform: scale(1.05);
-        }
-        
-        .hover-lift:hover {
-          transform: translateY(-5px);
-        }
-        
-        .text-gradient {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        
-        .text-gradient-2 {
-          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        
-        .text-gradient-3 {
-          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-      `}</style>
       {/* Fixed Navbar */}
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isNavbarScrolled ? 'bg-background/95 backdrop-blur-md border-b shadow-lg' : 'bg-transparent'
