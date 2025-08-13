@@ -653,205 +653,137 @@ export default function Transactions() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/50 shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center space-x-4">
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate('/dashboard')}
-                className="hover:bg-slate-100 transition-colors"
-              >
-                ← Dashboard
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-800">Transações</h1>
-                <p className="text-sm text-slate-600">{transactions.length} transações encontradas</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              <div className="hidden md:flex items-center space-x-4 text-sm">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-green-600 font-medium">
-                    {transactions.filter(t => t.transaction_type === 'income').length} Receitas
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <span className="text-red-600 font-medium">
-                    {transactions.filter(t => t.transaction_type === 'expense').length} Despesas
-                  </span>
-                </div>
-              </div>
+      <header className="border-b bg-card">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+              ← Dashboard
+            </Button>
+            <h1 className="text-2xl font-bold">Transações</h1>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={runAuthTests}
+              className="ml-4"
+            >
+              🧪 Testar Auth
+            </Button>
+          </div>
+          <SubscriptionGuard feature="transaction">
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => {
+                  console.log('Button clicked - opening dialog');
+                  console.log('Current accounts:', accounts);
               
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={runAuthTests}
-                className="hidden sm:flex"
-              >
-                🧪 Testar Auth
-              </Button>
-              
-              <SubscriptionGuard feature="transaction">
-                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button 
-                      onClick={() => {
-                        console.log('Button clicked - opening dialog');
-                        console.log('Current accounts:', accounts);
-                    
-                        setEditingTransaction(null);
-                        setFormData({
-                          description: '',
-                          amount: '',
-                          transaction_type: 'income',
-                          category: '',
-                          transaction_date: new Date().toISOString().split('T')[0],
-                          client_name: '',
-                          account_name: ''
-                        });
-                        console.log('Form data reset, opening dialog');
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Nova Transação
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-              <DialogHeader className="pb-4">
-                <DialogTitle className="text-xl font-semibold text-slate-800">
+                  setEditingTransaction(null);
+                  setFormData({
+                    description: '',
+                    amount: '',
+                    transaction_type: 'income',
+                    category: '',
+                    transaction_date: new Date().toISOString().split('T')[0],
+                    client_name: '',
+                    account_name: ''
+                  });
+                  console.log('Form data reset, opening dialog');
+                }}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nova Transação
+                </Button>
+              </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>
                   {editingTransaction ? 'Editar Transação' : 'Nova Transação'}
                 </DialogTitle>
-                <DialogDescription className="text-slate-600">
-                  {editingTransaction ? 'Atualize os dados da transação' : 'Adicione uma nova movimentação financeira'}
+                <DialogDescription>
+                  {editingTransaction ? 'Edite os dados da transação' : 'Adicione uma nova transação financeira'}
                 </DialogDescription>
               </DialogHeader>
-              
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Seção: Informações Básicas */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-slate-800 border-b pb-2">Informações Básicas</h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="description" className="text-sm font-medium">Descrição</Label>
-                      <Input
-                        id="description"
-                        placeholder="Ex: Venda de produto X"
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        className="focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="amount" className="text-sm font-medium">Valor</Label>
-                      <Input
-                        id="amount"
-                        type="number"
-                        step="0.01"
-                        placeholder="0,00"
-                        value={formData.amount}
-                        onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                        className="focus:ring-2 focus:ring-blue-500"
-                        required
-                      />
-                    </div>
-                  </div>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="description">Descrição (Opcional)</Label>
+                  <Input
+                    id="description"
+                    placeholder="Descrição da transação"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  />
                 </div>
-                
-                {/* Seção: Classificação */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-slate-800 border-b pb-2">Classificação</h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="transaction_type" className="text-sm font-medium">Tipo</Label>
-                      <Select value={formData.transaction_type} onValueChange={(value: any) => setFormData({ ...formData, transaction_type: value })}>
-                        <SelectTrigger className="focus:ring-2 focus:ring-blue-500">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="income">Receita</SelectItem>
-                          <SelectItem value="expense">Despesa</SelectItem>
-                          <SelectItem value="transfer">Transferência</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="category" className="text-sm font-medium">Categoria</Label>
-                      <Input
-                        id="category"
-                        placeholder="Ex: Vendas, Marketing"
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        className="focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="account_name" className="text-sm font-medium">Conta</Label>
-                      <Select 
-                        value={formData.account_name || undefined} 
-                        onValueChange={(value) => setFormData({ ...formData, account_name: value })}
-                      >
-                        <SelectTrigger className="focus:ring-2 focus:ring-blue-500">
-                          <SelectValue placeholder="Selecione uma conta" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {accounts.map((account) => (
-                            <SelectItem key={account.id} value={account.name}>
-                              {account.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Seção: Detalhes */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-slate-800 border-b pb-2">Detalhes</h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="client_name" className="text-sm font-medium">Cliente (Opcional)</Label>
-                      <Input
-                        id="client_name"
-                        placeholder="Nome do cliente"
-                        value={formData.client_name}
-                        onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
-                        className="focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="transaction_date" className="text-sm font-medium">Data</Label>
-                      <Input
-                        id="transaction_date"
-                        type="date"
-                        value={formData.transaction_date}
-                        onChange={(e) => {
-                          console.log('📅 DATA ALTERADA:', e.target.value);
-                          console.log('Data anterior:', formData.transaction_date);
-                          setFormData({ ...formData, transaction_date: e.target.value });
-                        }}
-                        className="focus:ring-2 focus:ring-blue-500"
-                        required
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Informação da tabela */}
+
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">Mês da Transação</Label>
-                    <div className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <Label htmlFor="amount">Valor</Label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      step="0.01"
+                      placeholder="0,00"
+                      value={formData.amount}
+                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="transaction_type">Tipo</Label>
+                    <Select value={formData.transaction_type} onValueChange={(value: any) => setFormData({ ...formData, transaction_type: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="income">Receita</SelectItem>
+                        <SelectItem value="expense">Despesa</SelectItem>
+                        <SelectItem value="transfer">Transferência</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="account_name">Conta</Label>
+                  <Select 
+                    value={formData.account_name || undefined} 
+                    onValueChange={(value) => setFormData({ ...formData, account_name: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma conta" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {accounts.map((account) => (
+                        <SelectItem key={account.id} value={account.name}>
+                          {account.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="client_name">Cliente (Opcional)</Label>
+                  <Input
+                    id="client_name"
+                    placeholder="Digite o nome do cliente"
+                    value={formData.client_name}
+                    onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Categoria</Label>
+                    <Input
+                      id="category"
+                      placeholder="Ex: Vendas, Marketing"
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="selected_month">Mês da Transação</Label>
+                    <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
                       {(() => {
                         const date = new Date(formData.transaction_date);
                         const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -861,36 +793,44 @@ export default function Transactions() {
                       })()}
                     </div>
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="transaction_date">Data</Label>
+                    <Input
+                      id="transaction_date"
+                      type="date"
+                      value={formData.transaction_date}
+                      onChange={(e) => {
+                        console.log('📅 DATA ALTERADA:', e.target.value);
+                        console.log('Data anterior:', formData.transaction_date);
+                        setFormData({ ...formData, transaction_date: e.target.value });
+                      }}
+                      required
+                    />
+                  </div>
                 </div>
-                
-                {/* Botões de Ação */}
-                <div className="flex justify-end space-x-3 pt-4 border-t">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setDialogOpen(false)}
-                    className="hover:bg-slate-50"
-                  >
+
+                <div className="flex justify-end space-x-2">
+                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                     Cancelar
                   </Button>
                   <Button 
                     type="submit"
-                    className="bg-blue-600 hover:bg-blue-700 transition-colors"
                     onClick={() => {
                       console.log('🔘 BOTÃO SUBMIT CLICADO');
                       console.log('FormData atual:', formData);
                       console.log('Data atual:', formData.transaction_date);
                     }}
                   >
-                    {editingTransaction ? 'Atualizar Transação' : 'Criar Transação'}
+                    {editingTransaction ? 'Atualizar' : 'Criar'}
                   </Button>
                 </div>
               </form>
             </DialogContent>
           </Dialog>
         </SubscriptionGuard>
-      </div>
-    </header>
+        </div>
+      </header>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
@@ -906,17 +846,23 @@ export default function Transactions() {
           </CardHeader>
           
           {/* Filtros e Seleção Múltipla */}
-          <div className="px-6 pb-6">
-            {/* Filtros em Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <Card className="p-4 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm">
-                <Label className="text-sm font-medium mb-2 text-slate-700">Mês</Label>
+          <div className="px-6 pb-4 border-b">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Filtros:</span>
+                </div>
+              
+              {/* Filtro por Mês */}
+              <div className="flex items-center gap-2">
+                <Label htmlFor="month-filter" className="text-xs">Mês:</Label>
                 <Select value={filters.month} onValueChange={(value) => setFilters({ ...filters, month: value })}>
-                  <SelectTrigger className="w-full focus:ring-2 focus:ring-blue-500">
-                    <SelectValue placeholder="Todos os meses" />
+                  <SelectTrigger className="w-32 h-8">
+                    <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos os meses</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="1">Janeiro</SelectItem>
                     <SelectItem value="2">Fevereiro</SelectItem>
                     <SelectItem value="3">Março</SelectItem>
@@ -931,91 +877,84 @@ export default function Transactions() {
                     <SelectItem value="12">Dezembro</SelectItem>
                   </SelectContent>
                 </Select>
-              </Card>
+              </div>
 
-              <Card className="p-4 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm">
-                <Label className="text-sm font-medium mb-2 text-slate-700">Tipo</Label>
-                <Select value={filters.type} onValueChange={(value) => setFilters({ ...filters, type: value })}>
-                  <SelectTrigger className="w-full focus:ring-2 focus:ring-blue-500">
-                    <SelectValue placeholder="Todos os tipos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os tipos</SelectItem>
-                    <SelectItem value="income">Receitas</SelectItem>
-                    <SelectItem value="expense">Despesas</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Card>
-
-              <Card className="p-4 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm">
-                <Label className="text-sm font-medium mb-2 text-slate-700">Conta</Label>
-                <Select value={filters.account} onValueChange={(value) => setFilters({ ...filters, account: value })}>
-                  <SelectTrigger className="w-full focus:ring-2 focus:ring-blue-500">
-                    <SelectValue placeholder="Todas as contas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as contas</SelectItem>
-                    <SelectItem value="Conta PJ">Conta PJ</SelectItem>
-                    <SelectItem value="Conta Checkout">Conta Checkout</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Card>
-
-              <Card className="p-4 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm">
-                <Label className="text-sm font-medium mb-2 text-slate-700">Dia</Label>
+              {/* Filtro por Dia */}
+              <div className="flex items-center gap-2">
+                <Label htmlFor="day-filter" className="text-xs">Dia:</Label>
                 <Select value={filters.day} onValueChange={(value) => setFilters({ ...filters, day: value })}>
-                  <SelectTrigger className="w-full focus:ring-2 focus:ring-blue-500">
-                    <SelectValue placeholder="Todos os dias" />
+                  <SelectTrigger className="w-20 h-8">
+                    <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos os dias</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
                       <SelectItem key={day} value={day.toString()}>{day}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              </Card>
-            </div>
-
-            {/* Controles de Filtro */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-slate-600" />
-                  <span className="text-sm font-medium text-slate-700">Filtros Ativos:</span>
-                </div>
-                
-                {/* Botão Limpar Filtros */}
-                {(filters.month !== 'all' || filters.day !== 'all' || filters.type !== 'all' || filters.account !== 'all') && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={clearFilters}
-                    className="hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
-                  >
-                    <X className="h-3 w-3 mr-1" />
-                    Limpar Filtros
-                  </Button>
-                )}
               </div>
 
+              {/* Filtro por Tipo */}
+              <div className="flex items-center gap-2">
+                <Label htmlFor="type-filter" className="text-xs">Tipo:</Label>
+                <Select value={filters.type} onValueChange={(value) => setFilters({ ...filters, type: value })}>
+                  <SelectTrigger className="w-28 h-8">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="income">Receita</SelectItem>
+                    <SelectItem value="expense">Despesa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Filtro por Conta */}
+              <div className="flex items-center gap-2">
+                <Label htmlFor="account-filter" className="text-xs">Conta:</Label>
+                <Select value={filters.account} onValueChange={(value) => setFilters({ ...filters, account: value })}>
+                  <SelectTrigger className="w-32 h-8">
+                    <SelectValue placeholder="Todas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    <SelectItem value="Conta PJ">Conta PJ</SelectItem>
+                    <SelectItem value="Conta Checkout">Conta Checkout</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Botão Limpar Filtros */}
+              {(filters.month !== 'all' || filters.day !== 'all' || filters.type !== 'all' || filters.account !== 'all') && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={clearFilters}
+                  className="h-8"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Limpar
+                </Button>
+              )}
+
               {/* Contador de resultados */}
-              <div className="text-sm text-slate-600 font-medium">
+              <div className="ml-auto text-xs text-muted-foreground">
                 {filteredTransactions.length} de {transactions.length} transações
               </div>
             </div>
             
             {/* Controles de Seleção Múltipla */}
             {selectedTransactions.size > 0 && (
-              <div className="flex items-center gap-2 mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200 shadow-sm">
-                <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={selectAll}
                     onChange={handleSelectAll}
-                    className="w-5 h-5 text-blue-600 bg-white border-blue-300 rounded focus:ring-blue-500 focus:ring-2"
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <span className="text-sm font-semibold text-blue-800">
+                  <span className="text-sm font-medium text-blue-800">
                     {selectedTransactions.size} transação(ões) selecionada(s)
                   </span>
                 </div>
@@ -1023,30 +962,31 @@ export default function Transactions() {
                   variant="destructive"
                   size="sm"
                   onClick={handleDeleteSelected}
-                  className="ml-auto bg-red-600 hover:bg-red-700 transition-colors"
+                  className="ml-auto"
                 >
-                  <Trash2 className="w-4 h-4 mr-2" />
+                  <Trash2 className="w-4 h-4 mr-1" />
                   Excluir Selecionadas
                 </Button>
               </div>
             )}
+            </div>
           </div>
 
           <CardContent>
             {/* Cabeçalho com Seleção Múltipla */}
             {filteredTransactions.length > 0 && (
-              <div className="flex items-center gap-3 mb-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
                 <input
                   type="checkbox"
                   checked={selectAll}
                   onChange={handleSelectAll}
-                  className="w-5 h-5 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2"
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <span className="text-sm font-medium text-slate-700">
+                <span className="text-sm font-medium text-gray-700">
                   {selectAll ? 'Desmarcar Todas' : 'Selecionar Todas'}
                 </span>
                 {selectedTransactions.size > 0 && (
-                  <span className="text-sm text-blue-600 font-medium ml-auto">
+                  <span className="text-sm text-blue-600 ml-auto">
                     {selectedTransactions.size} selecionada(s)
                   </span>
                 )}
@@ -1054,33 +994,17 @@ export default function Transactions() {
             )}
             
             {loading ? (
-              <div className="space-y-4">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="flex items-center space-x-4 p-4 bg-slate-100 rounded-lg">
-                      <div className="w-5 h-5 bg-slate-200 rounded"></div>
-                      <div className="w-12 h-12 bg-slate-200 rounded-full"></div>
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-slate-200 rounded w-3/4"></div>
-                        <div className="h-3 bg-slate-200 rounded w-1/2"></div>
-                      </div>
-                      <div className="w-24 h-6 bg-slate-200 rounded"></div>
-                    </div>
-                  </div>
-                ))}
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Carregando transações...</p>
               </div>
             ) : filteredTransactions.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="text-center py-8">
                 {transactions.length === 0 ? (
                   <>
-                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <DollarSign className="h-8 w-8 text-slate-400" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-slate-800 mb-2">
-                      Nenhuma transação encontrada
-                    </h3>
-                    <p className="text-slate-600 mb-6 max-w-md mx-auto">
-                      Comece adicionando sua primeira transação para gerenciar suas movimentações financeiras
+                    <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-4">
+                      Nenhuma transação encontrada. Adicione sua primeira transação.
                     </p>
                     <Button 
                       onClick={() => {
@@ -1095,29 +1019,18 @@ export default function Transactions() {
                           account_name: ''
                         });
                         setDialogOpen(true);
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700 transition-colors"
-                    >
+                      }}>
                       <Plus className="w-4 h-4 mr-2" />
                       Nova Transação
                     </Button>
                   </>
                 ) : (
                   <>
-                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Filter className="h-8 w-8 text-slate-400" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-slate-800 mb-2">
-                      Nenhuma transação encontrada
-                    </h3>
-                    <p className="text-slate-600 mb-6 max-w-md mx-auto">
-                      Nenhuma transação corresponde aos filtros aplicados. Tente ajustar os critérios de busca.
+                    <Filter className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-4">
+                      Nenhuma transação encontrada com os filtros aplicados.
                     </p>
-                    <Button 
-                      variant="outline" 
-                      onClick={clearFilters}
-                      className="hover:bg-slate-50"
-                    >
+                    <Button variant="outline" onClick={clearFilters}>
                       <X className="w-4 h-4 mr-2" />
                       Limpar Filtros
                     </Button>
@@ -1125,98 +1038,83 @@ export default function Transactions() {
                 )}
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {filteredTransactions.map((transaction) => (
                   <div 
                     key={transaction.id} 
-                    className={`group hover:shadow-lg transition-all duration-300 bg-gradient-to-r from-white to-slate-50/50 border-0 shadow-sm hover:scale-[1.01] rounded-xl p-4 ${
+                    className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
                       selectedTransactions.has(transaction.id) 
-                        ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-200' 
-                        : 'border-slate-200 hover:border-slate-300'
+                        ? 'bg-blue-50 border-blue-200' 
+                        : 'hover:bg-muted/50'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        {/* Checkbox de seleção */}
-                        <input
-                          type="checkbox"
-                          checked={selectedTransactions.has(transaction.id)}
-                          onChange={() => handleSelectTransaction(transaction.id)}
-                          className="w-5 h-5 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2"
-                        />
-                        
-                        {/* Ícone da transação */}
-                        <div className={`p-3 rounded-full transition-colors ${
-                          transaction.transaction_type === 'income' 
-                            ? 'bg-green-100 group-hover:bg-green-200' 
-                            : transaction.transaction_type === 'expense'
-                            ? 'bg-red-100 group-hover:bg-red-200'
-                            : 'bg-blue-100 group-hover:bg-blue-200'
-                        }`}>
-                          {transaction.transaction_type === 'income' ? (
-                            <ArrowUpRight className="h-5 w-5 text-green-600" />
-                          ) : transaction.transaction_type === 'expense' ? (
-                            <ArrowDownRight className="h-5 w-5 text-red-600" />
-                          ) : (
-                            <Calendar className="h-5 w-5 text-blue-600" />
+                    <div className="flex items-center space-x-4">
+                      {/* Checkbox de seleção */}
+                      <input
+                        type="checkbox"
+                        checked={selectedTransactions.has(transaction.id)}
+                        onChange={() => handleSelectTransaction(transaction.id)}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <div className={`p-2 rounded-full ${
+                        transaction.transaction_type === 'income' 
+                          ? 'bg-success/10' 
+                          : transaction.transaction_type === 'expense'
+                          ? 'bg-destructive/10'
+                          : 'bg-info/10'
+                      }`}>
+                        {transaction.transaction_type === 'income' ? (
+                          <ArrowUpRight className="h-4 w-4 text-success" />
+                        ) : transaction.transaction_type === 'expense' ? (
+                          <ArrowDownRight className="h-4 w-4 text-destructive" />
+                        ) : (
+                          <Calendar className="h-4 w-4 text-info" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">{transaction.description || 'Sem descrição'}</p>
+                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                          <span>{transaction.client_name || 'Sem cliente'}</span>
+                          <span>•</span>
+                          <span>{transaction.account_name}</span>
+                          <span>•</span>
+                          <span>{new Date(transaction.transaction_date).toLocaleDateString('pt-BR')}</span>
+                          {transaction.category && (
+                            <>
+                              <span>•</span>
+                              <span>{transaction.category}</span>
+                            </>
                           )}
                         </div>
-                        
-                        {/* Informações da transação */}
-                        <div>
-                          <h3 className="font-semibold text-slate-800 group-hover:text-slate-900 transition-colors">
-                            {transaction.description || 'Sem descrição'}
-                          </h3>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <span className="text-sm text-slate-500">{transaction.client_name || 'Sem cliente'}</span>
-                            <span className="text-xs text-slate-400">•</span>
-                            <span className="text-sm text-slate-500">{transaction.account_name}</span>
-                            <span className="text-xs text-slate-400">•</span>
-                            <span className="text-sm text-slate-500">
-                              {new Date(transaction.transaction_date).toLocaleDateString('pt-BR')}
-                            </span>
-                            {transaction.category && (
-                              <>
-                                <span className="text-xs text-slate-400">•</span>
-                                <span className="text-sm text-slate-500">{transaction.category}</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
                       </div>
-                      
-                      {/* Valor e ações */}
-                      <div className="flex items-center space-x-4">
-                        <div className={`text-xl font-bold ${
-                          transaction.transaction_type === 'income' 
-                            ? 'text-green-600' 
-                            : transaction.transaction_type === 'expense'
-                            ? 'text-red-600'
-                            : 'text-blue-600'
-                        }`}>
-                          {transaction.transaction_type === 'income' ? '+' : 
-                           transaction.transaction_type === 'expense' ? '-' : ''}
-                          {formatCurrency(Number(transaction.amount))}
-                        </div>
-                        
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleEdit(transaction)}
-                            className="hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDelete(transaction.id)}
-                            className="hover:bg-red-50 hover:text-red-600 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className={`font-semibold ${
+                        transaction.transaction_type === 'income' 
+                          ? 'text-success' 
+                          : transaction.transaction_type === 'expense'
+                          ? 'text-destructive'
+                          : 'text-info'
+                      }`}>
+                        {transaction.transaction_type === 'income' ? '+' : 
+                         transaction.transaction_type === 'expense' ? '-' : ''}
+                        {formatCurrency(Number(transaction.amount))}
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEdit(transaction)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDelete(transaction.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
                   </div>
