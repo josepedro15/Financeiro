@@ -23,7 +23,13 @@ import {
   DollarSign,
   CheckCircle,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Move,
+  Sparkles,
+  Zap,
+  ArrowRight,
+  History,
+  Brain
 } from 'lucide-react';
 
 // Tipos
@@ -115,6 +121,12 @@ export default function Clients() {
   const [stagesDialogOpen, setStagesDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [editingStage, setEditingStage] = useState<Stage | null>(null);
+  
+  // Estados para Smart Stage Navigator
+  const [moveModalOpen, setMoveModalOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [isMoving, setIsMoving] = useState(false);
+  const [moveHistory, setMoveHistory] = useState<Array<{clientId: string, fromStage: string, toStage: string, timestamp: string}>>([]);
   
   // Formulários
   const [formData, setFormData] = useState({
@@ -511,16 +523,106 @@ export default function Clients() {
     setStagesDialogOpen(false);
   };
 
-  // Componente do Card do Cliente
+  // Funções para Smart Stage Navigator
+  const getSuggestedStage = (client: Client): string | null => {
+    const currentStage = client.stage;
+    const stageOrder = ['lead', 'prospect', 'negotiation', 'closed'];
+    const currentIndex = stageOrder.indexOf(currentStage);
+    
+    if (currentIndex < stageOrder.length - 1) {
+      return stageOrder[currentIndex + 1];
+    }
+    return null;
+  };
+
+  const handleMoveClient = async (clientId: string, newStageKey: string) => {
+    if (!selectedClient) return;
+    
+    try {
+      setIsMoving(true);
+      console.log(`🚀 Movendo cliente ${selectedClient.name} para ${stages[newStageKey].name}`);
+      
+      // Atualizar no banco de dados
+      const { error } = await supabase
+        .from('clients')
+        .update({ 
+          stage: newStageKey,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', clientId);
+      
+      if (error) throw error;
+      
+      // Atualizar estado local
+      setClients(prevClients => 
+        prevClients.map(c => 
+          c.id === clientId 
+            ? { ...c, stage: newStageKey, updated_at: new Date().toISOString() }
+            : c
+        )
+      );
+      
+      // Adicionar ao histórico
+      setMoveHistory(prev => [...prev, {
+        clientId,
+        fromStage: selectedClient.stage,
+        toStage: newStageKey,
+        timestamp: new Date().toISOString()
+      }]);
+      
+      toast({
+        title: "🎉 Cliente Movido!",
+        description: `${selectedClient.name} foi movido para ${stages[newStageKey].name}`,
+      });
+      
+      setMoveModalOpen(false);
+      setSelectedClient(null);
+      
+    } catch (error: any) {
+      console.error('❌ Erro ao mover cliente:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao mover cliente",
+        variant: "destructive"
+      });
+    } finally {
+      setIsMoving(false);
+    }
+  };
+
+  const openMoveModal = (client: Client) => {
+    setSelectedClient(client);
+    setMoveModalOpen(true);
+  };
+
+  // Componente do Card do Cliente com Smart Stage Navigator
   const ClientCard = ({ client }: { client: Client }) => {
+    const suggestedStage = getSuggestedStage(client);
+    
     return (
-      <Card className="mb-3 hover:shadow-md transition-shadow group">
+      <Card className="mb-3 hover:shadow-md transition-shadow group relative overflow-hidden">
+        {/* Efeito de brilho no hover */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base font-medium">
               {client.name}
             </CardTitle>
-            <div className="flex space-x-1 opacity-100">
+            <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  openMoveModal(client);
+                }}
+                className="h-8 w-8 p-0 hover:bg-purple-100 hover:text-purple-600"
+                title="Mover cliente"
+              >
+                <Move className="w-3 h-3" />
+              </Button>
               <Button
                 size="sm"
                 variant="ghost"
@@ -573,6 +675,30 @@ export default function Clients() {
           <div className="pt-2 text-xs text-muted-foreground">
             Criado em {new Date(client.created_at).toLocaleDateString('pt-BR')}
           </div>
+          
+          {/* Sugestão inteligente */}
+          {suggestedStage && (
+            <div className="mt-2 p-2 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+              <div className="flex items-center space-x-2 text-xs">
+                <Brain className="w-3 h-3 text-purple-600" />
+                <span className="text-purple-700 font-medium">Sugestão IA:</span>
+                <span className="text-purple-600">Mover para {stages[suggestedStage]?.name}</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleMoveClient(client.id, suggestedStage);
+                  }}
+                  className="h-6 w-6 p-0 hover:bg-purple-200"
+                  title="Aceitar sugestão"
+                >
+                  <Zap className="w-3 h-3 text-purple-600" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
@@ -962,6 +1088,135 @@ export default function Clients() {
               </form>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Smart Stage Navigator */}
+      <Dialog open={moveModalOpen} onOpenChange={setMoveModalOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+              <span>Smart Stage Navigator</span>
+            </DialogTitle>
+            <DialogDescription>
+              Mova {selectedClient?.name} para o estágio desejado com sugestões inteligentes
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedClient && (
+            <div className="space-y-6">
+              {/* Cliente selecionado */}
+              <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                    <Users className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">{selectedClient.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Estágio atual: <span className="font-medium">{stages[selectedClient.stage]?.name}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sugestão IA */}
+              {getSuggestedStage(selectedClient) && (
+                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <Brain className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-green-800">Sugestão da IA</h4>
+                        <p className="text-sm text-green-700">
+                          Mover para <span className="font-medium">{stages[getSuggestedStage(selectedClient)!]?.name}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => handleMoveClient(selectedClient.id, getSuggestedStage(selectedClient)!)}
+                      disabled={isMoving}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Zap className="w-4 h-4 mr-2" />
+                      Aceitar Sugestão
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Todos os estágios */}
+              <div>
+                <h4 className="font-semibold mb-3 flex items-center space-x-2">
+                  <Move className="w-4 h-4" />
+                  <span>Escolher Estágio</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {Object.entries(stages).map(([stageKey, stage]) => {
+                    const StageIcon = stage.icon;
+                    const isCurrentStage = stageKey === selectedClient.stage;
+                    const isSuggestedStage = stageKey === getSuggestedStage(selectedClient);
+                    
+                    return (
+                      <Button
+                        key={stageKey}
+                        variant={isCurrentStage ? "outline" : "default"}
+                        disabled={isCurrentStage || isMoving}
+                        onClick={() => handleMoveClient(selectedClient.id, stageKey)}
+                        className={`h-auto p-4 flex flex-col items-center space-y-2 ${
+                          isCurrentStage ? 'opacity-50 cursor-not-allowed' : ''
+                        } ${
+                          isSuggestedStage ? 'ring-2 ring-green-500' : ''
+                        }`}
+                      >
+                        <StageIcon className="w-6 h-6" />
+                        <div className="text-center">
+                          <div className="font-medium">{stage.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {getClientsByStage(stageKey).length} clientes
+                          </div>
+                        </div>
+                        {isCurrentStage && (
+                          <div className="text-xs text-muted-foreground">Atual</div>
+                        )}
+                        {isSuggestedStage && (
+                          <div className="text-xs text-green-600 font-medium">Sugerido</div>
+                        )}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Histórico de movimentações */}
+              {moveHistory.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-3 flex items-center space-x-2">
+                    <History className="w-4 h-4" />
+                    <span>Histórico de Movimentações</span>
+                  </h4>
+                  <div className="max-h-32 overflow-y-auto space-y-2">
+                    {moveHistory.slice(-5).reverse().map((move, index) => (
+                      <div key={index} className="flex items-center space-x-2 text-sm p-2 bg-muted/50 rounded">
+                        <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">
+                          {clients.find(c => c.id === move.clientId)?.name}
+                        </span>
+                        <span className="text-muted-foreground">→</span>
+                        <span className="font-medium">{stages[move.toStage]?.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(move.timestamp).toLocaleTimeString('pt-BR')}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
