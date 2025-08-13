@@ -107,9 +107,21 @@ export const FollowUpManager: React.FC<FollowUpManagerProps> = ({ clientId, onFo
   // Criar/editar follow-up
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user) {
+      console.error('Usuário não autenticado');
+      toast({
+        title: "Erro",
+        description: "Usuário não autenticado",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
+      console.log('Dados do formulário:', formData);
+      console.log('Client ID:', clientId);
+      console.log('User ID:', user.id);
+
       const followUpData = {
         ...formData,
         user_id: user.id,
@@ -117,11 +129,17 @@ export const FollowUpManager: React.FC<FollowUpManagerProps> = ({ clientId, onFo
         scheduled_date: new Date(formData.scheduled_date).toISOString()
       };
 
+      console.log('Dados para inserção:', followUpData);
+
       if (editingFollowUp) {
-        const { error } = await supabase
+        console.log('Atualizando follow-up:', editingFollowUp.id);
+        const { data, error } = await supabase
           .from('follow_ups')
           .update(followUpData)
-          .eq('id', editingFollowUp.id);
+          .eq('id', editingFollowUp.id)
+          .select();
+
+        console.log('Resposta da atualização:', { data, error });
 
         if (error) throw error;
 
@@ -130,9 +148,13 @@ export const FollowUpManager: React.FC<FollowUpManagerProps> = ({ clientId, onFo
           description: "Follow-up atualizado com sucesso"
         });
       } else {
-        const { error } = await supabase
+        console.log('Criando novo follow-up');
+        const { data, error } = await supabase
           .from('follow_ups')
-          .insert([followUpData]);
+          .insert([followUpData])
+          .select();
+
+        console.log('Resposta da inserção:', { data, error });
 
         if (error) throw error;
 
@@ -147,6 +169,12 @@ export const FollowUpManager: React.FC<FollowUpManagerProps> = ({ clientId, onFo
       onFollowUpCreated?.();
     } catch (error: any) {
       console.error('Erro ao salvar follow-up:', error);
+      console.error('Detalhes do erro:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       toast({
         title: "Erro",
         description: error.message || "Erro ao salvar follow-up",
