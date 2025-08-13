@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { testDatabasePermissions, testClientIdNull } from '@/utils/testAuth';
+
 import { insertTransactionInCorrectTable, insertTransactionInSelectedMonthTable, updateTransactionInCorrectTable, deleteTransactionFromCorrectTable } from '@/utils/transactionInsertion';
 import { getAllMonthlyTables } from '@/utils/monthlyTableUtils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -614,30 +614,7 @@ export default function Transactions() {
 
 
 
-  const runAuthTests = async () => {
-    console.log('🧪 Executando testes de autorização...');
-    
-    // Teste geral de permissões
-    const permissionsResult = await testDatabasePermissions();
-    console.log('Resultado do teste de permissões:', permissionsResult);
-    
-    // Teste específico de client_id null
-    const clientIdResult = await testClientIdNull();
-    console.log('Resultado do teste de client_id:', clientIdResult);
-    
-    if (permissionsResult.success && clientIdResult.success) {
-      toast({
-        title: "Testes Concluídos",
-        description: "Todos os testes de autorização passaram!",
-      });
-    } else {
-      toast({
-        title: "Testes Falharam",
-        description: `Problemas encontrados: ${permissionsResult.error || clientIdResult.error}`,
-        variant: "destructive"
-      });
-    }
-  };
+
 
   if (loading) {
     return (
@@ -660,14 +637,7 @@ export default function Transactions() {
               ← Dashboard
             </Button>
             <h1 className="text-2xl font-bold">Transações</h1>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={runAuthTests}
-              className="ml-4"
-            >
-              🧪 Testar Auth
-            </Button>
+
           </div>
           <SubscriptionGuard feature="transaction">
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
