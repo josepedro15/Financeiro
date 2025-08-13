@@ -51,6 +51,7 @@ import {
   ArrowLeft,
   History
 } from 'lucide-react';
+import { FollowUpNotifications } from '../components/crm/FollowUpNotifications';
 
 // Tipos
 interface Client {
@@ -1265,6 +1266,17 @@ export default function Clients() {
           </div>
         </div>
       </header>
+
+      {/* Notificações de Follow-up */}
+      <div className="container mx-auto px-6 py-4">
+        <FollowUpNotifications 
+          onFollowUpCompleted={(followUpId) => {
+            console.log('Follow-up concluído:', followUpId);
+            // Recarregar clientes se necessário
+            loadClients();
+          }}
+        />
+      </div>
 
       {/* Conteúdo Principal */}
       <main className="flex-1 container mx-auto px-6 py-8 min-h-0 flex flex-col">
