@@ -31,19 +31,16 @@ import {
 import {
   DndContext,
   DragEndEvent,
-  DragOverEvent,
   DragOverlay,
   DragStartEvent,
   PointerSensor,
   useSensor,
   useSensors,
   closestCorners,
-  KeyboardSensor,
 } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
-  arrayMove,
 } from '@dnd-kit/sortable';
 import {
   useSortable,
@@ -173,8 +170,7 @@ export default function Clients() {
       activationConstraint: {
         distance: 8,
       },
-    }),
-    useSensor(KeyboardSensor)
+    })
   );
 
   // Carregar dados iniciais
@@ -557,6 +553,7 @@ export default function Clients() {
     const { active } = event;
     const draggedClient = clients.find(client => client.id === active.id);
     setActiveClient(draggedClient || null);
+    console.log('🔄 Drag iniciado:', draggedClient?.name);
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -564,17 +561,33 @@ export default function Clients() {
     
     setActiveClient(null);
     
-    if (!over || !active) return;
+    if (!over || !active) {
+      console.log('❌ Drag cancelado - sem destino válido');
+      return;
+    }
     
     const clientId = active.id as string;
     const newStageKey = over.id as string;
     
+    console.log('🔄 Tentando mover cliente:', clientId, 'para estágio:', newStageKey);
+    
     // Verificar se o cliente está sendo movido para um estágio diferente
     const client = clients.find(c => c.id === clientId);
-    if (!client || client.stage === newStageKey) return;
+    if (!client) {
+      console.log('❌ Cliente não encontrado');
+      return;
+    }
+    
+    if (client.stage === newStageKey) {
+      console.log('❌ Cliente não movido - mesmo estágio');
+      return;
+    }
     
     // Verificar se o destino é um estágio válido
-    if (!stages[newStageKey]) return;
+    if (!stages[newStageKey]) {
+      console.log('❌ Estágio de destino inválido:', newStageKey);
+      return;
+    }
     
     try {
       setIsUpdating(true);
