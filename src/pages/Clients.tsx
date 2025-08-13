@@ -945,8 +945,8 @@ export default function Clients() {
     const StageIcon = stage.icon;
     
     return (
-      <div className="flex-shrink-0 w-80">
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-5 shadow-sm border border-slate-200/50 hover:shadow-md transition-all duration-200 h-[calc(100vh-200px)] flex flex-col">
+      <div className="flex-shrink-0 w-80 h-full">
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-5 shadow-sm border border-slate-200/50 hover:shadow-md transition-all duration-200 h-full flex flex-col">
           <div className="flex items-center justify-between mb-5 flex-shrink-0">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-slate-100 rounded-lg">
@@ -990,7 +990,7 @@ export default function Clients() {
           
           <DroppableClientArea stageKey={stageKey}>
             <div 
-              className="flex-1 border-2 border-dashed border-slate-200 rounded-xl p-3 hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200 overflow-y-auto"
+              className="flex-1 border-2 border-dashed border-slate-200 rounded-xl p-3 hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200 overflow-y-auto min-h-0"
               data-stage={stageKey}
             >
               <div className="space-y-3">
@@ -1034,9 +1034,9 @@ export default function Clients() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="border-b bg-gradient-to-r from-slate-50 to-blue-50/50 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
+      <header className="border-b bg-gradient-to-r from-slate-50 to-blue-50/50 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex-shrink-0">
         <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
@@ -1085,14 +1085,14 @@ export default function Clients() {
       </header>
 
       {/* Conteúdo Principal */}
-      <main className="container mx-auto px-6 py-8">
+      <main className="flex-1 container mx-auto px-6 py-8 overflow-hidden">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex gap-6 overflow-x-auto pb-4">
+          <div className="flex gap-6 overflow-x-auto h-full">
             {Object.entries(stages).map(([stageKey, stage]) => (
               <StageColumnWithArrows key={stageKey} stageKey={stageKey} stage={stage} />
             ))}
