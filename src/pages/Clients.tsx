@@ -946,8 +946,8 @@ export default function Clients() {
     
     return (
       <div className="flex-shrink-0 w-80">
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-5 shadow-sm border border-slate-200/50 hover:shadow-md transition-all duration-200">
-          <div className="flex items-center justify-between mb-5">
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-5 shadow-sm border border-slate-200/50 hover:shadow-md transition-all duration-200 h-[calc(100vh-200px)] flex flex-col">
+          <div className="flex items-center justify-between mb-5 flex-shrink-0">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-slate-100 rounded-lg">
                 <StageIcon className="w-5 h-5 text-slate-600" />
@@ -990,28 +990,30 @@ export default function Clients() {
           
           <DroppableClientArea stageKey={stageKey}>
             <div 
-              className="space-y-3 min-h-[200px] border-2 border-dashed border-slate-200 rounded-xl p-3 hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200"
+              className="flex-1 border-2 border-dashed border-slate-200 rounded-xl p-3 hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200 overflow-y-auto"
               data-stage={stageKey}
             >
-              <SortableContext items={stageClients.map(c => c.id)} strategy={verticalListSortingStrategy}>
-                {stageClients.map((client) => (
-                  <SortableClientCard key={client.id} client={client} />
-                ))}
-              </SortableContext>
-              
-              {stageClients.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
-                  <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Users className="w-6 h-6 text-slate-400" />
+              <div className="space-y-3">
+                <SortableContext items={stageClients.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                  {stageClients.map((client) => (
+                    <SortableClientCard key={client.id} client={client} />
+                  ))}
+                </SortableContext>
+                
+                {stageClients.length === 0 && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Users className="w-6 h-6 text-slate-400" />
+                    </div>
+                    <p className="text-sm font-medium">Nenhum cliente</p>
+                    <p className="text-xs text-slate-400 mt-1">Arraste clientes para cá</p>
                   </div>
-                  <p className="text-sm font-medium">Nenhum cliente</p>
-                  <p className="text-xs text-slate-400 mt-1">Arraste clientes para cá</p>
+                )}
+                
+                {/* Área de drop no final do estágio */}
+                <div className="h-10 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center mt-3 bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+                  <span className="text-xs text-slate-500 font-medium">Soltar cliente aqui</span>
                 </div>
-              )}
-              
-              {/* Área de drop no final do estágio */}
-              <div className="h-10 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center mt-3 bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
-                <span className="text-xs text-slate-500 font-medium">Soltar cliente aqui</span>
               </div>
             </div>
           </DroppableClientArea>
@@ -1032,9 +1034,9 @@ export default function Clients() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30">
       {/* Header */}
-      <header className="border-b bg-gradient-to-r from-slate-50 to-blue-50/50 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 flex-shrink-0">
+      <header className="border-b bg-gradient-to-r from-slate-50 to-blue-50/50 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
         <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
@@ -1083,15 +1085,14 @@ export default function Clients() {
       </header>
 
       {/* Conteúdo Principal */}
-      <main className="flex-1 container mx-auto px-6 py-8 overflow-hidden">
-        <div className="h-full flex flex-col">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCorners}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <div className="flex gap-6 overflow-x-auto pb-4 flex-1 min-h-0">
+      <main className="container mx-auto px-6 py-8">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex gap-6 overflow-x-auto pb-4">
             {Object.entries(stages).map(([stageKey, stage]) => (
               <StageColumnWithArrows key={stageKey} stageKey={stageKey} stage={stage} />
             ))}
@@ -1117,7 +1118,6 @@ export default function Clients() {
             ) : null}
           </DragOverlay>
         </DndContext>
-        </div>
 
         {/* Estado vazio */}
         {Object.keys(stages).length === 0 && (
