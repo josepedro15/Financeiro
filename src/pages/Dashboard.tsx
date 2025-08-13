@@ -26,7 +26,9 @@ import {
   Crown,
   Clock,
   AlertTriangle,
-  Shield
+  Shield,
+  RefreshCw,
+  LogOut
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Area } from 'recharts';
 import NotificationCenter from '@/components/NotificationCenter';
@@ -414,10 +416,9 @@ export default function Dashboard() {
 
       // DEBUG: Verificar dados carregados das tabelas mensais
       console.log('=== DEBUG TABELAS MENSAIS ===');
-      console.log('Recent error:', recentError);
       console.log('Total all transactions loaded:', allTransactionsData.length);
       console.log('Total income transactions loaded:', incomeOnlyData.length);
-      console.log('Total recent transactions loaded:', recentData?.length || 0);
+      console.log('Total recent transactions loaded:', recentTransactions.length);
       console.log('Monthly revenue data:', monthlyRevenue);
       console.log('Sample transactions:', allTransactionsData.slice(0, 5));
       
@@ -628,33 +629,114 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-3">
-            <Button 
-              variant="ghost" 
-              className="p-0 h-auto hover:bg-transparent"
-              onClick={() => navigate('/')}
-            >
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/50 shadow-sm">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <div className="flex items-center space-x-3">
+              <Button 
+                variant="ghost" 
+                className="p-0 h-auto hover:bg-transparent"
+                onClick={() => navigate('/')}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <DollarSign className="w-5 h-5 text-white" />
+                  </div>
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                    FinanceiroLogotiq
+                  </h1>
                 </div>
-                <h1 className="text-lg sm:text-2xl font-bold">FinanceiroLogotiq</h1>
-              </div>
-            </Button>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
-            <span className="text-xs sm:text-sm text-muted-foreground text-center">
-              Bem-vindo, {user?.email}
-            </span>
+              </Button>
+            </div>
             
-            {/* Seletor de Fonte de Dados */}
-            {dataSources.length >= 1 && (
+            {/* Controles */}
+            <div className="flex items-center space-x-3">
+              {/* Seletor de Fonte de Dados */}
+              {dataSources.length >= 1 && (
+                <div className="hidden md:flex items-center space-x-2">
+                  <Database className="h-4 w-4 text-slate-600" />
+                  <Select value={selectedDataSource} onValueChange={setSelectedDataSource}>
+                    <SelectTrigger className="w-48 bg-white/50 backdrop-blur-sm border-slate-200">
+                      <SelectValue placeholder="Selecionar fonte de dados" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {dataSources.map((source) => (
+                        <SelectItem key={source.id} value={source.id}>
+                          <div className="flex items-center space-x-2">
+                            <span>{source.name}</span>
+                            {source.isOwner && source.id !== user.id && (
+                              <span className="text-xs text-blue-600">(Compartilhado)</span>
+                            )}
+                            {!source.isOwner && (
+                              <span className="text-xs text-green-600">(Organização)</span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              
+              {/* Botões de Navegação */}
               <div className="flex items-center space-x-2">
-                <Database className="h-4 w-4 text-gray-600" />
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => navigate('/clients')}
+                  className="hidden sm:flex items-center space-x-1 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  <Users className="w-4 h-4" />
+                  <span>CRM</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => navigate('/settings')}
+                  className="hidden sm:flex items-center space-x-1 hover:bg-slate-50 hover:text-slate-600 transition-colors"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Config</span>
+                </Button>
+                {isMasterUser && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => navigate('/analytics')}
+                    className="hidden sm:flex items-center space-x-1 hover:bg-purple-50 hover:text-purple-600 transition-colors"
+                  >
+                    <Shield className="w-4 h-4" />
+                    <span>Analytics</span>
+                  </Button>
+                )}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={loadFinancialData}
+                  className="hover:bg-green-50 hover:text-green-600 hover:border-green-200 transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={signOut}
+                  className="hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Mobile: Seletor de Fonte de Dados */}
+          {dataSources.length >= 1 && (
+            <div className="md:hidden mt-3">
+              <div className="flex items-center space-x-2">
+                <Database className="h-4 w-4 text-slate-600" />
                 <Select value={selectedDataSource} onValueChange={setSelectedDataSource}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-full bg-white/50 backdrop-blur-sm border-slate-200">
                     <SelectValue placeholder="Selecionar fonte de dados" />
                   </SelectTrigger>
                   <SelectContent>
@@ -674,53 +756,34 @@ export default function Dashboard() {
                   </SelectContent>
                 </Select>
               </div>
-            )}
-            
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" onClick={() => navigate('/clients')}>
-                <Users className="w-4 h-4 mr-1" />
-                CRM
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate('/settings')}>
-                <Settings className="w-4 h-4 mr-1" />
-                Configurações
-              </Button>
-              {isMasterUser && (
-                <Button variant="outline" size="sm" onClick={() => navigate('/analytics')}>
-                  <Shield className="w-4 h-4 mr-1" />
-                  Analytics
-                </Button>
-              )}
-              <Button variant="outline" size="sm" onClick={loadFinancialData}>
-                Atualizar
-              </Button>
-              <Button variant="outline" size="sm" onClick={signOut}>
-                Sair
-              </Button>
             </div>
-          </div>
+          )}
         </div>
       </header>
 
       {/* Subscription Status Banner */}
       {!isMasterUser && !subscriptionLoading && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200">
-          <div className="container mx-auto px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
+        <div className="bg-gradient-to-r from-slate-50 to-blue-50/30 border-b border-slate-200/50">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center space-x-4">
                 {isTrialActive() ? (
                   <>
-                    <Clock className="w-5 h-5 text-blue-600" />
+                    <div className="p-2 rounded-full bg-blue-100">
+                      <Clock className="w-5 h-5 text-blue-600" />
+                    </div>
                     <div>
-                      <p className="text-sm font-medium text-blue-900">
-                        Trial Gratuito - {trialDaysLeft} dias restantes
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-sm font-semibold text-slate-800">
+                          Trial Gratuito - {trialDaysLeft} dias restantes
+                        </p>
                         {trialDaysLeft <= 3 && trialDaysLeft > 0 && (
-                          <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 animate-pulse">
                             ⚠️ Acaba em breve!
                           </span>
                         )}
-                      </p>
-                      <p className="text-xs text-blue-700">
+                      </div>
+                      <p className="text-sm text-slate-600">
                         {trialDaysLeft <= 3 && trialDaysLeft > 0 
                           ? 'Seu trial está acabando! Faça upgrade para continuar usando.'
                           : 'Aproveite o período de teste para conhecer todas as funcionalidades'
@@ -730,26 +793,39 @@ export default function Dashboard() {
                   </>
                 ) : (
                   <>
-                    <Crown className="w-5 h-5 text-green-600" />
+                    <div className="p-2 rounded-full bg-green-100">
+                      <Crown className="w-5 h-5 text-green-600" />
+                    </div>
                     <div>
-                      <p className="text-sm font-medium text-green-900">
+                      <p className="text-sm font-semibold text-slate-800">
                         Plano {getPlanName(currentPlan)} Ativo
                       </p>
-                      <p className="text-xs text-green-700">
+                      <p className="text-sm text-slate-600">
                         {currentTransactions} / {transactionLimit} transações utilizadas
                       </p>
                     </div>
                   </>
                 )}
               </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="text-xs">
+              <div className="flex items-center space-x-3">
+                <span 
+                  className={`text-xs px-3 py-1 rounded-full border ${
+                    isTrialActive() 
+                      ? 'border-blue-200 text-blue-700 bg-blue-50' 
+                      : 'border-green-200 text-green-700 bg-green-50'
+                  }`}
+                >
                   {isTrialActive() ? 'Trial' : getPlanName(currentPlan)}
-                </Badge>
+                </span>
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={() => navigate('/subscription')}
+                  className={`hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors ${
+                    isTrialActive() && trialDaysLeft <= 3 
+                      ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' 
+                      : ''
+                  }`}
                 >
                   <Crown className="w-4 h-4 mr-1" />
                   Assinatura
@@ -768,173 +844,275 @@ export default function Dashboard() {
           <NotificationCenter />
         </div>
         {/* Status de atualização */}
-        <div className="mb-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            Última atualização: {lastUpdate.toLocaleTimeString('pt-BR')}
-          </p>
+        <div className="mb-6 flex items-center justify-center">
+          <div className="flex items-center space-x-2 px-4 py-2 bg-slate-50 rounded-full border border-slate-200">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <p className="text-sm text-slate-600 font-medium">
+              Última atualização: {lastUpdate.toLocaleTimeString('pt-BR')}
+            </p>
+          </div>
         </div>
 
 
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 sm:gap-6 mb-8">
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm hover:scale-[1.02]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                Receita Total
+              </CardTitle>
+              <div className="p-2 rounded-full bg-green-100 group-hover:bg-green-200 transition-colors">
+                <DollarSign className="h-5 w-5 text-green-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(financialData.totalIncome)}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-3xl font-bold text-slate-900 mb-2">
+                {formatCurrency(financialData.totalIncome)}
+              </div>
+              <div className="flex items-center text-sm text-green-600">
+                <TrendingUp className="h-4 w-4 mr-1" />
                 +{formatCurrency(financialData.totalIncome - financialData.totalExpenses)} vs despesas
-              </p>
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Saldo em Caixa</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm hover:scale-[1.02]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                Saldo em Caixa
+              </CardTitle>
+              <div className="p-2 rounded-full bg-blue-100 group-hover:bg-blue-200 transition-colors">
+                <DollarSign className="h-5 w-5 text-blue-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(financialData.balancePJ + financialData.balanceCheckout)}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-3xl font-bold text-slate-900 mb-2">
+                {formatCurrency(financialData.balancePJ + financialData.balanceCheckout)}
+              </div>
+              <div className="flex items-center text-sm text-blue-600">
+                <CreditCard className="h-4 w-4 mr-1" />
                 Soma das duas contas
-              </p>
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Conta 1</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm hover:scale-[1.02]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                Conta 1
+              </CardTitle>
+              <div className="p-2 rounded-full bg-purple-100 group-hover:bg-purple-200 transition-colors">
+                <CreditCard className="h-5 w-5 text-purple-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(financialData.balancePJ)}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-3xl font-bold text-slate-900 mb-2">
+                {formatCurrency(financialData.balancePJ)}
+              </div>
+              <div className="flex items-center text-sm text-purple-600">
+                <Shield className="h-4 w-4 mr-1" />
                 Conta Pessoa Jurídica
-              </p>
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Conta 2</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm hover:scale-[1.02]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                Conta 2
+              </CardTitle>
+              <div className="p-2 rounded-full bg-orange-100 group-hover:bg-orange-200 transition-colors">
+                <CreditCard className="h-5 w-5 text-orange-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(financialData.balanceCheckout)}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-3xl font-bold text-slate-900 mb-2">
+                {formatCurrency(financialData.balanceCheckout)}
+              </div>
+              <div className="flex items-center text-sm text-orange-600">
+                <CreditCard className="h-4 w-4 mr-1" />
                 Conta Checkout
-              </p>
+              </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Novos Indicadores */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
-              <Calculator className="h-4 w-4 text-muted-foreground" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm hover:scale-[1.02]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                Ticket Médio
+              </CardTitle>
+              <div className="p-2 rounded-full bg-indigo-100 group-hover:bg-indigo-200 transition-colors">
+                <Calculator className="h-5 w-5 text-indigo-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(financialData.ticketMedio)}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-3xl font-bold text-slate-900 mb-2">
+                {formatCurrency(financialData.ticketMedio)}
+              </div>
+              <div className="flex items-center text-sm text-indigo-600">
+                <BarChart3 className="h-4 w-4 mr-1" />
                 Por venda ({financialData.totalTransacoes} vendas)
-              </p>
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Lucro Líquido</CardTitle>
-              <PiggyBank className="h-4 w-4 text-muted-foreground" />
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm hover:scale-[1.02]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                Lucro Líquido
+              </CardTitle>
+              <div className={`p-2 rounded-full transition-colors ${
+                financialData.lucroLiquido >= 0 
+                  ? 'bg-green-100 group-hover:bg-green-200' 
+                  : 'bg-red-100 group-hover:bg-red-200'
+              }`}>
+                <PiggyBank className={`h-5 w-5 ${
+                  financialData.lucroLiquido >= 0 ? 'text-green-600' : 'text-red-600'
+                }`} />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${financialData.lucroLiquido >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <div className={`text-3xl font-bold mb-2 ${
+                financialData.lucroLiquido >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
                 {formatCurrency(financialData.lucroLiquido)}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <div className="flex items-center text-sm text-slate-600">
+                <Calculator className="h-4 w-4 mr-1" />
                 Receita - Despesas (sem prolabore)
-              </p>
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Margem de Lucro</CardTitle>
-              <Percent className="h-4 w-4 text-muted-foreground" />
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm hover:scale-[1.02]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                Margem de Lucro
+              </CardTitle>
+              <div className={`p-2 rounded-full transition-colors ${
+                financialData.margemLucro >= 0 
+                  ? 'bg-emerald-100 group-hover:bg-emerald-200' 
+                  : 'bg-red-100 group-hover:bg-red-200'
+              }`}>
+                <Percent className={`h-5 w-5 ${
+                  financialData.margemLucro >= 0 ? 'text-emerald-600' : 'text-red-600'
+                }`} />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${financialData.margemLucro >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <div className={`text-3xl font-bold mb-2 ${
+                financialData.margemLucro >= 0 ? 'text-emerald-600' : 'text-red-600'
+              }`}>
                 {financialData.margemLucro.toFixed(1)}%
               </div>
-              <p className="text-xs text-muted-foreground">
+              <div className="flex items-center text-sm text-slate-600">
+                <TrendingUp className="h-4 w-4 mr-1" />
                 Eficiência financeira
-              </p>
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Crescimento Mensal</CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm hover:scale-[1.02]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                Crescimento Mensal
+              </CardTitle>
+              <div className={`p-2 rounded-full transition-colors ${
+                financialData.crescimentoMensal >= 0 
+                  ? 'bg-green-100 group-hover:bg-green-200' 
+                  : 'bg-red-100 group-hover:bg-red-200'
+              }`}>
+                <BarChart3 className={`h-5 w-5 ${
+                  financialData.crescimentoMensal >= 0 ? 'text-green-600' : 'text-red-600'
+                }`} />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold flex items-center ${
+              <div className={`text-3xl font-bold flex items-center mb-2 ${
                 financialData.crescimentoMensal >= 0 ? 'text-green-600' : 'text-red-600'
               }`}>
                 {financialData.crescimentoMensal >= 0 ? (
-                  <TrendingUp className="h-4 w-4 mr-1" />
+                  <TrendingUp className="h-5 w-5 mr-2" />
                 ) : (
-                  <TrendingDown className="h-4 w-4 mr-1" />
+                  <TrendingDown className="h-5 w-5 mr-2" />
                 )}
                 {Math.abs(financialData.crescimentoMensal).toFixed(1)}%
               </div>
-              <p className="text-xs text-muted-foreground">
+              <div className="flex items-center text-sm text-slate-600">
+                <Clock className="h-4 w-4 mr-1" />
                 acumulado até hoje vs mês anterior
-              </p>
+              </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
           {/* Gráfico Mensal */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Evolução Mensal - Todas as Contas</CardTitle>
-              <CardDescription>
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-blue-600" />
+                Evolução Mensal - Todas as Contas
+              </CardTitle>
+              <CardDescription className="text-slate-600">
                 Receita mensal total em 2025 (todas as contas)
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={window.innerWidth < 768 ? 250 : 300}>
                 <BarChart data={financialData.monthlyRevenue}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip 
-                    formatter={(value: number) => formatCurrency(value)}
-                    labelStyle={{ color: 'black' }}
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis 
+                    dataKey="month" 
+                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    axisLine={{ stroke: '#cbd5e1' }}
                   />
-                  <Bar dataKey="revenue" fill="#3b82f6" />
+                  <YAxis 
+                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    axisLine={{ stroke: '#cbd5e1' }}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [formatCurrency(value), 'Receita']}
+                    labelStyle={{ color: 'black', fontWeight: 'bold' }}
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                  />
+                  <Bar 
+                    dataKey="revenue" 
+                    fill="url(#blueGradient)"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <defs>
+                    <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" />
+                      <stop offset="100%" stopColor="#1d4ed8" />
+                    </linearGradient>
+                  </defs>
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
           {/* Gráfico Diário do Mês Atual */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-green-600" />
                 Faturamento Diário - {financialData.currentMonth}
                 <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
                   Mês Atual
                 </span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-slate-600">
                 {financialData.currentMonth ? 
                   `Receita diária total em ${financialData.currentMonth.toLowerCase()} 2025 - Total: ${formatCurrency(financialData.currentMonthRevenue)}` 
                   : 'Carregando dados do mês atual...'
@@ -942,27 +1120,59 @@ export default function Dashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={window.innerWidth < 768 ? 250 : 300}>
                 <LineChart data={financialData.dailyRevenue}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                   <XAxis 
                     dataKey="day" 
-                    label={{ value: 'Dia do Mês', position: 'insideBottom', offset: -5 }}
+                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    axisLine={{ stroke: '#cbd5e1' }}
+                    label={{ 
+                      value: 'Dia do Mês', 
+                      position: 'insideBottom', 
+                      offset: -5,
+                      style: { fill: '#64748b', fontSize: 12 }
+                    }}
                   />
-                  <YAxis />
+                  <YAxis 
+                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    axisLine={{ stroke: '#cbd5e1' }}
+                  />
                   <Tooltip 
                     formatter={(value: number) => [formatCurrency(value), 'Faturamento']}
                     labelFormatter={(label: string) => `Dia ${label}`}
-                    labelStyle={{ color: 'black' }}
+                    labelStyle={{ color: 'black', fontWeight: 'bold' }}
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="revenue" 
-                    stroke="#10b981" 
+                    stroke="url(#greenGradient)"
                     strokeWidth={3}
-                    dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2 }}
+                    dot={{ 
+                      fill: '#10b981', 
+                      strokeWidth: 2, 
+                      r: 4,
+                      stroke: 'white'
+                    }}
+                    activeDot={{ 
+                      r: 6, 
+                      stroke: '#10b981', 
+                      strokeWidth: 2,
+                      fill: '#10b981'
+                    }}
                   />
+                  <defs>
+                    <linearGradient id="greenGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" />
+                      <stop offset="100%" stopColor="#059669" />
+                    </linearGradient>
+                  </defs>
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -970,27 +1180,31 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Transactions */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-row items-center justify-between">
+        <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm">
+          <CardHeader className="pb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <CardTitle>Transações Recentes</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-blue-600" />
+                  Transações Recentes
+                </CardTitle>
+                <CardDescription className="text-slate-600">
                   Últimas {financialData.recentTransactions.length} transações
                 </CardDescription>
               </div>
-              <div className="flex space-x-2">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={() => navigate('/transactions')}
+                  className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors"
                 >
                   Ver Todas
                 </Button>
                 <Button 
                   size="sm"
                   onClick={() => navigate('/transactions')}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
                   Nova Transação
@@ -1000,43 +1214,60 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             {financialData.recentTransactions.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CreditCard className="h-8 w-8 text-slate-400" />
+                </div>
+                <p className="text-slate-600 mb-4 font-medium">
                   Nenhuma transação encontrada
+                </p>
+                <p className="text-slate-500 text-sm mb-6">
+                  Comece adicionando sua primeira transação para ver os dados aqui
                 </p>
                 <Button 
                   onClick={() => navigate('/transactions')}
-                  className="flex items-center gap-2 mx-auto"
+                  className="flex items-center gap-2 mx-auto bg-blue-600 hover:bg-blue-700 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
                   Criar Primeira Transação
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {financialData.recentTransactions.map((transaction) => (
-                  <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div 
+                    key={transaction.id} 
+                    className="group/item flex items-center justify-between p-4 border border-slate-200 rounded-xl hover:bg-slate-50/50 hover:border-slate-300 transition-all duration-200 cursor-pointer"
+                  >
                     <div className="flex items-center space-x-4">
-                      <div className={`p-2 rounded-full ${
+                      <div className={`p-3 rounded-full transition-colors ${
                         transaction.transaction_type === 'income' 
-                          ? 'bg-green-100 text-green-600' 
-                          : 'bg-red-100 text-red-600'
+                          ? 'bg-green-100 text-green-600 group-hover/item:bg-green-200' 
+                          : 'bg-red-100 text-red-600 group-hover/item:bg-red-200'
                       }`}>
                         {transaction.transaction_type === 'income' ? (
-                          <ArrowUpRight className="h-4 w-4" />
+                          <ArrowUpRight className="h-5 w-5" />
                         ) : (
-                          <ArrowDownRight className="h-4 w-4" />
+                          <ArrowDownRight className="h-5 w-5" />
                         )}
                       </div>
                       <div>
-                        <p className="font-medium">{transaction.description}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(transaction.transaction_date).toLocaleDateString('pt-BR')}
+                        <p className="font-semibold text-slate-800 group-hover/item:text-slate-900 transition-colors">
+                          {transaction.description || 'Transação sem descrição'}
                         </p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <p className="text-sm text-slate-500">
+                            {new Date(transaction.transaction_date).toLocaleDateString('pt-BR')}
+                          </p>
+                          <span className="text-xs text-slate-400">•</span>
+                          <p className="text-xs text-slate-500 capitalize">
+                            {transaction.transaction_type === 'income' ? 'Receita' : 'Despesa'}
+                          </p>
+                        </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className={`font-medium ${
+                      <p className={`font-bold text-lg ${
                         transaction.transaction_type === 'income' 
                           ? 'text-green-600' 
                           : 'text-red-600'
@@ -1044,8 +1275,8 @@ export default function Dashboard() {
                         {transaction.transaction_type === 'income' ? '+' : '-'}
                         {formatCurrency(transaction.amount)}
                       </p>
-                      <p className="text-xs text-muted-foreground capitalize">
-                        {transaction.transaction_type}
+                      <p className="text-xs text-slate-500 mt-1">
+                        {transaction.account_name || 'Conta não especificada'}
                       </p>
                     </div>
                   </div>
