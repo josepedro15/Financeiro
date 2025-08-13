@@ -721,7 +721,7 @@ export default function Transactions() {
                       Nova Transação
                     </Button>
                   </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                  <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
               <DialogHeader className="pb-4">
                 <DialogTitle className="text-xl font-semibold text-slate-800">
                   {editingTransaction ? 'Editar Transação' : 'Nova Transação'}
@@ -1030,7 +1030,6 @@ export default function Transactions() {
                 </Button>
               </div>
             )}
-            </div>
           </div>
 
           <CardContent>
