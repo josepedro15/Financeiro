@@ -285,3 +285,39 @@ export interface AutomationAction {
   type: 'create_activity' | 'send_notification' | 'update_field' | 'assign_to';
   params: Record<string, any>;
 }
+
+// Tipos para sistema de follow-ups
+export interface FollowUp {
+  id: string;
+  client_id: string;
+  user_id: string;
+  title: string;
+  description?: string;
+  scheduled_date: string;
+  completed_date?: string;
+  status: 'pending' | 'completed' | 'overdue' | 'rescheduled' | 'cancelled';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  type: 'call' | 'email' | 'meeting' | 'task' | 'note' | 'follow_up';
+  reminder_days: number;
+  notification_sent: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FollowUpFormData {
+  title: string;
+  description?: string;
+  scheduled_date: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  type: 'call' | 'email' | 'meeting' | 'task' | 'note' | 'follow_up';
+  reminder_days: number;
+}
+
+export interface FollowUpWithClient extends FollowUp {
+  client: {
+    id: string;
+    name: string;
+    email?: string;
+    phone?: string;
+  };
+}
