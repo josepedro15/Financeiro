@@ -50,6 +50,11 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
       console.log('🔍 Carregando follow-ups do dia...');
       console.log('📅 Data de hoje:', new Date().toISOString().split('T')[0]);
       
+      // Ajustar data para compensar fuso horário (adicionar um dia)
+      const today = new Date();
+      today.setDate(today.getDate() + 1);
+      const todayString = today.toISOString().split('T')[0];
+      
       const { data, error } = await supabase
         .from('follow_ups')
         .select(`
@@ -58,8 +63,8 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
         `)
         .eq('user_id', user.id)
         .eq('status', 'pending')
-        .gte('scheduled_date', new Date().toISOString().split('T')[0] + 'T00:00:00')
-        .lt('scheduled_date', new Date().toISOString().split('T')[0] + 'T23:59:59')
+        .gte('scheduled_date', todayString + 'T00:00:00')
+        .lt('scheduled_date', todayString + 'T23:59:59')
         .order('scheduled_date', { ascending: true });
 
       if (error) throw error;
@@ -68,14 +73,13 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
       setTodayFollowUps(data || []);
       
       // Verificar se há clientes com next_follow_up para hoje
-      const today = new Date().toISOString().split('T')[0];
       const { data: clientsWithFollowUp, error: clientsError } = await supabase
         .from('clients')
         .select('id, name, email, phone, next_follow_up')
         .eq('user_id', user.id)
         .not('next_follow_up', 'is', null)
-        .gte('next_follow_up', today + 'T00:00:00')
-        .lt('next_follow_up', today + 'T23:59:59');
+        .gte('next_follow_up', todayString + 'T00:00:00')
+        .lt('next_follow_up', todayString + 'T23:59:59');
 
       if (clientsError) {
         console.error('Erro ao carregar clientes com follow-up:', clientsError);
@@ -170,6 +174,14 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  // Formatar data com compensação de fuso horário
+  const formatDateWithTimezone = (dateString: string) => {
+    const date = new Date(dateString);
+    // Adicionar um dia para compensar o fuso horário
+    date.setDate(date.getDate() + 1);
+    return date.toLocaleDateString('pt-BR');
   };
 
   // Calcular se está atrasado
@@ -352,7 +364,7 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
                       </p>
                       <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                         <Clock className="w-3 h-3" />
-                        <span>Próximo: {new Date(client.next_follow_up).toLocaleDateString('pt-BR')}</span>
+                        <span>Próximo: {formatDateWithTimezone(client.next_follow_up)}</span>
                       </div>
                     </div>
                   </DropdownMenuItem>

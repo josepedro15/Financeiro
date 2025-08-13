@@ -1088,12 +1088,20 @@ export default function Clients() {
             <div className="space-y-1">
               {client.last_contact_date && (
                 <div className="text-sm text-slate-600">
-                  <span className="font-medium">Último contato:</span> {new Date(client.last_contact_date).toLocaleDateString('pt-BR')}
+                                          <span className="font-medium">Último contato:</span> {(() => {
+                          const date = new Date(client.last_contact_date);
+                          date.setDate(date.getDate() + 1);
+                          return date.toLocaleDateString('pt-BR');
+                        })()}
                 </div>
               )}
               {client.next_follow_up && (
                 <div className="text-sm text-slate-600">
-                  <span className="font-medium">Próximo follow-up:</span> {new Date(client.next_follow_up).toLocaleDateString('pt-BR')}
+                                          <span className="font-medium">Próximo follow-up:</span> {(() => {
+                          const date = new Date(client.next_follow_up);
+                          date.setDate(date.getDate() + 1);
+                          return date.toLocaleDateString('pt-BR');
+                        })()}
                 </div>
               )}
             </div>
