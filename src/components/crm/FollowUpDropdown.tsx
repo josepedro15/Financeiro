@@ -147,6 +147,42 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
     }
   };
 
+  // Marcar follow-up do cliente como concluído
+  const markClientFollowUpAsCompleted = async (clientId: string) => {
+    try {
+      // Atualizar last_contact_date para hoje e limpar next_follow_up
+      const { error } = await supabase
+        .from('clients')
+        .update({
+          last_contact_date: new Date().toISOString(),
+          next_follow_up: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', clientId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Follow-up do cliente marcado como concluído"
+      });
+
+      // Recarregar dados
+      await loadTodayFollowUps();
+      await loadOverdueFollowUps();
+      
+      // Notificar componente pai para recarregar clientes
+      onFollowUpCompleted?.(clientId);
+    } catch (error: any) {
+      console.error('Erro ao marcar follow-up do cliente como concluído:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao marcar follow-up do cliente como concluído",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Obter ícone do tipo
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -364,6 +400,18 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
                           Cliente
                         </Badge>
                       </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markClientFollowUpAsCompleted(client.id);
+                        }}
+                        className="h-6 w-6 p-0 hover:bg-green-100 hover:text-green-600"
+                        title="Marcar follow-up como concluído"
+                      >
+                        <CheckCircle className="w-3 h-3" />
+                      </Button>
                     </div>
                     <div className="w-full">
                       <p className="text-xs text-muted-foreground">

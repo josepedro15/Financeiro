@@ -1097,11 +1097,17 @@ export default function Clients() {
               )}
               {client.next_follow_up && (
                 <div className="text-sm text-slate-600">
-                                          <span className="font-medium">Próximo follow-up:</span> {(() => {
-                          const date = new Date(client.next_follow_up);
-                          date.setDate(date.getDate() + 1);
-                          return date.toLocaleDateString('pt-BR');
-                        })()}
+                  <span className="font-medium">Próximo follow-up:</span> {(() => {
+                    const date = new Date(client.next_follow_up);
+                    date.setDate(date.getDate() + 1);
+                    return date.toLocaleDateString('pt-BR');
+                  })()}
+                </div>
+              )}
+              {!client.next_follow_up && client.last_contact_date && (
+                <div className="text-sm text-green-600 flex items-center space-x-1">
+                  <CheckCircle className="w-3 h-3" />
+                  <span className="font-medium">Follow-up concluído</span>
                 </div>
               )}
             </div>
