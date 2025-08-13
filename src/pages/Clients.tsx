@@ -26,10 +26,8 @@ import {
   AlertCircle,
   Move,
   Sparkles,
-  Zap,
   ArrowRight,
-  History,
-  Brain
+  History
 } from 'lucide-react';
 
 // Tipos
@@ -523,17 +521,7 @@ export default function Clients() {
     setStagesDialogOpen(false);
   };
 
-  // Funções para Smart Stage Navigator
-  const getSuggestedStage = (client: Client): string | null => {
-    const currentStage = client.stage;
-    const stageOrder = ['lead', 'prospect', 'negotiation', 'closed'];
-    const currentIndex = stageOrder.indexOf(currentStage);
-    
-    if (currentIndex < stageOrder.length - 1) {
-      return stageOrder[currentIndex + 1];
-    }
-    return null;
-  };
+
 
   const handleMoveClient = async (clientId: string, newStageKey: string) => {
     if (!selectedClient) return;
@@ -595,9 +583,8 @@ export default function Clients() {
     setMoveModalOpen(true);
   };
 
-  // Componente do Card do Cliente com Smart Stage Navigator
+  // Componente do Card do Cliente
   const ClientCard = ({ client }: { client: Client }) => {
-    const suggestedStage = getSuggestedStage(client);
     
     return (
       <Card className="mb-3 hover:shadow-md transition-shadow group relative overflow-hidden">
@@ -676,29 +663,8 @@ export default function Clients() {
             Criado em {new Date(client.created_at).toLocaleDateString('pt-BR')}
           </div>
           
-          {/* Sugestão inteligente */}
-          {suggestedStage && (
-            <div className="mt-2 p-2 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
-              <div className="flex items-center space-x-2 text-xs">
-                <Brain className="w-3 h-3 text-purple-600" />
-                <span className="text-purple-700 font-medium">Sugestão IA:</span>
-                <span className="text-purple-600">Mover para {stages[suggestedStage]?.name}</span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    handleMoveClient(client.id, suggestedStage);
-                  }}
-                  className="h-6 w-6 p-0 hover:bg-purple-200"
-                  title="Aceitar sugestão"
-                >
-                  <Zap className="w-3 h-3 text-purple-600" />
-                </Button>
-              </div>
-            </div>
-          )}
+          
+
         </CardContent>
       </Card>
     );
@@ -1121,32 +1087,7 @@ export default function Clients() {
                 </div>
               </div>
 
-              {/* Sugestão IA */}
-              {getSuggestedStage(selectedClient) && (
-                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                        <Brain className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-green-800">Sugestão da IA</h4>
-                        <p className="text-sm text-green-700">
-                          Mover para <span className="font-medium">{stages[getSuggestedStage(selectedClient)!]?.name}</span>
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={() => handleMoveClient(selectedClient.id, getSuggestedStage(selectedClient)!)}
-                      disabled={isMoving}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <Zap className="w-4 h-4 mr-2" />
-                      Aceitar Sugestão
-                    </Button>
-                  </div>
-                </div>
-              )}
+
 
               {/* Todos os estágios */}
               <div>
@@ -1158,7 +1099,7 @@ export default function Clients() {
                   {Object.entries(stages).map(([stageKey, stage]) => {
                     const StageIcon = stage.icon;
                     const isCurrentStage = stageKey === selectedClient.stage;
-                    const isSuggestedStage = stageKey === getSuggestedStage(selectedClient);
+                    const isSuggestedStage = false;
                     
                     return (
                       <Button
@@ -1182,9 +1123,7 @@ export default function Clients() {
                         {isCurrentStage && (
                           <div className="text-xs text-muted-foreground">Atual</div>
                         )}
-                        {isSuggestedStage && (
-                          <div className="text-xs text-green-600 font-medium">Sugerido</div>
-                        )}
+
                       </Button>
                     );
                   })}
