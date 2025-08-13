@@ -48,6 +48,7 @@ import {
   Move,
   Sparkles,
   ArrowRight,
+  ArrowLeft,
   History
 } from 'lucide-react';
 
@@ -149,8 +150,6 @@ export default function Clients() {
   
   // Estados para Drag and Drop
   const [activeClient, setActiveClient] = useState<Client | null>(null);
-  const [activeStage, setActiveStage] = useState<Stage | null>(null);
-  const [isDraggingStage, setIsDraggingStage] = useState(false);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -622,34 +621,34 @@ export default function Clients() {
     const { active } = event;
     const activeId = active.id as string;
     
-    // Verificar se é um drag de estágio
-    if (stages[activeId]) {
-      setActiveStage(stages[activeId]);
-      setIsDraggingStage(true);
-      setActiveClient(null);
-      return;
-    }
-    
     // Verificar se é um drag de cliente
     const client = clients.find(c => c.id === activeId);
     setActiveClient(client || null);
-    setIsDraggingStage(false);
-    setActiveStage(null);
   };
 
-  const handleReorderStages = async (fromStageKey: string, toStageKey: string) => {
+  const handleReorderStages = async (fromStageKey: string, direction: 'left' | 'right') => {
     try {
       const fromStage = stages[fromStageKey];
-      const toStage = stages[toStageKey];
-      
-      if (!fromStage || !toStage) return;
+      if (!fromStage) return;
 
       // Obter todos os estágios ordenados
       const stageEntries = Object.entries(stages).sort((a, b) => a[1].order_index - b[1].order_index);
       const fromIndex = stageEntries.findIndex(([key]) => key === fromStageKey);
-      const toIndex = stageEntries.findIndex(([key]) => key === toStageKey);
       
-      if (fromIndex === -1 || toIndex === -1) return;
+      if (fromIndex === -1) return;
+
+      let toIndex = fromIndex;
+      
+      if (direction === 'left' && fromIndex > 0) {
+        toIndex = fromIndex - 1;
+      } else if (direction === 'right' && fromIndex < stageEntries.length - 1) {
+        toIndex = fromIndex + 1;
+      } else {
+        return; // Não pode mover mais
+      }
+
+      const toStageKey = stageEntries[toIndex][0];
+      const toStage = stages[toStageKey];
 
       // Reordenar os estágios
       const reorderedStages = [...stageEntries];
@@ -674,8 +673,8 @@ export default function Clients() {
       }
 
       toast({
-        title: "🎉 Estágios Reordenados!",
-        description: `${fromStage.name} foi movido para a posição ${toIndex + 1}`,
+        title: "🎉 Estágio Movido!",
+        description: `${fromStage.name} foi movido ${direction === 'left' ? 'para a esquerda' : 'para a direita'}`,
       });
 
       await loadStages();
@@ -695,36 +694,11 @@ export default function Clients() {
     
     if (!over) {
       setActiveClient(null);
-      setActiveStage(null);
-      setIsDraggingStage(false);
       return;
     }
 
     const activeId = active.id as string;
     const overId = over.id as string;
-
-    // Verificar se é um drag de estágio
-    if (isDraggingStage) {
-      const stageKey = activeId;
-      let targetStageKey = overId;
-      
-      // Se não é um estágio direto, tentar encontrar o estágio mais próximo
-      if (!stages[overId]) {
-        // Procurar por elementos com data-stage
-        const stageElement = (over as any).closest?.('[data-stage]');
-        if (stageElement) {
-          targetStageKey = stageElement.getAttribute('data-stage');
-        }
-      }
-      
-      if (stageKey !== targetStageKey && stages[stageKey] && stages[targetStageKey]) {
-        await handleReorderStages(stageKey, targetStageKey);
-      }
-      
-      setActiveStage(null);
-      setIsDraggingStage(false);
-      return;
-    }
 
     // Verificar se é um drag de cliente
     const client = clients.find(c => c.id === activeId);
@@ -805,28 +779,45 @@ export default function Clients() {
 
 
 
-  // Componente Sortable para Drag and Drop de Estágios
-  const SortableStageColumn = ({ stageKey, stage }: { stageKey: string; stage: Stage }) => {
-    const {
-      attributes,
-      listeners,
-      setNodeRef,
-      transform,
-      transition,
-      isDragging,
-    } = useSortable({ id: stageKey });
-
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-      opacity: isDragging ? 0.5 : 1,
-    };
+  // Componente de Estágio com Setas de Reordenação
+  const StageColumnWithArrows = ({ stageKey, stage }: { stageKey: string; stage: Stage }) => {
+    const stageEntries = Object.entries(stages).sort((a, b) => a[1].order_index - b[1].order_index);
+    const currentIndex = stageEntries.findIndex(([key]) => key === stageKey);
+    const canMoveLeft = currentIndex > 0;
+    const canMoveRight = currentIndex < stageEntries.length - 1;
 
     return (
-      <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <div className="flex items-center">
+        {/* Seta esquerda */}
+        {canMoveLeft && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => handleReorderStages(stageKey, 'left')}
+            className="h-8 w-8 p-0 mr-1"
+            title="Mover para esquerda"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+        )}
+        
+        {/* Estágio */}
         <DroppableStage stageKey={stageKey} stage={stage}>
           <StageColumn stageKey={stageKey} stage={stage} />
         </DroppableStage>
+        
+        {/* Seta direita */}
+        {canMoveRight && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => handleReorderStages(stageKey, 'right')}
+            className="h-8 w-8 p-0 ml-1"
+            title="Mover para direita"
+          >
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+        )}
       </div>
     );
   };
@@ -955,9 +946,8 @@ export default function Clients() {
     return (
       <div className="flex-shrink-0 w-80">
         <div className="bg-muted/50 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-4 cursor-grab active:cursor-grabbing">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
-              <Move className="w-4 h-4 text-muted-foreground" />
               <StageIcon className="w-5 h-5" />
               <h3 className="font-semibold">{stage.name}</h3>
               <span className="bg-background px-2 py-1 rounded-full text-xs font-medium">
@@ -1047,7 +1037,7 @@ export default function Clients() {
                 <Users className="w-6 h-6" />
                 <h1 className="text-2xl font-bold">CRM - Gestão de Clientes</h1>
                 <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">
-                  Arraste clientes entre estágios • Arraste estágios para reordenar
+                  Arraste clientes entre estágios • Use as setas para reordenar estágios
                 </span>
               </div>
             </div>
@@ -1082,14 +1072,9 @@ export default function Clients() {
           onDragEnd={handleDragEnd}
         >
           <div className="flex gap-6 overflow-x-auto pb-4">
-            <SortableContext 
-              items={Object.keys(stages)} 
-              strategy={horizontalListSortingStrategy}
-            >
-              {Object.entries(stages).map(([stageKey, stage]) => (
-                <SortableStageColumn key={stageKey} stageKey={stageKey} stage={stage} />
-              ))}
-            </SortableContext>
+            {Object.entries(stages).map(([stageKey, stage]) => (
+              <StageColumnWithArrows key={stageKey} stageKey={stageKey} stage={stage} />
+            ))}
             
             {/* Botão para adicionar estágios */}
             <div className="flex-shrink-0 w-80 flex items-center justify-center">
@@ -1108,10 +1093,6 @@ export default function Clients() {
             {activeClient ? (
               <div className="w-80">
                 <ClientCard client={activeClient} />
-              </div>
-            ) : activeStage ? (
-              <div className="w-80">
-                <StageColumn stageKey={activeStage.key} stage={activeStage} />
               </div>
             ) : null}
           </DragOverlay>
