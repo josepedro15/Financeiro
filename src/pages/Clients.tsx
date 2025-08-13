@@ -1086,14 +1086,14 @@ export default function Clients() {
       </header>
 
       {/* Conteúdo Principal */}
-      <main className="flex-1 container mx-auto px-6 py-8 min-h-0">
+      <main className="flex-1 container mx-auto px-6 py-8 min-h-0 flex flex-col">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex gap-6 overflow-x-auto" style={{ height: 'calc(100vh - 200px)' }}>
+          <div className="flex gap-6 overflow-x-auto flex-1" style={{ height: 'calc(100vh - 200px)' }}>
             {Object.entries(stages).map(([stageKey, stage]) => (
               <StageColumnWithArrows key={stageKey} stageKey={stageKey} stage={stage} />
             ))}
