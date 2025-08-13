@@ -48,12 +48,14 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
     setLoading(true);
     try {
       console.log('🔍 Carregando follow-ups do dia...');
-      console.log('📅 Data de hoje:', new Date().toISOString().split('T')[0]);
+      const realToday = new Date().toISOString().split('T')[0];
+      console.log('📅 Data real de hoje:', realToday);
       
       // Subtrair 1 dia para compensar o fuso horário na consulta
       const today = new Date();
       today.setDate(today.getDate() - 1);
       const todayString = today.toISOString().split('T')[0];
+      console.log('🔍 Data para consulta (hoje - 1):', todayString);
       
       const { data, error } = await supabase
         .from('follow_ups')
@@ -70,6 +72,7 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
       if (error) throw error;
 
       console.log('📊 Follow-ups encontrados na tabela follow_ups:', data);
+      console.log('🔍 Query executada para follow_ups:', `scheduled_date >= ${todayString}T00:00:00 AND scheduled_date < ${todayString}T23:59:59`);
       setTodayFollowUps(data || []);
       
       // Verificar se há clientes com next_follow_up para hoje
@@ -85,6 +88,7 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
         console.error('Erro ao carregar clientes com follow-up:', clientsError);
       } else {
         console.log('👥 Clientes com next_follow_up para hoje:', clientsWithFollowUp);
+        console.log('🔍 Query executada para clients:', `next_follow_up >= ${todayString}T00:00:00 AND next_follow_up < ${todayString}T23:59:59`);
         setClientsWithFollowUp(clientsWithFollowUp || []);
       }
       
