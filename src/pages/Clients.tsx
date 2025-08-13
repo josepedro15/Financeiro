@@ -794,10 +794,10 @@ export default function Clients() {
             size="sm"
             variant="ghost"
             onClick={() => handleReorderStages(stageKey, 'left')}
-            className="h-8 w-8 p-0 mr-1"
+            className="h-10 w-10 p-0 mr-2 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 rounded-full"
             title="Mover para esquerda"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-5 h-5" />
           </Button>
         )}
         
@@ -812,10 +812,10 @@ export default function Clients() {
             size="sm"
             variant="ghost"
             onClick={() => handleReorderStages(stageKey, 'right')}
-            className="h-8 w-8 p-0 ml-1"
+            className="h-10 w-10 p-0 ml-2 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 rounded-full"
             title="Mover para direita"
           >
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-5 h-5" />
           </Button>
         )}
       </div>
@@ -852,19 +852,19 @@ export default function Clients() {
   const ClientCard = ({ client }: { client: Client }) => {
     
     return (
-              <Card className="mb-3 hover:shadow-md transition-shadow group relative overflow-hidden cursor-grab active:cursor-grabbing">
-          {/* Efeito de brilho no hover */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+      <Card className="mb-3 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 group relative overflow-hidden cursor-grab active:cursor-grabbing border-slate-200/50">
+        {/* Efeito de brilho no hover */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 via-purple-50/50 to-blue-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
         
-                  <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-muted-foreground/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-                <CardTitle className="text-base font-medium">
-                  {client.name}
-                </CardTitle>
-              </div>
-              <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-2 h-2 bg-blue-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+              <CardTitle className="text-base font-semibold text-slate-900">
+                {client.name}
+              </CardTitle>
+            </div>
+            <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <Button
                 size="sm"
                 variant="ghost"
@@ -873,10 +873,10 @@ export default function Clients() {
                   e.preventDefault();
                   openMoveModal(client);
                 }}
-                className="h-8 w-8 p-0 hover:bg-purple-100 hover:text-purple-600"
+                className="h-8 w-8 p-0 hover:bg-purple-100 hover:text-purple-600 transition-colors"
                 title="Mover cliente"
               >
-                <Move className="w-3 h-3" />
+                <Move className="w-4 h-4" />
               </Button>
               <Button
                 size="sm"
@@ -887,10 +887,10 @@ export default function Clients() {
                   console.log('✏️ Botão editar clicado para cliente:', client.id);
                   handleEdit(client);
                 }}
-                className="h-8 w-8 p-0 hover:bg-blue-100"
+                className="h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-600 transition-colors"
                 title="Editar cliente"
               >
-                <Edit className="w-3 h-3" />
+                <Edit className="w-4 h-4" />
               </Button>
               <Button
                 size="sm"
@@ -901,38 +901,39 @@ export default function Clients() {
                   console.log('🗑️ Botão delete clicado para cliente:', client.id);
                   handleDelete(client.id);
                 }}
-                className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600"
+                className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600 transition-colors"
                 title="Excluir cliente"
               >
-                <Trash2 className="w-3 h-3" />
+                <Trash2 className="w-4 h-4" />
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-3">
           {client.email && (
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <Mail className="w-3 h-3" />
-              <span className="truncate">{client.email}</span>
+            <div className="flex items-center space-x-2 text-sm text-slate-600">
+              <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center">
+                <Mail className="w-2.5 h-2.5 text-blue-600" />
+              </div>
+              <span className="truncate font-medium">{client.email}</span>
             </div>
           )}
           {client.phone && (
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <Phone className="w-3 h-3" />
-              <span>{client.phone}</span>
+            <div className="flex items-center space-x-2 text-sm text-slate-600">
+              <div className="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center">
+                <Phone className="w-2.5 h-2.5 text-green-600" />
+              </div>
+              <span className="font-medium">{client.phone}</span>
             </div>
           )}
           {client.notes && (
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-slate-600 bg-slate-50 rounded-lg p-2">
               <p className="line-clamp-2">{client.notes}</p>
             </div>
           )}
-          <div className="pt-2 text-xs text-muted-foreground">
+          <div className="pt-2 text-xs text-slate-400 border-t border-slate-100">
             Criado em {new Date(client.created_at).toLocaleDateString('pt-BR')}
           </div>
-          
-          
-
         </CardContent>
       </Card>
     );
@@ -945,14 +946,18 @@ export default function Clients() {
     
     return (
       <div className="flex-shrink-0 w-80">
-        <div className="bg-muted/50 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <StageIcon className="w-5 h-5" />
-              <h3 className="font-semibold">{stage.name}</h3>
-              <span className="bg-background px-2 py-1 rounded-full text-xs font-medium">
-                {stageClients.length}
-              </span>
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-5 shadow-sm border border-slate-200/50 hover:shadow-md transition-all duration-200">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-slate-100 rounded-lg">
+                <StageIcon className="w-5 h-5 text-slate-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-900">{stage.name}</h3>
+                <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+                  {stageClients.length} {stageClients.length === 1 ? 'cliente' : 'clientes'}
+                </span>
+              </div>
             </div>
             <div className="flex space-x-1">
               <Button
@@ -962,10 +967,10 @@ export default function Clients() {
                   e.stopPropagation();
                   handleEditStage(stage);
                 }}
-                className="h-6 w-6 p-0"
+                className="h-8 w-8 p-0 hover:bg-slate-100"
                 title="Editar estágio"
               >
-                <Edit className="w-3 h-3" />
+                <Edit className="w-4 h-4" />
               </Button>
               <Button
                 size="sm"
@@ -974,18 +979,18 @@ export default function Clients() {
                   e.stopPropagation();
                   handleDeleteStage(stageKey);
                 }}
-                className="h-6 w-6 p-0 hover:text-red-600"
+                className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
                 title="Excluir estágio"
                 disabled={stageClients.length > 0}
               >
-                <Trash2 className="w-3 h-3" />
+                <Trash2 className="w-4 h-4" />
               </Button>
             </div>
           </div>
           
           <DroppableClientArea stageKey={stageKey}>
             <div 
-              className="space-y-2 min-h-[200px] border-2 border-dashed border-muted/30 rounded-lg p-2 hover:border-primary/50 transition-colors"
+              className="space-y-3 min-h-[200px] border-2 border-dashed border-slate-200 rounded-xl p-3 hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200"
               data-stage={stageKey}
             >
               <SortableContext items={stageClients.map(c => c.id)} strategy={verticalListSortingStrategy}>
@@ -995,15 +1000,18 @@ export default function Clients() {
               </SortableContext>
               
               {stageClients.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Nenhum cliente</p>
+                <div className="text-center py-12 text-muted-foreground">
+                  <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Users className="w-6 h-6 text-slate-400" />
+                  </div>
+                  <p className="text-sm font-medium">Nenhum cliente</p>
+                  <p className="text-xs text-slate-400 mt-1">Arraste clientes para cá</p>
                 </div>
               )}
               
               {/* Área de drop no final do estágio */}
-              <div className="h-8 border-2 border-dashed border-muted/30 rounded-lg flex items-center justify-center mt-2">
-                <span className="text-xs text-muted-foreground">Soltar cliente aqui</span>
+              <div className="h-10 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center mt-3 bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+                <span className="text-xs text-slate-500 font-medium">Soltar cliente aqui</span>
               </div>
             </div>
           </DroppableClientArea>
@@ -1024,36 +1032,47 @@ export default function Clients() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30">
       {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4">
+      <header className="border-b bg-gradient-to-r from-slate-50 to-blue-50/50 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
+        <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" onClick={() => window.history.back()}>
+            <div className="flex items-center space-x-6">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => window.history.back()}
+                className="hover:bg-white/80 transition-colors"
+              >
                 ← Dashboard
               </Button>
-              <div className="flex items-center space-x-2">
-                <Users className="w-6 h-6" />
-                <h1 className="text-2xl font-bold">CRM - Gestão de Clientes</h1>
-                <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">
-                  Arraste clientes entre estágios • Use as setas para reordenar estágios
-                </span>
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Users className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-blue-900 bg-clip-text text-transparent">
+                    CRM - Gestão de Clientes
+                  </h1>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Arraste clientes entre estágios • Use as setas para reordenar estágios
+                  </p>
+                </div>
               </div>
             </div>
             
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-3">
               <Button
                 variant="outline"
                 onClick={() => setStagesDialogOpen(true)}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-2 hover:bg-white/80 transition-colors"
               >
                 <Settings className="w-4 h-4" />
                 Configurar Estágios
               </Button>
               <Button
                 onClick={() => setDialogOpen(true)}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
               >
                 <Plus className="w-4 h-4" />
                 Novo Cliente
@@ -1064,7 +1083,7 @@ export default function Clients() {
       </header>
 
       {/* Conteúdo Principal */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-6 py-8">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
@@ -1080,10 +1099,10 @@ export default function Clients() {
             <div className="flex-shrink-0 w-80 flex items-center justify-center">
               <Button 
                 variant="outline" 
-                className="h-12 w-12 rounded-full border-dashed border-2 hover:border-solid"
+                className="h-16 w-16 rounded-full border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200"
                 onClick={() => setStagesDialogOpen(true)}
               >
-                <Plus className="w-6 h-6" />
+                <Plus className="w-8 h-8 text-slate-400" />
               </Button>
             </div>
           </div>
