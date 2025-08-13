@@ -19,6 +19,7 @@ import {
   useSensors,
   closestCorners,
   DragOverEvent,
+  useDroppable,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -714,8 +715,16 @@ export default function Clients() {
     // Tentar encontrar o estágio de destino
     let targetStageKey = overId;
     
+    // Verificar se é um droppable de estágio (formato: stage-{stageKey})
+    if (overId.startsWith('stage-')) {
+      targetStageKey = overId.replace('stage-', '');
+    }
+    // Verificar se é um droppable de área de clientes (formato: client-area-{stageKey})
+    else if (overId.startsWith('client-area-')) {
+      targetStageKey = overId.replace('client-area-', '');
+    }
     // Se o over não é um estágio, verificar se é um elemento dentro de um estágio
-    if (!stages[overId]) {
+    else if (!stages[overId]) {
       const stageElement = (over as any).closest?.('[data-stage]');
       if (stageElement) {
         targetStageKey = stageElement.getAttribute('data-stage');
@@ -731,6 +740,42 @@ export default function Clients() {
     // Mover o cliente
     await handleMoveClient(activeId, targetStageKey);
     setActiveClient(null);
+  };
+
+  // Componente Droppable para Estágios
+  const DroppableStage = ({ stageKey, stage, children }: { stageKey: string; stage: Stage; children: React.ReactNode }) => {
+    const { setNodeRef, isOver } = useDroppable({
+      id: `stage-${stageKey}`,
+    });
+
+    return (
+      <div 
+        ref={setNodeRef}
+        className={`transition-colors duration-200 ${
+          isOver ? 'bg-blue-50 border-blue-200' : ''
+        }`}
+      >
+        {children}
+      </div>
+    );
+  };
+
+  // Componente Droppable para Área de Clientes
+  const DroppableClientArea = ({ stageKey, children }: { stageKey: string; children: React.ReactNode }) => {
+    const { setNodeRef, isOver } = useDroppable({
+      id: `client-area-${stageKey}`,
+    });
+
+    return (
+      <div 
+        ref={setNodeRef}
+        className={`transition-all duration-200 ${
+          isOver ? 'bg-green-50 border-green-200 scale-[1.02]' : ''
+        }`}
+      >
+        {children}
+      </div>
+    );
   };
 
   // Componente Sortable para Drag and Drop de Estágios
@@ -752,7 +797,9 @@ export default function Clients() {
 
     return (
       <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-        <StageColumn stageKey={stageKey} stage={stage} />
+        <DroppableStage stageKey={stageKey} stage={stage}>
+          <StageColumn stageKey={stageKey} stage={stage} />
+        </DroppableStage>
       </div>
     );
   };
@@ -917,23 +964,35 @@ export default function Clients() {
             </div>
           </div>
           
-          <div 
-            className="space-y-2 min-h-[200px] border-2 border-dashed border-muted/30 rounded-lg p-2 hover:border-primary/50 transition-colors"
-            data-stage={stageKey}
-          >
-            <SortableContext items={stageClients.map(c => c.id)} strategy={verticalListSortingStrategy}>
-              {stageClients.map((client) => (
-                <SortableClientCard key={client.id} client={client} />
-              ))}
-            </SortableContext>
-            
-            {stageClients.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">Nenhum cliente</p>
+          <DroppableClientArea stageKey={stageKey}>
+            <div 
+              className="space-y-2 min-h-[200px] border-2 border-dashed border-muted/30 rounded-lg p-2 hover:border-primary/50 transition-colors"
+              data-stage={stageKey}
+            >
+              <SortableContext items={stageClients.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                {stageClients.map((client) => (
+                  <SortableClientCard key={client.id} client={client} />
+                ))}
+              </SortableContext>
+              
+              {/* Área de drop adicional quando há clientes */}
+              {stageClients.length > 0 && (
+                <div className="h-4 border-t border-dashed border-muted/30 mt-2" />
+              )}
+              
+              {stageClients.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Nenhum cliente</p>
+                </div>
+              )}
+              
+              {/* Área de drop no final do estágio */}
+              <div className="h-8 border-2 border-dashed border-muted/30 rounded-lg flex items-center justify-center mt-2">
+                <span className="text-xs text-muted-foreground">Soltar cliente aqui</span>
               </div>
-            )}
-          </div>
+            </div>
+          </DroppableClientArea>
         </div>
       </div>
     );
