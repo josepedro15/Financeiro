@@ -723,9 +723,36 @@ export default function Clients() {
     else if (overId.startsWith('client-area-')) {
       targetStageKey = overId.replace('client-area-', '');
     }
+    // Verificar se é uma zona entre cards (formato: card-zone-{stageKey}-{index})
+    else if (overId.startsWith('card-zone-')) {
+      const parts = overId.split('-');
+      if (parts.length >= 3) {
+        targetStageKey = parts[2]; // stageKey está na posição 2
+      }
+    }
+    // Verificar se é uma área completa do estágio (formato: full-stage-{stageKey})
+    else if (overId.startsWith('full-stage-')) {
+      targetStageKey = overId.replace('full-stage-', '');
+    }
     // Se o over não é um estágio, verificar se é um elemento dentro de um estágio
     else if (!stages[overId]) {
-      const stageElement = (over as any).closest?.('[data-stage]');
+      // Tentar encontrar o estágio de várias formas
+      let stageElement = (over as any).closest?.('[data-stage]');
+      
+      if (!stageElement) {
+        // Procurar em elementos pais
+        let parent = (over as any).parentElement;
+        while (parent && !stageElement) {
+          stageElement = parent.querySelector?.('[data-stage]');
+          parent = parent.parentElement;
+        }
+      }
+      
+      if (!stageElement) {
+        // Procurar por qualquer elemento com data-stage
+        stageElement = document.querySelector(`[data-stage]`);
+      }
+      
       if (stageElement) {
         targetStageKey = stageElement.getAttribute('data-stage');
       }
@@ -754,6 +781,7 @@ export default function Clients() {
         className={`transition-colors duration-200 ${
           isOver ? 'bg-blue-50 border-blue-200' : ''
         }`}
+        style={{ minHeight: '100%' }}
       >
         {children}
       </div>
@@ -775,6 +803,38 @@ export default function Clients() {
       >
         {children}
       </div>
+    );
+  };
+
+  // Componente Droppable para Zonas entre Cards
+  const DroppableCardZone = ({ stageKey, index }: { stageKey: string; index: number }) => {
+    const { setNodeRef, isOver } = useDroppable({
+      id: `card-zone-${stageKey}-${index}`,
+    });
+
+    return (
+      <div 
+        ref={setNodeRef}
+        className={`h-2 transition-all duration-200 ${
+          isOver ? 'bg-blue-200 border border-blue-300 rounded' : ''
+        }`}
+      />
+    );
+  };
+
+  // Componente Droppable para Área Completa do Estágio
+  const DroppableFullStage = ({ stageKey, children }: { stageKey: string; children: React.ReactNode }) => {
+    const { setNodeRef, isOver } = useDroppable({
+      id: `full-stage-${stageKey}`,
+    });
+
+    return (
+      <div 
+        ref={setNodeRef}
+        className={`absolute inset-0 transition-colors duration-200 pointer-events-none ${
+          isOver ? 'bg-blue-100/50 border-2 border-blue-300 rounded-lg' : ''
+        }`}
+      />
     );
   };
 
@@ -924,8 +984,10 @@ export default function Clients() {
     const StageIcon = stage.icon;
     
     return (
-      <div className="flex-shrink-0 w-80">
+      <div className="flex-shrink-0 w-80 relative">
         <div className="bg-muted/50 rounded-lg p-4">
+          {/* Área completa de drop */}
+          <DroppableFullStage stageKey={stageKey} />
           <div className="flex items-center justify-between mb-4 cursor-grab active:cursor-grabbing">
             <div className="flex items-center space-x-2">
               <Move className="w-4 h-4 text-muted-foreground" />
@@ -966,19 +1028,21 @@ export default function Clients() {
           
           <DroppableClientArea stageKey={stageKey}>
             <div 
-              className="space-y-2 min-h-[200px] border-2 border-dashed border-muted/30 rounded-lg p-2 hover:border-primary/50 transition-colors"
+              className="min-h-[200px] border-2 border-dashed border-muted/30 rounded-lg p-2 hover:border-primary/50 transition-colors"
               data-stage={stageKey}
             >
+              {/* Zona de drop no topo */}
+              <DroppableCardZone stageKey={stageKey} index={0} />
+              
               <SortableContext items={stageClients.map(c => c.id)} strategy={verticalListSortingStrategy}>
-                {stageClients.map((client) => (
-                  <SortableClientCard key={client.id} client={client} />
+                {stageClients.map((client, index) => (
+                  <div key={client.id}>
+                    <SortableClientCard client={client} />
+                    {/* Zona de drop entre cards */}
+                    <DroppableCardZone stageKey={stageKey} index={index + 1} />
+                  </div>
                 ))}
               </SortableContext>
-              
-              {/* Área de drop adicional quando há clientes */}
-              {stageClients.length > 0 && (
-                <div className="h-4 border-t border-dashed border-muted/30 mt-2" />
-              )}
               
               {stageClients.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
