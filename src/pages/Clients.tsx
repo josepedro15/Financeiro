@@ -644,26 +644,38 @@ export default function Clients() {
       
       if (!fromStage || !toStage) return;
 
-      // Trocar os order_index dos estágios
-      const { error: error1 } = await supabase
-        .from('stages')
-        .update({ order_index: toStage.order_index })
-        .eq('key', fromStageKey)
-        .eq('user_id', user?.id);
+      // Obter todos os estágios ordenados
+      const stageEntries = Object.entries(stages).sort((a, b) => a[1].order_index - b[1].order_index);
+      const fromIndex = stageEntries.findIndex(([key]) => key === fromStageKey);
+      const toIndex = stageEntries.findIndex(([key]) => key === toStageKey);
+      
+      if (fromIndex === -1 || toIndex === -1) return;
 
-      if (error1) throw error1;
+      // Reordenar os estágios
+      const reorderedStages = [...stageEntries];
+      const [movedStage] = reorderedStages.splice(fromIndex, 1);
+      reorderedStages.splice(toIndex, 0, movedStage);
 
-      const { error: error2 } = await supabase
-        .from('stages')
-        .update({ order_index: fromStage.order_index })
-        .eq('key', toStageKey)
-        .eq('user_id', user?.id);
+      // Atualizar order_index para todos os estágios
+      const updates = reorderedStages.map(([key], index) => ({
+        key,
+        order_index: index + 1
+      }));
 
-      if (error2) throw error2;
+      // Fazer as atualizações no banco
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('stages')
+          .update({ order_index: update.order_index })
+          .eq('key', update.key)
+          .eq('user_id', user?.id);
+
+        if (error) throw error;
+      }
 
       toast({
         title: "🎉 Estágios Reordenados!",
-        description: `${fromStage.name} e ${toStage.name} foram trocados de posição`,
+        description: `${fromStage.name} foi movido para a posição ${toIndex + 1}`,
       });
 
       await loadStages();
@@ -694,10 +706,50 @@ export default function Clients() {
     // Verificar se é um drag de estágio
     if (isDraggingStage) {
       const stageKey = activeId;
-      const newPosition = overId;
+      let targetStageKey = overId;
       
-      if (stageKey !== newPosition && stages[stageKey] && stages[newPosition]) {
-        await handleReorderStages(stageKey, newPosition);
+      // Se não é um estágio direto, tentar encontrar o estágio mais próximo
+      if (!stages[overId]) {
+        // Verificar se é uma zona entre estágios
+        if (overId.startsWith('stage-zone-')) {
+          const zoneIndex = parseInt(overId.replace('stage-zone-', ''));
+          const stageEntries = Object.entries(stages).sort((a, b) => a[1].order_index - b[1].order_index);
+          if (stageEntries[zoneIndex]) {
+            targetStageKey = stageEntries[zoneIndex][0];
+          }
+        } else {
+          // Procurar por elementos com data-stage
+          const stageElement = (over as any).closest?.('[data-stage]');
+          if (stageElement) {
+            targetStageKey = stageElement.getAttribute('data-stage');
+          } else {
+            // Procurar por qualquer elemento que contenha um estágio
+            const allStageElements = document.querySelectorAll('[data-stage]');
+            if (allStageElements.length > 0) {
+              // Encontrar o estágio mais próximo baseado na posição
+              const overRect = (over as any).getBoundingClientRect();
+              let closestStage = null;
+              let minDistance = Infinity;
+              
+              allStageElements.forEach((element) => {
+                const rect = element.getBoundingClientRect();
+                const distance = Math.abs(rect.left - overRect.left);
+                if (distance < minDistance) {
+                  minDistance = distance;
+                  closestStage = element;
+                }
+              });
+              
+              if (closestStage) {
+                targetStageKey = closestStage.getAttribute('data-stage');
+              }
+            }
+          }
+        }
+      }
+      
+      if (stageKey !== targetStageKey && stages[stageKey] && stages[targetStageKey]) {
+        await handleReorderStages(stageKey, targetStageKey);
       }
       
       setActiveStage(null);
@@ -861,6 +913,22 @@ export default function Clients() {
           <StageColumn stageKey={stageKey} stage={stage} />
         </DroppableStage>
       </div>
+    );
+  };
+
+  // Componente Droppable para Zonas entre Estágios
+  const DroppableStageZone = ({ index }: { index: number }) => {
+    const { setNodeRef, isOver } = useDroppable({
+      id: `stage-zone-${index}`,
+    });
+
+    return (
+      <div 
+        ref={setNodeRef}
+        className={`w-4 h-32 transition-all duration-200 ${
+          isOver ? 'bg-blue-200 border-2 border-blue-400 rounded' : ''
+        }`}
+      />
     );
   };
 
@@ -1122,12 +1190,19 @@ export default function Clients() {
           onDragEnd={handleDragEnd}
         >
           <div className="flex gap-6 overflow-x-auto pb-4">
+            {/* Zona de drop antes do primeiro estágio */}
+            <DroppableStageZone index={0} />
+            
             <SortableContext 
               items={Object.keys(stages)} 
               strategy={horizontalListSortingStrategy}
             >
-              {Object.entries(stages).map(([stageKey, stage]) => (
-                <SortableStageColumn key={stageKey} stageKey={stageKey} stage={stage} />
+              {Object.entries(stages).map(([stageKey, stage], index) => (
+                <div key={stageKey} className="flex items-center">
+                  <SortableStageColumn stageKey={stageKey} stage={stage} />
+                  {/* Zona de drop entre estágios */}
+                  <DroppableStageZone index={index + 1} />
+                </div>
               ))}
             </SortableContext>
             
