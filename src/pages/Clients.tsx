@@ -718,6 +718,10 @@ export default function Clients() {
     else if (overId.startsWith('client-area-')) {
       targetStageKey = overId.replace('client-area-', '');
     }
+    // Verificar se é um droppable de zona de drop (formato: drop-zone-{stageKey})
+    else if (overId.startsWith('drop-zone-')) {
+      targetStageKey = overId.replace('drop-zone-', '');
+    }
     // Se o over não é um estágio, verificar se é um elemento dentro de um estágio
     else if (!stages[overId]) {
       // Procurar por elementos com data-stage
@@ -771,6 +775,36 @@ export default function Clients() {
         }`}
       >
         {children}
+      </div>
+    );
+  };
+
+  // Componente Droppable para Zonas de Drop
+  const DroppableDropZone = ({ stageKey, position }: { stageKey: string; position: string }) => {
+    const { setNodeRef, isOver } = useDroppable({
+      id: `drop-zone-${stageKey}-${position}`,
+    });
+
+    const getHeight = () => {
+      if (position === 'top') return 'h-8';
+      if (position === 'bottom') return 'h-10';
+      return 'h-6';
+    };
+
+    const getText = () => {
+      if (position === 'top') return 'Soltar cliente aqui';
+      if (position === 'bottom') return 'Soltar cliente aqui';
+      return 'Soltar aqui';
+    };
+
+    return (
+      <div 
+        ref={setNodeRef}
+        className={`${getHeight()} border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center bg-slate-50/50 hover:bg-slate-100/50 transition-colors ${
+          isOver ? 'bg-blue-100 border-blue-300' : ''
+        }`}
+      >
+        <span className="text-xs text-slate-500 font-medium">{getText()}</span>
       </div>
     );
   };
@@ -996,9 +1030,7 @@ export default function Clients() {
             >
               <div className="space-y-3">
                 {/* Área de drop no topo */}
-                <div className="h-8 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
-                  <span className="text-xs text-slate-500 font-medium">Soltar cliente aqui</span>
-                </div>
+                <DroppableDropZone stageKey={stageKey} position="top" />
                 
                 <SortableContext items={stageClients.map(c => c.id)} strategy={verticalListSortingStrategy}>
                   {stageClients.map((client, index) => (
@@ -1006,9 +1038,7 @@ export default function Clients() {
                       <SortableClientCard client={client} />
                       {/* Área de drop entre cards */}
                       {index < stageClients.length - 1 && (
-                        <div className="h-6 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center my-2 bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
-                          <span className="text-xs text-slate-500 font-medium">Soltar aqui</span>
-                        </div>
+                        <DroppableDropZone stageKey={stageKey} position={`between-${index}`} />
                       )}
                     </div>
                   ))}
@@ -1025,9 +1055,7 @@ export default function Clients() {
                 )}
                 
                 {/* Área de drop no final do estágio */}
-                <div className="h-10 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center mt-3 bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
-                  <span className="text-xs text-slate-500 font-medium">Soltar cliente aqui</span>
-                </div>
+                <DroppableDropZone stageKey={stageKey} position="bottom" />
               </div>
             </div>
           </DroppableClientArea>
