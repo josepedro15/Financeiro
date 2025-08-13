@@ -23,32 +23,8 @@ import {
   DollarSign,
   CheckCircle,
   Clock,
-  AlertCircle,
-  GripVertical
+  AlertCircle
 } from 'lucide-react';
-
-// DND Kit imports - versão simplificada
-import {
-  DndContext,
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  closestCorners,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import {
-  useSortable,
-} from '@dnd-kit/sortable';
-import {
-  useDroppable,
-} from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
 
 // Tipos
 interface Client {
@@ -140,10 +116,6 @@ export default function Clients() {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [editingStage, setEditingStage] = useState<Stage | null>(null);
   
-  // Estados para Drag and Drop
-  const [activeClient, setActiveClient] = useState<Client | null>(null);
-  const [isUpdating, setIsUpdating] = useState(false);
-  
   // Formulários
   const [formData, setFormData] = useState({
     name: '',
@@ -163,15 +135,6 @@ export default function Clients() {
     color: 'bg-yellow-100 text-yellow-800',
     order_index: 1
   });
-
-  // Sensores para Drag and Drop - versão simplificada
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5, // Reduzido para ser mais responsivo
-      },
-    })
-  );
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -548,203 +511,25 @@ export default function Clients() {
     setStagesDialogOpen(false);
   };
 
-  // Handlers para Drag and Drop - versão simplificada
-  const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event;
-    const draggedClient = clients.find(client => client.id === active.id);
-    setActiveClient(draggedClient || null);
-    console.log('🔄 Drag iniciado:', draggedClient?.name, 'ID:', active.id);
-  };
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    console.log('🔄 Drag end - Active:', active?.id, 'Over:', over?.id);
-    
-    setActiveClient(null);
-    
-    if (!over || !active) {
-      console.log('❌ Drag cancelado - sem destino válido');
-      return;
-    }
-    
-    const clientId = active.id as string;
-    const newStageKey = over.id as string;
-    
-    console.log('🔄 Tentando mover cliente:', clientId, 'para estágio:', newStageKey);
-    
-    // Verificar se o cliente está sendo movido para um estágio diferente
-    const client = clients.find(c => c.id === clientId);
-    if (!client) {
-      console.log('❌ Cliente não encontrado');
-      return;
-    }
-    
-    if (client.stage === newStageKey) {
-      console.log('❌ Cliente não movido - mesmo estágio');
-      return;
-    }
-    
-    // Verificar se o destino é um estágio válido
-    if (!stages[newStageKey]) {
-      console.log('❌ Estágio de destino inválido:', newStageKey);
-      return;
-    }
-    
-    try {
-      setIsUpdating(true);
-      console.log(`🔄 Movendo cliente ${client.name} de ${client.stage} para ${newStageKey}`);
-      
-      // Atualizar no banco de dados
-      const { error } = await supabase
-        .from('clients')
-        .update({ 
-          stage: newStageKey,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', clientId);
-      
-      if (error) throw error;
-      
-      // Atualizar estado local
-      setClients(prevClients => 
-        prevClients.map(c => 
-          c.id === clientId 
-            ? { ...c, stage: newStageKey, updated_at: new Date().toISOString() }
-            : c
-        )
-      );
-      
-      toast({
-        title: "Sucesso",
-        description: `Cliente movido para ${stages[newStageKey].name}`,
-      });
-      
-    } catch (error: any) {
-      console.error('❌ Erro ao mover cliente:', error);
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao mover cliente",
-        variant: "destructive"
-      });
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  // Componente do Card do Cliente com Drag and Drop - versão simplificada
-  const SortableClientCard = ({ client }: { client: Client }) => {
-    const {
-      attributes,
-      listeners,
-      setNodeRef,
-      transform,
-      transition,
-      isDragging,
-    } = useSortable({ id: client.id });
-
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-      opacity: isDragging ? 0.5 : 1,
-    };
-
+  // Componente do Card do Cliente
+  const ClientCard = ({ client }: { client: Client }) => {
     return (
-      <div ref={setNodeRef} style={style} className="mb-3">
-        <Card className="hover:shadow-md transition-shadow group">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 flex-1">
-                <div
-                  {...attributes}
-                  {...listeners}
-                  className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted/50 rounded touch-none"
-                  title="Arrastar para mover"
-                  style={{ touchAction: 'none' }}
-                >
-                  <GripVertical className="w-4 h-4 text-muted-foreground" />
-                </div>
-                <CardTitle className="text-base font-medium">
-                  {client.name}
-                </CardTitle>
-              </div>
-              <div className="flex space-x-1 opacity-100">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    console.log('✏️ Botão editar clicado para cliente:', client.id);
-                    handleEdit(client);
-                  }}
-                  className="h-8 w-8 p-0 hover:bg-blue-100"
-                  title="Editar cliente"
-                >
-                  <Edit className="w-3 h-3" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    console.log('🗑️ Botão delete clicado para cliente:', client.id);
-                    handleDelete(client.id);
-                  }}
-                  className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600"
-                  title="Excluir cliente"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {client.email && (
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <Mail className="w-3 h-3" />
-                <span className="truncate">{client.email}</span>
-              </div>
-            )}
-            {client.phone && (
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <Phone className="w-3 h-3" />
-                <span>{client.phone}</span>
-              </div>
-            )}
-            {client.notes && (
-              <div className="text-sm text-muted-foreground">
-                <p className="line-clamp-2">{client.notes}</p>
-              </div>
-            )}
-            <div className="pt-2 text-xs text-muted-foreground">
-              Criado em {new Date(client.created_at).toLocaleDateString('pt-BR')}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  };
-
-  // Componente do Card para o Overlay (preview durante drag)
-  const ClientCardOverlay = ({ client }: { client: Client }) => {
-    return (
-      <Card className="mb-3 shadow-lg border-2 border-primary/50 bg-background/95 backdrop-blur">
+      <Card className="mb-3 hover:shadow-md transition-shadow group">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 flex-1">
-              <div className="p-1">
-                <GripVertical className="w-4 h-4 text-muted-foreground" />
-              </div>
-              <CardTitle className="text-base font-medium">
-                {client.name}
-              </CardTitle>
-            </div>
+            <CardTitle className="text-base font-medium">
+              {client.name}
+            </CardTitle>
             <div className="flex space-x-1 opacity-100">
               <Button
                 size="sm"
                 variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  console.log('✏️ Botão editar clicado para cliente:', client.id);
+                  handleEdit(client);
+                }}
                 className="h-8 w-8 p-0 hover:bg-blue-100"
                 title="Editar cliente"
               >
@@ -753,6 +538,12 @@ export default function Clients() {
               <Button
                 size="sm"
                 variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  console.log('🗑️ Botão delete clicado para cliente:', client.id);
+                  handleDelete(client.id);
+                }}
                 className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600"
                 title="Excluir cliente"
               >
@@ -787,14 +578,10 @@ export default function Clients() {
     );
   };
 
-  // Componente da Coluna de Estágio com Drag and Drop - versão simplificada
+  // Componente da Coluna de Estágio
   const StageColumn = ({ stageKey, stage }: { stageKey: string; stage: Stage }) => {
     const stageClients = getClientsByStage(stageKey);
     const StageIcon = stage.icon;
-    
-    const { setNodeRef, isOver } = useDroppable({
-      id: stageKey,
-    });
     
     return (
       <div className="flex-shrink-0 w-80">
@@ -830,25 +617,15 @@ export default function Clients() {
             </div>
           </div>
           
-          <div 
-            ref={setNodeRef}
-            className={`space-y-2 min-h-[200px] border-2 border-dashed rounded-lg p-2 transition-all duration-200 ${
-              isOver 
-                ? 'border-primary/50 bg-primary/5' 
-                : 'border-muted/30 hover:border-muted/50'
-            }`}
-          >
-            <SortableContext items={stageClients.map(c => c.id)} strategy={verticalListSortingStrategy}>
-              {stageClients.map((client) => (
-                <SortableClientCard key={client.id} client={client} />
-              ))}
-            </SortableContext>
+          <div className="space-y-2 min-h-[200px] border-2 border-dashed border-muted/30 rounded-lg p-2">
+            {stageClients.map((client) => (
+              <ClientCard key={client.id} client={client} />
+            ))}
             
             {stageClients.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">Nenhum cliente</p>
-                <p className="text-xs mt-1">Arraste um cliente aqui</p>
               </div>
             )}
           </div>
@@ -907,34 +684,22 @@ export default function Clients() {
 
       {/* Conteúdo Principal */}
       <main className="container mx-auto px-4 py-8">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="flex gap-6 overflow-x-auto pb-4">
-            {Object.entries(stages).map(([stageKey, stage]) => (
-              <StageColumn key={stageKey} stageKey={stageKey} stage={stage} />
-            ))}
-            
-            {/* Botão para adicionar estágios */}
-            <div className="flex-shrink-0 w-80 flex items-center justify-center">
-              <Button 
-                variant="outline" 
-                className="h-12 w-12 rounded-full border-dashed border-2 hover:border-solid"
-                onClick={() => setStagesDialogOpen(true)}
-              >
-                <Plus className="w-6 h-6" />
-              </Button>
-            </div>
+        <div className="flex gap-6 overflow-x-auto pb-4">
+          {Object.entries(stages).map(([stageKey, stage]) => (
+            <StageColumn key={stageKey} stageKey={stageKey} stage={stage} />
+          ))}
+          
+          {/* Botão para adicionar estágios */}
+          <div className="flex-shrink-0 w-80 flex items-center justify-center">
+            <Button 
+              variant="outline" 
+              className="h-12 w-12 rounded-full border-dashed border-2 hover:border-solid"
+              onClick={() => setStagesDialogOpen(true)}
+            >
+              <Plus className="w-6 h-6" />
+            </Button>
           </div>
-
-          {/* Drag Overlay */}
-          <DragOverlay>
-            {activeClient ? <ClientCardOverlay client={activeClient} /> : null}
-          </DragOverlay>
-        </DndContext>
+        </div>
 
         {/* Estado vazio */}
         {Object.keys(stages).length === 0 && (
@@ -948,16 +713,6 @@ export default function Clients() {
               <Settings className="w-4 h-4 mr-2" />
               Criar Primeiro Estágio
             </Button>
-          </div>
-        )}
-
-        {/* Indicador de carregamento durante atualização */}
-        {isUpdating && (
-          <div className="fixed bottom-4 right-4 bg-primary text-primary-foreground px-4 py-2 rounded-lg shadow-lg z-50">
-            <div className="flex items-center space-x-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-              <span>Atualizando...</span>
-            </div>
           </div>
         )}
       </main>
