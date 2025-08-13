@@ -37,6 +37,7 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
   const { toast } = useToast();
   const [todayFollowUps, setTodayFollowUps] = useState<FollowUpWithClient[]>([]);
   const [overdueFollowUps, setOverdueFollowUps] = useState<any[]>([]);
+  const [clientsWithFollowUp, setClientsWithFollowUp] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -46,6 +47,9 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
 
     setLoading(true);
     try {
+      console.log('🔍 Carregando follow-ups do dia...');
+      console.log('📅 Data de hoje:', new Date().toISOString().split('T')[0]);
+      
       const { data, error } = await supabase
         .from('follow_ups')
         .select(`
@@ -60,7 +64,26 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
 
       if (error) throw error;
 
+      console.log('📊 Follow-ups encontrados na tabela follow_ups:', data);
       setTodayFollowUps(data || []);
+      
+      // Verificar se há clientes com next_follow_up para hoje
+      const today = new Date().toISOString().split('T')[0];
+      const { data: clientsWithFollowUp, error: clientsError } = await supabase
+        .from('clients')
+        .select('id, name, email, phone, next_follow_up')
+        .eq('user_id', user.id)
+        .not('next_follow_up', 'is', null)
+        .gte('next_follow_up', today + 'T00:00:00')
+        .lt('next_follow_up', today + 'T23:59:59');
+
+      if (clientsError) {
+        console.error('Erro ao carregar clientes com follow-up:', clientsError);
+      } else {
+        console.log('👥 Clientes com next_follow_up para hoje:', clientsWithFollowUp);
+        setClientsWithFollowUp(clientsWithFollowUp || []);
+      }
+      
     } catch (error: any) {
       console.error('Erro ao carregar follow-ups do dia:', error);
     } finally {
@@ -159,7 +182,7 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
     loadOverdueFollowUps();
   }, [user]);
 
-  const totalFollowUps = todayFollowUps.length + overdueFollowUps.length;
+  const totalFollowUps = todayFollowUps.length + overdueFollowUps.length + clientsWithFollowUp.length;
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -296,6 +319,40 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
                             {followUp.description}
                           </span>
                         )}
+                      </div>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </>
+            )}
+
+            {/* Clientes com next_follow_up para hoje */}
+            {clientsWithFollowUp.length > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-blue-700 font-semibold flex items-center space-x-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>Clientes com Follow-up ({clientsWithFollowUp.length})</span>
+                </DropdownMenuLabel>
+                
+                {clientsWithFollowUp.map((client) => (
+                  <DropdownMenuItem key={client.id} className="flex flex-col items-start p-3 space-y-2">
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center space-x-2">
+                        <CalendarDays className="w-3 h-3" />
+                        <span className="font-medium text-sm">Follow-up agendado</span>
+                        <Badge className="bg-blue-100 text-blue-800">
+                          Cliente
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="w-full">
+                      <p className="text-xs text-muted-foreground">
+                        Cliente: {client.name}
+                      </p>
+                      <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                        <Clock className="w-3 h-3" />
+                        <span>Próximo: {new Date(client.next_follow_up).toLocaleDateString('pt-BR')}</span>
                       </div>
                     </div>
                   </DropdownMenuItem>
