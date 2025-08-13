@@ -184,6 +184,13 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
     return date.toLocaleDateString('pt-BR');
   };
 
+  // Formatar data com +1 dia para exibição (apenas onde está "Próximo:")
+  const formatDateWithPlusOne = (dateString: string) => {
+    const date = new Date(dateString);
+    date.setDate(date.getDate() + 1);
+    return date.toLocaleDateString('pt-BR');
+  };
+
   // Calcular se está atrasado
   const isOverdue = (scheduledDate: string) => {
     return new Date(scheduledDate) < new Date();
@@ -364,7 +371,7 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
                       </p>
                       <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                         <Clock className="w-3 h-3" />
-                        <span>Próximo: {formatDateOriginal(client.next_follow_up)}</span>
+                        <span>Próximo: {formatDateWithPlusOne(client.next_follow_up)}</span>
                       </div>
                     </div>
                   </DropdownMenuItem>
