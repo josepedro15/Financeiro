@@ -684,6 +684,24 @@ export default function Dashboard() {
                 <Button 
                   variant="ghost" 
                   size="sm" 
+                  onClick={() => navigate('/dashboard')}
+                  className="hidden sm:flex items-center space-x-1 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                >
+                  <DollarSign className="w-4 h-4" />
+                  <span>Dashboard</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => navigate('/transactions')}
+                  className="hidden sm:flex items-center space-x-1 hover:bg-slate-50 hover:text-slate-600 transition-colors"
+                >
+                  <CreditCard className="w-4 h-4" />
+                  <span>Transações</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
                   onClick={() => navigate('/clients')}
                   className="hidden sm:flex items-center space-x-1 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                 >
@@ -859,13 +877,22 @@ export default function Dashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-slate-900 mb-2">
-                {formatCurrency(financialData.totalIncome)}
-              </div>
-              <div className="flex items-center text-sm text-green-600">
-                <TrendingUp className="h-4 w-4 mr-1" />
-                +{formatCurrency(financialData.totalIncome - financialData.totalExpenses)} vs despesas
-              </div>
+              {loading ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-slate-200 rounded mb-2"></div>
+                  <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-3xl font-bold text-slate-900 mb-2">
+                    {formatCurrency(financialData.totalIncome)}
+                  </div>
+                  <div className="flex items-center text-sm text-green-600">
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    +{formatCurrency(financialData.totalIncome - financialData.totalExpenses)} vs despesas
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
