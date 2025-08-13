@@ -336,6 +336,7 @@ export default function Clients() {
 
     try {
       console.log('🔄 Salvando cliente...');
+      console.log('📝 Dados do formulário:', formData);
       
       const clientData = {
         user_id: user.id,
@@ -346,8 +347,29 @@ export default function Clients() {
         address: formData.address.trim() || null,
         stage: formData.stage,
         notes: formData.notes.trim() || null,
-        is_active: true
+        is_active: true,
+        // Campos CRM - Perfil e classificação
+        contact_type: formData.contact_type,
+        lead_source: formData.lead_source || null,
+        // Campos CRM - Dados complementares estratégicos
+        job_title: formData.job_title || null,
+        company: formData.company || null,
+        industry: formData.industry || null,
+        estimated_ticket: formData.estimated_ticket || null,
+        clv: formData.clv || null,
+        purchase_history: formData.purchase_history || null,
+        // Campos CRM - Histórico de interações
+        last_contact_date: formData.last_contact_date || null,
+        next_follow_up: formData.next_follow_up || null,
+        days_since_last_contact: formData.days_since_last_contact || null,
+        // Campos CRM - Customizações para negócio
+        payment_method: formData.payment_method || null,
+        delivery_deadline: formData.delivery_deadline || null,
+        technical_contact: formData.technical_contact || null,
+        contract_type: formData.contract_type || null
       };
+
+      console.log('💾 Dados para salvar:', clientData);
 
       if (editingClient) {
         console.log('✏️ Atualizando cliente:', editingClient.id);
@@ -400,7 +422,26 @@ export default function Clients() {
       document: client.document || '',
       address: client.address || '',
       stage: client.stage,
-      notes: client.notes || ''
+      notes: client.notes || '',
+      // Campos CRM - Perfil e classificação
+      contact_type: client.contact_type || 'lead',
+      lead_source: client.lead_source || '',
+      // Campos CRM - Dados complementares estratégicos
+      job_title: client.job_title || '',
+      company: client.company || '',
+      industry: client.industry || '',
+      estimated_ticket: client.estimated_ticket || 0,
+      clv: client.clv || 0,
+      purchase_history: client.purchase_history || null,
+      // Campos CRM - Histórico de interações
+      last_contact_date: client.last_contact_date ? client.last_contact_date.split('T')[0] : '',
+      next_follow_up: client.next_follow_up ? client.next_follow_up.split('T')[0] : '',
+      days_since_last_contact: client.days_since_last_contact || 0,
+      // Campos CRM - Customizações para negócio
+      payment_method: client.payment_method || '',
+      delivery_deadline: client.delivery_deadline || '',
+      technical_contact: client.technical_contact || '',
+      contract_type: client.contract_type || ''
     });
     setDialogOpen(true);
   };
