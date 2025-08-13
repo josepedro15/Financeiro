@@ -995,9 +995,22 @@ export default function Clients() {
               data-stage={stageKey}
             >
               <div className="space-y-3">
+                {/* Área de drop no topo */}
+                <div className="h-8 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+                  <span className="text-xs text-slate-500 font-medium">Soltar cliente aqui</span>
+                </div>
+                
                 <SortableContext items={stageClients.map(c => c.id)} strategy={verticalListSortingStrategy}>
-                  {stageClients.map((client) => (
-                    <SortableClientCard key={client.id} client={client} />
+                  {stageClients.map((client, index) => (
+                    <div key={client.id}>
+                      <SortableClientCard client={client} />
+                      {/* Área de drop entre cards */}
+                      {index < stageClients.length - 1 && (
+                        <div className="h-6 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center my-2 bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+                          <span className="text-xs text-slate-500 font-medium">Soltar aqui</span>
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </SortableContext>
                 
