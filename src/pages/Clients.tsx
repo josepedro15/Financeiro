@@ -25,24 +25,6 @@ import {
   Clock,
   AlertCircle
 } from 'lucide-react';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-  useDroppable,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
 // Tipos
 interface Client {
@@ -153,14 +135,6 @@ export default function Clients() {
     color: 'bg-yellow-100 text-yellow-800',
     order_index: 1
   });
-
-  // Drag and Drop sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -287,81 +261,6 @@ export default function Clients() {
   // Obter clientes por estágio
   const getClientsByStage = (stageKey: string) => {
     return clients.filter(client => client.stage === stageKey);
-  };
-
-  // Handle drag end
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (!over) {
-      console.log('❌ Cliente arrastado para área inválida');
-      return;
-    }
-
-    const clientId = active.id as string;
-    const newStage = over.id as string;
-
-    // Encontrar o cliente sendo arrastado
-    const client = clients.find(c => c.id === clientId);
-    if (!client) {
-      console.log('❌ Cliente não encontrado');
-      return;
-    }
-
-    // Verificar se o destino é um estágio válido
-    if (!stages[newStage]) {
-      console.log('❌ Destino não é um estágio válido:', newStage);
-      toast({
-        title: "Movimento Inválido",
-        description: "Você só pode mover clientes para estágios válidos",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Se arrastado para o mesmo estágio, não fazer nada
-    if (client.stage === newStage) {
-      console.log('✅ Cliente movido para o mesmo estágio - ignorando');
-      return;
-    }
-
-    console.log(`🔄 Movendo cliente ${client.name} de ${client.stage} para ${newStage}`);
-    
-    try {
-      // Atualizar no banco de dados
-      const { error } = await supabase
-        .from('clients')
-        .update({ 
-          stage: newStage,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', clientId);
-
-      if (error) throw error;
-
-      // Atualizar estado local
-      setClients(prevClients => 
-        prevClients.map(c => 
-          c.id === clientId 
-            ? { ...c, stage: newStage, updated_at: new Date().toISOString() }
-            : c
-        )
-      );
-
-      const stageName = stages[newStage]?.name || newStage;
-      toast({
-        title: "Sucesso",
-        description: `Cliente movido para ${stageName}`
-      });
-
-    } catch (error: any) {
-      console.error('❌ Erro ao mover cliente:', error);
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao mover cliente",
-        variant: "destructive"
-      });
-    }
   };
 
   // Handlers
@@ -612,46 +511,10 @@ export default function Clients() {
     setStagesDialogOpen(false);
   };
 
-  // Componente do Card do Cliente (Draggable)
-  const DraggableClientCard = ({ client }: { client: Client }) => {
-    const {
-      attributes,
-      listeners,
-      setNodeRef,
-      transform,
-      transition,
-      isDragging,
-    } = useSortable({ 
-      id: client.id,
-      data: {
-        type: 'client',
-        client
-      }
-    });
-
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-      opacity: isDragging ? 0.5 : 1,
-    };
-
+  // Componente do Card do Cliente
+  const ClientCard = ({ client }: { client: Client }) => {
     return (
-      <Card 
-        ref={setNodeRef} 
-        style={style} 
-        {...attributes} 
-        {...listeners}
-        className={`mb-3 hover:shadow-md transition-all duration-200 cursor-grab active:cursor-grabbing group ${
-          isDragging ? 'shadow-2xl z-50 rotate-3' : ''
-        }`}
-        onMouseDown={(e) => {
-          // Permitir que botões funcionem mesmo durante drag
-          if (e.target instanceof HTMLButtonElement) {
-            e.stopPropagation();
-            e.preventDefault();
-          }
-        }}
-      >
+      <Card className="mb-3 hover:shadow-md transition-shadow group">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base font-medium">
@@ -667,10 +530,6 @@ export default function Clients() {
                   console.log('✏️ Botão editar clicado para cliente:', client.id);
                   handleEdit(client);
                 }}
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                }}
                 className="h-8 w-8 p-0 hover:bg-blue-100"
                 title="Editar cliente"
               >
@@ -684,10 +543,6 @@ export default function Clients() {
                   e.preventDefault();
                   console.log('🗑️ Botão delete clicado para cliente:', client.id);
                   handleDelete(client.id);
-                }}
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
                 }}
                 className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600"
                 title="Excluir cliente"
@@ -723,16 +578,8 @@ export default function Clients() {
     );
   };
 
-  // Componente da Coluna de Estágio (Droppable)
-  const DroppableStageColumn = ({ stageKey, stage }: { stageKey: string; stage: Stage }) => {
-    const { setNodeRef, isOver } = useDroppable({
-      id: stageKey,
-      data: {
-        type: 'stage',
-        stage
-      }
-    });
-
+  // Componente da Coluna de Estágio
+  const StageColumn = ({ stageKey, stage }: { stageKey: string; stage: Stage }) => {
     const stageClients = getClientsByStage(stageKey);
     const StageIcon = stage.icon;
     
@@ -770,26 +617,15 @@ export default function Clients() {
             </div>
           </div>
           
-          <div 
-            ref={setNodeRef}
-            className={`space-y-2 min-h-[200px] border-2 border-dashed rounded-lg p-2 transition-all ${
-              isOver ? 'border-primary bg-primary/5 scale-105' : 'border-muted/30 hover:border-muted'
-            }`}
-          >
-            <SortableContext items={stageClients.map(c => c.id)} strategy={verticalListSortingStrategy}>
-              {stageClients.map((client) => (
-                <DraggableClientCard key={client.id} client={client} />
-              ))}
-            </SortableContext>
+          <div className="space-y-2 min-h-[200px] border-2 border-dashed border-muted/30 rounded-lg p-2">
+            {stageClients.map((client) => (
+              <ClientCard key={client.id} client={client} />
+            ))}
             
             {stageClients.length === 0 && (
-              <div className={`text-center py-8 transition-colors ${
-                isOver ? 'text-primary' : 'text-muted-foreground'
-              }`}>
+              <div className="text-center py-8 text-muted-foreground">
                 <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">
-                  {isOver ? 'Solte aqui!' : 'Nenhum cliente'}
-                </p>
+                <p className="text-sm">Nenhum cliente</p>
               </div>
             )}
           </div>
@@ -848,28 +684,22 @@ export default function Clients() {
 
       {/* Conteúdo Principal */}
       <main className="container mx-auto px-4 py-8">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="flex gap-6 overflow-x-auto pb-4">
-            {Object.entries(stages).map(([stageKey, stage]) => (
-              <DroppableStageColumn key={stageKey} stageKey={stageKey} stage={stage} />
-            ))}
-            
-            {/* Botão para adicionar estágios */}
-            <div className="flex-shrink-0 w-80 flex items-center justify-center">
-              <Button 
-                variant="outline" 
-                className="h-12 w-12 rounded-full border-dashed border-2 hover:border-solid"
-                onClick={() => setStagesDialogOpen(true)}
-              >
-                <Plus className="w-6 h-6" />
-              </Button>
-            </div>
+        <div className="flex gap-6 overflow-x-auto pb-4">
+          {Object.entries(stages).map(([stageKey, stage]) => (
+            <StageColumn key={stageKey} stageKey={stageKey} stage={stage} />
+          ))}
+          
+          {/* Botão para adicionar estágios */}
+          <div className="flex-shrink-0 w-80 flex items-center justify-center">
+            <Button 
+              variant="outline" 
+              className="h-12 w-12 rounded-full border-dashed border-2 hover:border-solid"
+              onClick={() => setStagesDialogOpen(true)}
+            >
+              <Plus className="w-6 h-6" />
+            </Button>
           </div>
-        </DndContext>
+        </div>
 
         {/* Estado vazio */}
         {Object.keys(stages).length === 0 && (
