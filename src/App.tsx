@@ -26,7 +26,7 @@ const Privacy = lazy(() => import("./pages/Privacy"));
 const InvoiceHistory = lazy(() => import("./pages/InvoiceHistory"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TestPage = lazy(() => import("./pages/TestPage"));
-const TestDndWorking = lazy(() => import("./test-dnd-working"));
+const TestDndWorking = lazy(() => import("./pages/TestDndWorking"));
 
 // Loading component
 const PageLoader = () => (
