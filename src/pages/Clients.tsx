@@ -1086,27 +1086,29 @@ export default function Clients() {
       </header>
 
       {/* Conteúdo Principal */}
-      <main className="flex-1 container mx-auto px-6 py-8 min-h-0">
+      <main className="flex-1 container mx-auto px-6 py-8 min-h-0 flex flex-col">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex gap-6 overflow-x-auto h-full pb-4" style={{ height: 'calc(100vh - 200px)' }}>
-            {Object.entries(stages).map(([stageKey, stage]) => (
-              <StageColumnWithArrows key={stageKey} stageKey={stageKey} stage={stage} />
-            ))}
-            
-            {/* Botão para adicionar estágios */}
-            <div className="flex-shrink-0 w-80 flex items-center justify-center">
-              <Button 
-                variant="outline" 
-                className="h-16 w-16 rounded-full border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200"
-                onClick={() => setStagesDialogOpen(true)}
-              >
-                <Plus className="w-8 h-8 text-slate-400" />
-              </Button>
+          <div className="flex-1 min-h-0">
+            <div className="flex gap-6 overflow-x-auto h-full" style={{ height: 'calc(100vh - 200px)' }}>
+              {Object.entries(stages).map(([stageKey, stage]) => (
+                <StageColumnWithArrows key={stageKey} stageKey={stageKey} stage={stage} />
+              ))}
+              
+              {/* Botão para adicionar estágios */}
+              <div className="flex-shrink-0 w-80 flex items-center justify-center">
+                <Button 
+                  variant="outline" 
+                  className="h-16 w-16 rounded-full border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200"
+                  onClick={() => setStagesDialogOpen(true)}
+                >
+                  <Plus className="w-8 h-8 text-slate-400" />
+                </Button>
+              </div>
             </div>
           </div>
           
