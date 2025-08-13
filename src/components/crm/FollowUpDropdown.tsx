@@ -50,10 +50,8 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
       console.log('🔍 Carregando follow-ups do dia...');
       console.log('📅 Data de hoje:', new Date().toISOString().split('T')[0]);
       
-      // Ajustar data para compensar fuso horário (adicionar um dia)
-      const today = new Date();
-      today.setDate(today.getDate() + 1);
-      const todayString = today.toISOString().split('T')[0];
+      // Usar data original para consulta (sem compensação)
+      const todayString = new Date().toISOString().split('T')[0];
       
       const { data, error } = await supabase
         .from('follow_ups')
@@ -176,11 +174,9 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
     });
   };
 
-  // Formatar data com compensação de fuso horário
-  const formatDateWithTimezone = (dateString: string) => {
+  // Formatar data sem compensação de fuso horário (para exibição no dropdown)
+  const formatDateOriginal = (dateString: string) => {
     const date = new Date(dateString);
-    // Adicionar um dia para compensar o fuso horário
-    date.setDate(date.getDate() + 1);
     return date.toLocaleDateString('pt-BR');
   };
 
@@ -364,7 +360,7 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
                       </p>
                       <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                         <Clock className="w-3 h-3" />
-                        <span>Próximo: {formatDateWithTimezone(client.next_follow_up)}</span>
+                        <span>Próximo: {formatDateOriginal(client.next_follow_up)}</span>
                       </div>
                     </div>
                   </DropdownMenuItem>
