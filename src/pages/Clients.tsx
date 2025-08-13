@@ -9,6 +9,24 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCorners,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { 
   Users, 
   Plus, 
@@ -125,6 +143,16 @@ export default function Clients() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isMoving, setIsMoving] = useState(false);
   const [moveHistory, setMoveHistory] = useState<Array<{clientId: string, fromStage: string, toStage: string, timestamp: string}>>([]);
+  
+  // Estados para Drag and Drop
+  const [activeClient, setActiveClient] = useState<Client | null>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
   
   // Formulários
   const [formData, setFormData] = useState({
@@ -524,11 +552,12 @@ export default function Clients() {
 
 
   const handleMoveClient = async (clientId: string, newStageKey: string) => {
-    if (!selectedClient) return;
+    const client = clients.find(c => c.id === clientId);
+    if (!client) return;
     
     try {
       setIsMoving(true);
-      console.log(`🚀 Movendo cliente ${selectedClient.name} para ${stages[newStageKey].name}`);
+      console.log(`🚀 Movendo cliente ${client.name} para ${stages[newStageKey].name}`);
       
       // Atualizar no banco de dados
       const { error } = await supabase
@@ -553,14 +582,14 @@ export default function Clients() {
       // Adicionar ao histórico
       setMoveHistory(prev => [...prev, {
         clientId,
-        fromStage: selectedClient.stage,
+        fromStage: client.stage,
         toStage: newStageKey,
         timestamp: new Date().toISOString()
       }]);
       
       toast({
         title: "🎉 Cliente Movido!",
-        description: `${selectedClient.name} foi movido para ${stages[newStageKey].name}`,
+        description: `${client.name} foi movido para ${stages[newStageKey].name}`,
       });
       
       setMoveModalOpen(false);
@@ -583,20 +612,82 @@ export default function Clients() {
     setMoveModalOpen(true);
   };
 
+  // Funções para Drag and Drop
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const client = clients.find(c => c.id === active.id);
+    setActiveClient(client || null);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over) {
+      setActiveClient(null);
+      return;
+    }
+
+    const clientId = active.id as string;
+    const newStageKey = over.id as string;
+    
+    // Verificar se o over é um estágio válido
+    if (!stages[newStageKey]) {
+      setActiveClient(null);
+      return;
+    }
+
+    const client = clients.find(c => c.id === clientId);
+    if (!client || client.stage === newStageKey) {
+      setActiveClient(null);
+      return;
+    }
+
+    // Mover o cliente
+    await handleMoveClient(clientId, newStageKey);
+    setActiveClient(null);
+  };
+
+  // Componente Sortable para Drag and Drop
+  const SortableClientCard = ({ client }: { client: Client }) => {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({ id: client.id });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+      <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+        <ClientCard client={client} />
+      </div>
+    );
+  };
+
   // Componente do Card do Cliente
   const ClientCard = ({ client }: { client: Client }) => {
     
     return (
-      <Card className="mb-3 hover:shadow-md transition-shadow group relative overflow-hidden">
-        {/* Efeito de brilho no hover */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+              <Card className="mb-3 hover:shadow-md transition-shadow group relative overflow-hidden cursor-grab active:cursor-grabbing">
+          {/* Efeito de brilho no hover */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
         
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-medium">
-              {client.name}
-            </CardTitle>
-            <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-muted-foreground/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                <CardTitle className="text-base font-medium">
+                  {client.name}
+                </CardTitle>
+              </div>
+              <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <Button
                 size="sm"
                 variant="ghost"
@@ -709,10 +800,15 @@ export default function Clients() {
             </div>
           </div>
           
-          <div className="space-y-2 min-h-[200px] border-2 border-dashed border-muted/30 rounded-lg p-2">
-            {stageClients.map((client) => (
-              <ClientCard key={client.id} client={client} />
-            ))}
+          <div 
+            className="space-y-2 min-h-[200px] border-2 border-dashed border-muted/30 rounded-lg p-2 hover:border-primary/50 transition-colors"
+            data-stage={stageKey}
+          >
+            <SortableContext items={stageClients.map(c => c.id)} strategy={verticalListSortingStrategy}>
+              {stageClients.map((client) => (
+                <SortableClientCard key={client.id} client={client} />
+              ))}
+            </SortableContext>
             
             {stageClients.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
@@ -750,6 +846,9 @@ export default function Clients() {
               <div className="flex items-center space-x-2">
                 <Users className="w-6 h-6" />
                 <h1 className="text-2xl font-bold">CRM - Gestão de Clientes</h1>
+                <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">
+                  Arraste os clientes para movê-los entre estágios
+                </span>
               </div>
             </div>
             
@@ -776,22 +875,38 @@ export default function Clients() {
 
       {/* Conteúdo Principal */}
       <main className="container mx-auto px-4 py-8">
-        <div className="flex gap-6 overflow-x-auto pb-4">
-          {Object.entries(stages).map(([stageKey, stage]) => (
-            <StageColumn key={stageKey} stageKey={stageKey} stage={stage} />
-          ))}
-          
-          {/* Botão para adicionar estágios */}
-          <div className="flex-shrink-0 w-80 flex items-center justify-center">
-            <Button 
-              variant="outline" 
-              className="h-12 w-12 rounded-full border-dashed border-2 hover:border-solid"
-              onClick={() => setStagesDialogOpen(true)}
-            >
-              <Plus className="w-6 h-6" />
-            </Button>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex gap-6 overflow-x-auto pb-4">
+            {Object.entries(stages).map(([stageKey, stage]) => (
+              <StageColumn key={stageKey} stageKey={stageKey} stage={stage} />
+            ))}
+            
+            {/* Botão para adicionar estágios */}
+            <div className="flex-shrink-0 w-80 flex items-center justify-center">
+              <Button 
+                variant="outline" 
+                className="h-12 w-12 rounded-full border-dashed border-2 hover:border-solid"
+                onClick={() => setStagesDialogOpen(true)}
+              >
+                <Plus className="w-6 h-6" />
+              </Button>
+            </div>
           </div>
-        </div>
+          
+          {/* Drag Overlay */}
+          <DragOverlay>
+            {activeClient ? (
+              <div className="w-80">
+                <ClientCard client={activeClient} />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
 
         {/* Estado vazio */}
         {Object.keys(stages).length === 0 && (
