@@ -51,11 +51,9 @@ export const FollowUpDropdown: React.FC<FollowUpDropdownProps> = ({
       const realToday = new Date().toISOString().split('T')[0];
       console.log('📅 Data real de hoje:', realToday);
       
-      // Subtrair 1 dia para compensar o fuso horário na consulta
-      const today = new Date();
-      today.setDate(today.getDate() - 1);
-      const todayString = today.toISOString().split('T')[0];
-      console.log('🔍 Data para consulta (hoje - 1):', todayString);
+      // Usar data real de hoje para consulta
+      const todayString = realToday;
+      console.log('🔍 Data para consulta (hoje real):', todayString);
       
       const { data, error } = await supabase
         .from('follow_ups')
