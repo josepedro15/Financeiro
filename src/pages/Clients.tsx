@@ -1032,9 +1032,9 @@ export default function Clients() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 flex flex-col">
       {/* Header */}
-      <header className="border-b bg-gradient-to-r from-slate-50 to-blue-50/50 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
+      <header className="border-b bg-gradient-to-r from-slate-50 to-blue-50/50 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 flex-shrink-0">
         <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
@@ -1083,14 +1083,15 @@ export default function Clients() {
       </header>
 
       {/* Conteúdo Principal */}
-      <main className="container mx-auto px-6 py-8">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="flex gap-6 overflow-x-auto pb-4">
+      <main className="flex-1 container mx-auto px-6 py-8 overflow-hidden">
+        <div className="h-full flex flex-col">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="flex gap-6 overflow-x-auto pb-4 flex-1 min-h-0">
             {Object.entries(stages).map(([stageKey, stage]) => (
               <StageColumnWithArrows key={stageKey} stageKey={stageKey} stage={stage} />
             ))}
@@ -1116,6 +1117,7 @@ export default function Clients() {
             ) : null}
           </DragOverlay>
         </DndContext>
+        </div>
 
         {/* Estado vazio */}
         {Object.keys(stages).length === 0 && (
