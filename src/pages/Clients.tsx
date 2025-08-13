@@ -18,10 +18,12 @@ import {
   useSensor,
   useSensors,
   closestCorners,
+  DragOverEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
+  horizontalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import {
   useSortable,
@@ -146,6 +148,8 @@ export default function Clients() {
   
   // Estados para Drag and Drop
   const [activeClient, setActiveClient] = useState<Client | null>(null);
+  const [activeStage, setActiveStage] = useState<Stage | null>(null);
+  const [isDraggingStage, setIsDraggingStage] = useState(false);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -615,8 +619,62 @@ export default function Clients() {
   // Funções para Drag and Drop
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    const client = clients.find(c => c.id === active.id);
+    const activeId = active.id as string;
+    
+    // Verificar se é um drag de estágio
+    if (stages[activeId]) {
+      setActiveStage(stages[activeId]);
+      setIsDraggingStage(true);
+      setActiveClient(null);
+      return;
+    }
+    
+    // Verificar se é um drag de cliente
+    const client = clients.find(c => c.id === activeId);
     setActiveClient(client || null);
+    setIsDraggingStage(false);
+    setActiveStage(null);
+  };
+
+  const handleReorderStages = async (fromStageKey: string, toStageKey: string) => {
+    try {
+      const fromStage = stages[fromStageKey];
+      const toStage = stages[toStageKey];
+      
+      if (!fromStage || !toStage) return;
+
+      // Trocar os order_index dos estágios
+      const { error: error1 } = await supabase
+        .from('stages')
+        .update({ order_index: toStage.order_index })
+        .eq('key', fromStageKey)
+        .eq('user_id', user?.id);
+
+      if (error1) throw error1;
+
+      const { error: error2 } = await supabase
+        .from('stages')
+        .update({ order_index: fromStage.order_index })
+        .eq('key', toStageKey)
+        .eq('user_id', user?.id);
+
+      if (error2) throw error2;
+
+      toast({
+        title: "🎉 Estágios Reordenados!",
+        description: `${fromStage.name} e ${toStage.name} foram trocados de posição`,
+      });
+
+      await loadStages();
+      
+    } catch (error: any) {
+      console.error('❌ Erro ao reordenar estágios:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao reordenar estágios",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -624,27 +682,79 @@ export default function Clients() {
     
     if (!over) {
       setActiveClient(null);
+      setActiveStage(null);
+      setIsDraggingStage(false);
       return;
     }
 
-    const clientId = active.id as string;
-    const newStageKey = over.id as string;
-    
-    // Verificar se o over é um estágio válido
-    if (!stages[newStageKey]) {
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    // Verificar se é um drag de estágio
+    if (isDraggingStage) {
+      const stageKey = activeId;
+      const newPosition = overId;
+      
+      if (stageKey !== newPosition && stages[stageKey] && stages[newPosition]) {
+        await handleReorderStages(stageKey, newPosition);
+      }
+      
+      setActiveStage(null);
+      setIsDraggingStage(false);
+      return;
+    }
+
+    // Verificar se é um drag de cliente
+    const client = clients.find(c => c.id === activeId);
+    if (!client) {
       setActiveClient(null);
       return;
     }
 
-    const client = clients.find(c => c.id === clientId);
-    if (!client || client.stage === newStageKey) {
+    // Tentar encontrar o estágio de destino
+    let targetStageKey = overId;
+    
+    // Se o over não é um estágio, verificar se é um elemento dentro de um estágio
+    if (!stages[overId]) {
+      const stageElement = (over as any).closest?.('[data-stage]');
+      if (stageElement) {
+        targetStageKey = stageElement.getAttribute('data-stage');
+      }
+    }
+
+    // Verificar se o estágio de destino é válido
+    if (!stages[targetStageKey] || client.stage === targetStageKey) {
       setActiveClient(null);
       return;
     }
 
     // Mover o cliente
-    await handleMoveClient(clientId, newStageKey);
+    await handleMoveClient(activeId, targetStageKey);
     setActiveClient(null);
+  };
+
+  // Componente Sortable para Drag and Drop de Estágios
+  const SortableStageColumn = ({ stageKey, stage }: { stageKey: string; stage: Stage }) => {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({ id: stageKey });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+      <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+        <StageColumn stageKey={stageKey} stage={stage} />
+      </div>
+    );
   };
 
   // Componente Sortable para Drag and Drop
@@ -769,8 +879,9 @@ export default function Clients() {
     return (
       <div className="flex-shrink-0 w-80">
         <div className="bg-muted/50 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 cursor-grab active:cursor-grabbing">
             <div className="flex items-center space-x-2">
+              <Move className="w-4 h-4 text-muted-foreground" />
               <StageIcon className="w-5 h-5" />
               <h3 className="font-semibold">{stage.name}</h3>
               <span className="bg-background px-2 py-1 rounded-full text-xs font-medium">
@@ -781,7 +892,10 @@ export default function Clients() {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => handleEditStage(stage)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditStage(stage);
+                }}
                 className="h-6 w-6 p-0"
                 title="Editar estágio"
               >
@@ -790,7 +904,10 @@ export default function Clients() {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => handleDeleteStage(stageKey)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteStage(stageKey);
+                }}
                 className="h-6 w-6 p-0 hover:text-red-600"
                 title="Excluir estágio"
                 disabled={stageClients.length > 0}
@@ -847,7 +964,7 @@ export default function Clients() {
                 <Users className="w-6 h-6" />
                 <h1 className="text-2xl font-bold">CRM - Gestão de Clientes</h1>
                 <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">
-                  Arraste os clientes para movê-los entre estágios
+                  Arraste clientes entre estágios • Arraste estágios para reordenar
                 </span>
               </div>
             </div>
@@ -882,9 +999,14 @@ export default function Clients() {
           onDragEnd={handleDragEnd}
         >
           <div className="flex gap-6 overflow-x-auto pb-4">
-            {Object.entries(stages).map(([stageKey, stage]) => (
-              <StageColumn key={stageKey} stageKey={stageKey} stage={stage} />
-            ))}
+            <SortableContext 
+              items={Object.keys(stages)} 
+              strategy={horizontalListSortingStrategy}
+            >
+              {Object.entries(stages).map(([stageKey, stage]) => (
+                <SortableStageColumn key={stageKey} stageKey={stageKey} stage={stage} />
+              ))}
+            </SortableContext>
             
             {/* Botão para adicionar estágios */}
             <div className="flex-shrink-0 w-80 flex items-center justify-center">
@@ -903,6 +1025,10 @@ export default function Clients() {
             {activeClient ? (
               <div className="w-80">
                 <ClientCard client={activeClient} />
+              </div>
+            ) : activeStage ? (
+              <div className="w-80">
+                <StageColumn stageKey={activeStage.key} stage={activeStage} />
               </div>
             ) : null}
           </DragOverlay>
