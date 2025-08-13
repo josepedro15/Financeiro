@@ -707,36 +707,39 @@ export default function Clients() {
       return;
     }
 
-    // Tentar encontrar o estágio de destino
-    let targetStageKey = overId;
+    // Extrair o stageKey do overId
+    let targetStageKey = '';
     
-    // Verificar se é um droppable de estágio (formato: stage-{stageKey})
     if (overId.startsWith('stage-')) {
       targetStageKey = overId.replace('stage-', '');
-    }
-    // Verificar se é um droppable de área de clientes (formato: client-area-{stageKey})
-    else if (overId.startsWith('client-area-')) {
+    } else if (overId.startsWith('client-area-')) {
       targetStageKey = overId.replace('client-area-', '');
-    }
-    // Verificar se é um droppable de zona de drop (formato: drop-zone-{stageKey})
-    else if (overId.startsWith('drop-zone-')) {
-      targetStageKey = overId.replace('drop-zone-', '');
-    }
-    // Se o over não é um estágio, verificar se é um elemento dentro de um estágio
-    else if (!stages[overId]) {
-      // Procurar por elementos com data-stage
-      const stageElement = (over as any).closest?.('[data-stage]');
+    } else if (overId.startsWith('drop-zone-')) {
+      // Para drop-zone-{stageKey}-{position}, extrair apenas o stageKey
+      const parts = overId.split('-');
+      if (parts.length >= 3) {
+        targetStageKey = parts[2]; // stageKey está na posição 2
+      }
+    } else {
+      // Fallback: procurar por data-stage no elemento ou seus pais
+      const element = over as any;
+      const stageElement = element.closest?.('[data-stage]') || element.querySelector?.('[data-stage]');
       if (stageElement) {
         targetStageKey = stageElement.getAttribute('data-stage');
       }
     }
 
+    console.log('🔍 Debug drag end:', { activeId, overId, targetStageKey, clientStage: client.stage });
+
     // Verificar se o estágio de destino é válido
-    if (!stages[targetStageKey] || client.stage === targetStageKey) {
+    if (!targetStageKey || !stages[targetStageKey] || client.stage === targetStageKey) {
+      console.log('❌ Estágio inválido ou mesmo estágio');
       setActiveClient(null);
       return;
     }
 
+    console.log('✅ Movendo cliente para:', targetStageKey);
+    
     // Mover o cliente
     await handleMoveClient(activeId, targetStageKey);
     setActiveClient(null);
