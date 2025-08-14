@@ -46,10 +46,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, userData?: any) => {
-    // Usar URL de produção em vez de localhost
-    const redirectUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://seu-dominio.com/' // Substitua pela sua URL de produção
-      : `${window.location.origin}/`;
+    // Determinar URL de redirecionamento de forma mais robusta
+    let redirectUrl;
+    
+    if (process.env.NODE_ENV === 'production') {
+      // Em produção, usar URL específica ou detectar automaticamente
+      redirectUrl = process.env.VITE_SITE_URL || 
+                   window.location.origin || 
+                   'https://financeiro-7.vercel.app'; // URL de fallback
+    } else {
+      // Em desenvolvimento, usar localhost
+      redirectUrl = `${window.location.origin}/`;
+    }
+    
+    console.log('🔗 URL de redirecionamento:', redirectUrl);
     
     const { error } = await supabase.auth.signUp({
       email,
