@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useDeviceInfo } from '@/hooks/use-mobile';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -25,17 +28,10 @@ import {
   AlertTriangle,
   Shield,
   RefreshCw,
-  LogOut,
-  Home,
-  BarChart
+  LogOut
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar, Area } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Area } from 'recharts';
 import NotificationCenter from '@/components/NotificationCenter';
-import { Breadcrumbs } from '@/components/ui/breadcrumbs';
-import { EnhancedCard, MetricCard, StatsCard } from '@/components/ui/enhanced-card';
-import { EnhancedButton, GradientButton } from '@/components/ui/enhanced-button';
-import { LoadingSpinner, SkeletonCard } from '@/components/ui/loading-spinner';
-import { useToast } from '@/hooks/use-toast';
 
 interface DataSource {
   id: string;
@@ -75,10 +71,6 @@ export default function Dashboard() {
     loading: subscriptionLoading 
   } = useSubscription();
   const navigate = useNavigate();
-  const location = useLocation();
-  const { isMobile, isTablet } = useDeviceInfo();
-  const { toast } = useToast();
-  
   const [dataSources, setDataSources] = useState<DataSource[]>([]);
   const [selectedDataSource, setSelectedDataSource] = useState<string>('');
   const [loadingDataSources, setLoadingDataSources] = useState(true);
@@ -103,49 +95,50 @@ export default function Dashboard() {
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [trialDaysLeft, setTrialDaysLeft] = useState<number>(0);
 
-  // Breadcrumbs
-  const breadcrumbItems = [
-    { label: 'Dashboard', href: '/dashboard' }
-  ];
 
   useEffect(() => {
     if (!user) {
       navigate('/auth');
       return;
     }
-    loadData();
+    loadDataSources();
   }, [user, navigate]);
 
   useEffect(() => {
-    if (isTrialActive()) {
-      setTrialDaysLeft(getTrialDaysLeft());
+    if (selectedDataSource) {
+      loadFinancialData();
     }
-  }, [isTrialActive, getTrialDaysLeft]);
+  }, [selectedDataSource]);
 
-  const loadData = async () => {
+  // Forçar atualização a cada 30 segundos
+  useEffect(() => {
     if (!user) return;
+    
+    const interval = setInterval(() => {
+      console.log('=== ATUALIZAÇÃO AUTOMÁTICA ===');
+      loadFinancialData();
+    }, 30000); // 30 segundos
+    
+    return () => clearInterval(interval);
+  }, [user]);
 
-    try {
-      setLoading(true);
-      
-      // Carregar fontes de dados
-      await loadDataSources();
-      
-      // Carregar dados financeiros
-      await loadFinancialData();
-      
-      setLastUpdate(new Date());
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar dados do dashboard",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
+  // Atualizar contador de dias do trial a cada minuto
+  useEffect(() => {
+    if (!isMasterUser && isTrialActive()) {
+      const updateTrialDays = () => {
+        const daysLeft = getTrialDaysLeft();
+        setTrialDaysLeft(daysLeft);
+      };
+
+      // Atualizar imediatamente
+      updateTrialDays();
+
+      // Atualizar a cada minuto
+      const interval = setInterval(updateTrialDays, 60000); // 1 minuto
+
+      return () => clearInterval(interval);
     }
-  };
+  }, [isMasterUser, isTrialActive, getTrialDaysLeft]);
 
   const loadDataSources = async () => {
     if (!user) return;
@@ -625,367 +618,693 @@ export default function Dashboard() {
     }).format(amount);
   };
 
-  const formatPercentage = (value: number) => {
-    return `${value.toFixed(1)}%`;
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-6">
-          <Breadcrumbs items={breadcrumbItems} />
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
-            {[...Array(8)].map((_, i) => (
-              <SkeletonCard key={i} lines={3} className="h-32" />
-            ))}
-          </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 space-y-6">
-        {/* Header com Breadcrumbs */}
-        <div className="space-y-4">
-          <Breadcrumbs items={breadcrumbItems} />
-          
-          {/* Header do Dashboard */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                Dashboard Financeiro
-              </h1>
-              <p className="text-muted-foreground">
-                Última atualização: {lastUpdate.toLocaleTimeString('pt-BR')}
-              </p>
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/50 shadow-sm">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <div className="flex items-center space-x-3">
+              <Button 
+                variant="ghost" 
+                className="p-0 h-auto hover:bg-transparent"
+                onClick={() => navigate('/')}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <DollarSign className="w-5 h-5 text-white" />
+                  </div>
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                    FinanceiroLogotiq
+                  </h1>
+                </div>
+              </Button>
             </div>
             
-            <div className="flex items-center gap-3">
-              <EnhancedButton
-                variant="outline"
-                size="sm"
-                icon={<RefreshCw className="w-4 h-4" />}
-                onClick={loadData}
-                loading={loading}
-              >
-                Atualizar
-              </EnhancedButton>
+            {/* Controles */}
+            <div className="flex items-center space-x-3">
+              {/* Seletor de Fonte de Dados */}
+              {dataSources.length >= 1 && (
+                <div className="hidden md:flex items-center space-x-2">
+                  <Database className="h-4 w-4 text-slate-600" />
+                  <Select value={selectedDataSource} onValueChange={setSelectedDataSource}>
+                    <SelectTrigger className="w-48 bg-white/50 backdrop-blur-sm border-slate-200">
+                      <SelectValue placeholder="Selecionar fonte de dados" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {dataSources.map((source) => (
+                        <SelectItem key={source.id} value={source.id}>
+                          <div className="flex items-center space-x-2">
+                            <span>{source.name}</span>
+                            {source.isOwner && source.id !== user.id && (
+                              <span className="text-xs text-blue-600">(Compartilhado)</span>
+                            )}
+                            {!source.isOwner && (
+                              <span className="text-xs text-green-600">(Organização)</span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               
-              <EnhancedButton
-                variant="outline"
-                size="sm"
-                icon={<Plus className="w-4 h-4" />}
-                onClick={() => navigate('/transactions')}
-              >
-                Nova Transação
-              </EnhancedButton>
+              {/* Botões de Navegação */}
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => navigate('/dashboard')}
+                  className="hidden sm:flex items-center space-x-1 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                >
+                  <DollarSign className="w-4 h-4" />
+                  <span>Dashboard</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => navigate('/transactions')}
+                  className="hidden sm:flex items-center space-x-1 hover:bg-slate-50 hover:text-slate-600 transition-colors"
+                >
+                  <CreditCard className="w-4 h-4" />
+                  <span>Transações</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => navigate('/clients')}
+                  className="hidden sm:flex items-center space-x-1 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  <Users className="w-4 h-4" />
+                  <span>CRM</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => navigate('/settings')}
+                  className="hidden sm:flex items-center space-x-1 hover:bg-slate-50 hover:text-slate-600 transition-colors"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Config</span>
+                </Button>
+                {isMasterUser && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => navigate('/analytics')}
+                    className="hidden sm:flex items-center space-x-1 hover:bg-purple-50 hover:text-purple-600 transition-colors"
+                  >
+                    <Shield className="w-4 h-4" />
+                    <span>Analytics</span>
+                  </Button>
+                )}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={loadFinancialData}
+                  className="hover:bg-green-50 hover:text-green-600 hover:border-green-200 transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={signOut}
+                  className="hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Mobile: Seletor de Fonte de Dados */}
+          {dataSources.length >= 1 && (
+            <div className="md:hidden mt-3">
+              <div className="flex items-center space-x-2">
+                <Database className="h-4 w-4 text-slate-600" />
+                <Select value={selectedDataSource} onValueChange={setSelectedDataSource}>
+                  <SelectTrigger className="w-full bg-white/50 backdrop-blur-sm border-slate-200">
+                    <SelectValue placeholder="Selecionar fonte de dados" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dataSources.map((source) => (
+                      <SelectItem key={source.id} value={source.id}>
+                        <div className="flex items-center space-x-2">
+                          <span>{source.name}</span>
+                          {source.isOwner && source.id !== user.id && (
+                            <span className="text-xs text-blue-600">(Compartilhado)</span>
+                          )}
+                          {!source.isOwner && (
+                            <span className="text-xs text-green-600">(Organização)</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* Subscription Status Banner */}
+      {!isMasterUser && !subscriptionLoading && (
+        <div className="bg-gradient-to-r from-slate-50 to-blue-50/30 border-b border-slate-200/50">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                {isTrialActive() ? (
+                  <>
+                    <div className="p-2 rounded-full bg-blue-100">
+                      <Clock className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-sm font-semibold text-slate-800">
+                          Trial Gratuito - {trialDaysLeft} dias restantes
+                        </p>
+                        {trialDaysLeft <= 3 && trialDaysLeft > 0 && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 animate-pulse">
+                            ⚠️ Acaba em breve!
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-600">
+                        {trialDaysLeft <= 3 && trialDaysLeft > 0 
+                          ? 'Seu trial está acabando! Faça upgrade para continuar usando.'
+                          : 'Aproveite o período de teste para conhecer todas as funcionalidades'
+                        }
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="p-2 rounded-full bg-green-100">
+                      <Crown className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">
+                        Plano {getPlanName(currentPlan)} Ativo
+                      </p>
+                      <p className="text-sm text-slate-600">
+                        {currentTransactions} / {transactionLimit} transações utilizadas
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center space-x-3">
+                <span 
+                  className={`text-xs px-3 py-1 rounded-full border ${
+                    isTrialActive() 
+                      ? 'border-blue-200 text-blue-700 bg-blue-50' 
+                      : 'border-green-200 text-green-700 bg-green-50'
+                  }`}
+                >
+                  {isTrialActive() ? 'Trial' : getPlanName(currentPlan)}
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate('/subscription')}
+                  className={`hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors ${
+                    isTrialActive() && trialDaysLeft <= 3 
+                      ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' 
+                      : ''
+                  }`}
+                >
+                  <Crown className="w-4 h-4 mr-1" />
+                  Assinatura
+                </Button>
+              </div>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Sistema de Notificações */}
-        <NotificationCenter />
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">
+        
+        {/* Centro de Notificações */}
+        <div className="mb-6">
+          <NotificationCenter />
+        </div>
 
-        {/* Trial Banner */}
-        {isTrialActive() && (
-          <EnhancedCard
-            variant="gradient"
-            className="border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Clock className="w-5 h-5 text-yellow-600" />
-                <div>
-                  <h3 className="font-medium text-yellow-800 dark:text-yellow-200">
-                    Período de Teste Ativo
-                  </h3>
-                  <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                    {trialDaysLeft} dias restantes no seu teste gratuito
-                  </p>
-                </div>
+
+
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 sm:gap-6 mb-8">
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm hover:scale-[1.02]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                Receita Total
+              </CardTitle>
+              <div className="p-2 rounded-full bg-green-100 group-hover:bg-green-200 transition-colors">
+                <DollarSign className="h-5 w-5 text-green-600" />
               </div>
-              <GradientButton
-                gradient="warning"
-                size="sm"
-                onClick={() => navigate('/plans')}
-              >
-                Escolher Plano
-              </GradientButton>
-            </div>
-          </EnhancedCard>
-        )}
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-slate-200 rounded mb-2"></div>
+                  <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-3xl font-bold text-slate-900 mb-2">
+                    {formatCurrency(financialData.totalIncome)}
+                  </div>
+                  <div className="flex items-center text-sm text-green-600">
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    +{formatCurrency(financialData.totalIncome - financialData.totalExpenses)} vs despesas
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
 
-        {/* Cards de Métricas Principais */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
-          <MetricCard
-            title="Receita Total"
-            value={formatCurrency(financialData.totalIncome)}
-            icon={<DollarSign className="w-5 h-5 text-green-600" />}
-            trend="up"
-            change={{ value: 12.5, type: 'increase' }}
-          />
-          
-          <MetricCard
-            title="Despesas Totais"
-            value={formatCurrency(financialData.totalExpenses)}
-            icon={<TrendingDown className="w-5 h-5 text-red-600" />}
-            trend="down"
-            change={{ value: 8.3, type: 'decrease' }}
-          />
-          
-          <MetricCard
-            title="Saldo PJ"
-            value={formatCurrency(financialData.balancePJ)}
-            icon={<CreditCard className="w-5 h-5 text-blue-600" />}
-            trend="up"
-            change={{ value: 5.7, type: 'increase' }}
-          />
-          
-          <MetricCard
-            title="Saldo Checkout"
-            value={formatCurrency(financialData.balanceCheckout)}
-            icon={<PiggyBank className="w-5 h-5 text-purple-600" />}
-            trend="neutral"
-          />
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm hover:scale-[1.02]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                Saldo em Caixa
+              </CardTitle>
+              <div className="p-2 rounded-full bg-blue-100 group-hover:bg-blue-200 transition-colors">
+                <DollarSign className="h-5 w-5 text-blue-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-slate-900 mb-2">
+                {formatCurrency(financialData.balancePJ + financialData.balanceCheckout)}
+              </div>
+              <div className="flex items-center text-sm text-blue-600">
+                <CreditCard className="h-4 w-4 mr-1" />
+                Soma das duas contas
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm hover:scale-[1.02]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                Conta 1
+              </CardTitle>
+              <div className="p-2 rounded-full bg-purple-100 group-hover:bg-purple-200 transition-colors">
+                <CreditCard className="h-5 w-5 text-purple-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-slate-900 mb-2">
+                {formatCurrency(financialData.balancePJ)}
+              </div>
+              <div className="flex items-center text-sm text-purple-600">
+                <Shield className="h-4 w-4 mr-1" />
+                Conta Pessoa Jurídica
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm hover:scale-[1.02]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                Conta 2
+              </CardTitle>
+              <div className="p-2 rounded-full bg-orange-100 group-hover:bg-orange-200 transition-colors">
+                <CreditCard className="h-5 w-5 text-orange-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-slate-900 mb-2">
+                {formatCurrency(financialData.balanceCheckout)}
+              </div>
+              <div className="flex items-center text-sm text-orange-600">
+                <CreditCard className="h-4 w-4 mr-1" />
+                Conta Checkout
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Cards de Indicadores Avançados */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          <StatsCard
-            title="Indicadores de Performance"
-            stats={[
-              { label: 'Ticket Médio', value: formatCurrency(financialData.ticketMedio) },
-              { label: 'Lucro Líquido', value: formatCurrency(financialData.lucroLiquido) },
-              { label: 'Margem de Lucro', value: formatPercentage(financialData.margemLucro) },
-              { label: 'Crescimento Mensal', value: formatPercentage(financialData.crescimentoMensal) },
-            ]}
-            icon={<Calculator className="w-5 h-5" />}
-          />
+        {/* Novos Indicadores */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm hover:scale-[1.02]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                Ticket Médio
+              </CardTitle>
+              <div className="p-2 rounded-full bg-indigo-100 group-hover:bg-indigo-200 transition-colors">
+                <Calculator className="h-5 w-5 text-indigo-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-slate-900 mb-2">
+                {formatCurrency(financialData.ticketMedio)}
+              </div>
+              <div className="flex items-center text-sm text-indigo-600">
+                <BarChart3 className="h-4 w-4 mr-1" />
+                Por venda ({financialData.totalTransacoes} vendas)
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm hover:scale-[1.02]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                Lucro Líquido
+              </CardTitle>
+              <div className={`p-2 rounded-full transition-colors ${
+                financialData.lucroLiquido >= 0 
+                  ? 'bg-green-100 group-hover:bg-green-200' 
+                  : 'bg-red-100 group-hover:bg-red-200'
+              }`}>
+                <PiggyBank className={`h-5 w-5 ${
+                  financialData.lucroLiquido >= 0 ? 'text-green-600' : 'text-red-600'
+                }`} />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-3xl font-bold mb-2 ${
+                financialData.lucroLiquido >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {formatCurrency(financialData.lucroLiquido)}
+              </div>
+              <div className="flex items-center text-sm text-slate-600">
+                <Calculator className="h-4 w-4 mr-1" />
+                Receita - Despesas (sem prolabore)
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm hover:scale-[1.02]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                Margem de Lucro
+              </CardTitle>
+              <div className={`p-2 rounded-full transition-colors ${
+                financialData.margemLucro >= 0 
+                  ? 'bg-emerald-100 group-hover:bg-emerald-200' 
+                  : 'bg-red-100 group-hover:bg-red-200'
+              }`}>
+                <Percent className={`h-5 w-5 ${
+                  financialData.margemLucro >= 0 ? 'text-emerald-600' : 'text-red-600'
+                }`} />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-3xl font-bold mb-2 ${
+                financialData.margemLucro >= 0 ? 'text-emerald-600' : 'text-red-600'
+              }`}>
+                {financialData.margemLucro.toFixed(1)}%
+              </div>
+              <div className="flex items-center text-sm text-slate-600">
+                <TrendingUp className="h-4 w-4 mr-1" />
+                Eficiência financeira
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm hover:scale-[1.02]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                Crescimento Mensal
+              </CardTitle>
+              <div className={`p-2 rounded-full transition-colors ${
+                financialData.crescimentoMensal >= 0 
+                  ? 'bg-green-100 group-hover:bg-green-200' 
+                  : 'bg-red-100 group-hover:bg-red-200'
+              }`}>
+                <BarChart3 className={`h-5 w-5 ${
+                  financialData.crescimentoMensal >= 0 ? 'text-green-600' : 'text-red-600'
+                }`} />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-3xl font-bold flex items-center mb-2 ${
+                financialData.crescimentoMensal >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {financialData.crescimentoMensal >= 0 ? (
+                  <TrendingUp className="h-5 w-5 mr-2" />
+                ) : (
+                  <TrendingDown className="h-5 w-5 mr-2" />
+                )}
+                {Math.abs(financialData.crescimentoMensal).toFixed(1)}%
+              </div>
+              <div className="flex items-center text-sm text-slate-600">
+                <Clock className="h-4 w-4 mr-1" />
+                acumulado até hoje vs mês anterior
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Gráficos */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Gráfico de Receita Mensal */}
-          <EnhancedCard
-            title="Receita Mensal"
-            description="Evolução da receita nos últimos 6 meses"
-            icon={<BarChart3 className="w-5 h-5" />}
-            variant="elevated"
-          >
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={financialData.monthlyRevenue}>
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
+          {/* Gráfico Mensal */}
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-blue-600" />
+                Evolução Mensal - Todas as Contas
+              </CardTitle>
+              <CardDescription className="text-slate-600">
+                Receita mensal total em 2025 (todas as contas)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={window.innerWidth < 768 ? 250 : 300}>
+                <BarChart data={financialData.monthlyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                   <XAxis 
                     dataKey="month" 
-                    className="text-xs sm:text-sm"
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    axisLine={{ stroke: '#cbd5e1' }}
                   />
                   <YAxis 
-                    className="text-xs sm:text-sm"
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(value) => `R$ ${value / 1000}k`}
+                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    axisLine={{ stroke: '#cbd5e1' }}
                   />
                   <Tooltip 
+                    formatter={(value: number) => [formatCurrency(value), 'Receita']}
+                    labelStyle={{ color: 'black', fontWeight: 'bold' }}
                     contentStyle={{
-                      backgroundColor: 'hsl(var(--background))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
+                      backgroundColor: 'white',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                     }}
-                    formatter={(value: any) => [formatCurrency(value), 'Receita']}
+                  />
+                  <Bar 
+                    dataKey="revenue" 
+                    fill="url(#blueGradient)"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <defs>
+                    <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" />
+                      <stop offset="100%" stopColor="#1d4ed8" />
+                    </linearGradient>
+                  </defs>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Gráfico Diário do Mês Atual */}
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-green-600" />
+                Faturamento Diário - {financialData.currentMonth}
+                <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                  Mês Atual
+                </span>
+              </CardTitle>
+              <CardDescription className="text-slate-600">
+                {financialData.currentMonth ? 
+                  `Receita diária total em ${financialData.currentMonth.toLowerCase()} 2025 - Total: ${formatCurrency(financialData.currentMonthRevenue)}` 
+                  : 'Carregando dados do mês atual...'
+                }
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={window.innerWidth < 768 ? 250 : 300}>
+                <LineChart data={financialData.dailyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis 
+                    dataKey="day" 
+                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    axisLine={{ stroke: '#cbd5e1' }}
+                    label={{ 
+                      value: 'Dia do Mês', 
+                      position: 'insideBottom', 
+                      offset: -5,
+                      style: { fill: '#64748b', fontSize: 12 }
+                    }}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    axisLine={{ stroke: '#cbd5e1' }}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [formatCurrency(value), 'Faturamento']}
+                    labelFormatter={(label: string) => `Dia ${label}`}
+                    labelStyle={{ color: 'black', fontWeight: 'bold' }}
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="revenue" 
-                    stroke="hsl(var(--primary))" 
-                    strokeWidth={2}
-                    dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
+                    stroke="url(#greenGradient)"
+                    strokeWidth={3}
+                    dot={{ 
+                      fill: '#10b981', 
+                      strokeWidth: 2, 
+                      r: 4,
+                      stroke: 'white'
+                    }}
+                    activeDot={{ 
+                      r: 6, 
+                      stroke: '#10b981', 
+                      strokeWidth: 2,
+                      fill: '#10b981'
+                    }}
                   />
+                  <defs>
+                    <linearGradient id="greenGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" />
+                      <stop offset="100%" stopColor="#059669" />
+                    </linearGradient>
+                  </defs>
                 </LineChart>
               </ResponsiveContainer>
-            </div>
-          </EnhancedCard>
-
-          {/* Gráfico de Receita Diária */}
-          <EnhancedCard
-            title="Receita Diária"
-            description="Receita por dia da semana"
-            icon={<BarChart className="w-5 h-5" />}
-            variant="elevated"
-          >
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <RechartsBarChart data={financialData.dailyRevenue}>
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis 
-                    dataKey="day" 
-                    className="text-xs sm:text-sm"
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis 
-                    className="text-xs sm:text-sm"
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(value) => `R$ ${value / 1000}k`}
-                  />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--background))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                    formatter={(value: any) => [formatCurrency(value), 'Receita']}
-                  />
-                  <Bar 
-                    dataKey="revenue" 
-                    fill="hsl(var(--primary))" 
-                    radius={[4, 4, 0, 0]}
-                  />
-                </RechartsBarChart>
-              </ResponsiveContainer>
-            </div>
-          </EnhancedCard>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Transações Recentes */}
-        <EnhancedCard
-          title="Transações Recentes"
-          description="Últimas transações registradas"
-          icon={<Database className="w-5 h-5" />}
-          action={{
-            label: 'Ver Todas',
-            onClick: () => navigate('/transactions'),
-            variant: 'outline'
-          }}
-        >
-          <div className="space-y-3">
-            {financialData.recentTransactions.map((transaction) => (
-              <div
-                key={transaction.id}
-                className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`
-                    p-2 rounded-full
-                    ${transaction.transaction_type === 'income' 
-                      ? 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400'
-                      : 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400'
-                    }
-                  `}>
-                    {transaction.transaction_type === 'income' ? (
-                      <ArrowUpRight className="w-4 h-4" />
-                    ) : (
-                      <ArrowDownRight className="w-4 h-4" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium">{transaction.description}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(transaction.transaction_date).toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-                </div>
-                <div className={`
-                  font-medium
-                  ${transaction.transaction_type === 'income' ? 'text-green-600' : 'text-red-600'}
-                `}>
-                  {formatCurrency(Math.abs(transaction.amount))}
-                </div>
+        {/* Recent Transactions */}
+        <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 border-0 shadow-sm">
+          <CardHeader className="pb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-blue-600" />
+                  Transações Recentes
+                </CardTitle>
+                <CardDescription className="text-slate-600">
+                  Últimas {financialData.recentTransactions.length} transações
+                </CardDescription>
               </div>
-            ))}
-          </div>
-        </EnhancedCard>
-
-        {/* Informações da Assinatura */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <EnhancedCard
-            title="Plano Atual"
-            description={`Você está no plano ${getPlanName(currentPlan)}`}
-            icon={<Crown className="w-5 h-5" />}
-            variant="outlined"
-          >
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Transações este mês</span>
-                <span className="font-medium">
-                  {currentTransactions} / {transactionLimit || '∞'}
-                </span>
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate('/transactions')}
+                  className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors"
+                >
+                  Ver Todas
+                </Button>
+                <Button 
+                  size="sm"
+                  onClick={() => navigate('/transactions')}
+                  className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  Nova Transação
+                </Button>
               </div>
-              
-              {transactionLimit && (
-                <div className="w-full bg-muted rounded-full h-2">
+            </div>
+          </CardHeader>
+          <CardContent>
+            {financialData.recentTransactions.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CreditCard className="h-8 w-8 text-slate-400" />
+                </div>
+                <p className="text-slate-600 mb-4 font-medium">
+                  Nenhuma transação encontrada
+                </p>
+                <p className="text-slate-500 text-sm mb-6">
+                  Comece adicionando sua primeira transação para ver os dados aqui
+                </p>
+                <Button 
+                  onClick={() => navigate('/transactions')}
+                  className="flex items-center gap-2 mx-auto bg-blue-600 hover:bg-blue-700 transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  Criar Primeira Transação
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {financialData.recentTransactions.map((transaction) => (
                   <div 
-                    className="bg-primary h-2 rounded-full transition-all duration-300"
-                    style={{ 
-                      width: `${Math.min((currentTransactions / transactionLimit) * 100, 100)}%` 
-                    }}
-                  />
-                </div>
-              )}
-              
-              <EnhancedButton
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/subscription')}
-                fullWidth
-              >
-                Gerenciar Assinatura
-              </EnhancedButton>
-            </div>
-          </EnhancedCard>
-
-          <EnhancedCard
-            title="Ações Rápidas"
-            description="Acesse rapidamente as principais funcionalidades"
-            icon={<Settings className="w-5 h-5" />}
-            variant="outlined"
-          >
-            <div className="grid grid-cols-2 gap-3">
-              <EnhancedButton
-                variant="outline"
-                size="sm"
-                icon={<Plus className="w-4 h-4" />}
-                onClick={() => navigate('/transactions')}
-                fullWidth
-              >
-                Nova Transação
-              </EnhancedButton>
-              
-              <EnhancedButton
-                variant="outline"
-                size="sm"
-                icon={<Users className="w-4 h-4" />}
-                onClick={() => navigate('/clients')}
-                fullWidth
-              >
-                Gerenciar Clientes
-              </EnhancedButton>
-              
-              <EnhancedButton
-                variant="outline"
-                size="sm"
-                icon={<BarChart3 className="w-4 h-4" />}
-                onClick={() => navigate('/reports')}
-                fullWidth
-              >
-                Relatórios
-              </EnhancedButton>
-              
-              <EnhancedButton
-                variant="outline"
-                size="sm"
-                icon={<LogOut className="w-4 h-4" />}
-                onClick={signOut}
-                fullWidth
-              >
-                Sair
-              </EnhancedButton>
-            </div>
-          </EnhancedCard>
-        </div>
-      </div>
+                    key={transaction.id} 
+                    className="group/item flex items-center justify-between p-4 border border-slate-200 rounded-xl hover:bg-slate-50/50 hover:border-slate-300 transition-all duration-200 cursor-pointer"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className={`p-3 rounded-full transition-colors ${
+                        transaction.transaction_type === 'income' 
+                          ? 'bg-green-100 text-green-600 group-hover/item:bg-green-200' 
+                          : 'bg-red-100 text-red-600 group-hover/item:bg-red-200'
+                      }`}>
+                        {transaction.transaction_type === 'income' ? (
+                          <ArrowUpRight className="h-5 w-5" />
+                        ) : (
+                          <ArrowDownRight className="h-5 w-5" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-800 group-hover/item:text-slate-900 transition-colors">
+                          {transaction.description || 'Transação sem descrição'}
+                        </p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <p className="text-sm text-slate-500">
+                            {new Date(transaction.transaction_date).toLocaleDateString('pt-BR')}
+                          </p>
+                          <span className="text-xs text-slate-400">•</span>
+                          <p className="text-xs text-slate-500 capitalize">
+                            {transaction.transaction_type === 'income' ? 'Receita' : 'Despesa'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-bold text-lg ${
+                        transaction.transaction_type === 'income' 
+                          ? 'text-green-600' 
+                          : 'text-red-600'
+                      }`}>
+                        {transaction.transaction_type === 'income' ? '+' : '-'}
+                        {formatCurrency(transaction.amount)}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {transaction.account_name || 'Conta não especificada'}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </main>
     </div>
   );
 }
