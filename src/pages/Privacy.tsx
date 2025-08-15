@@ -46,7 +46,7 @@ const Privacy = () => {
                   <DollarSign className="w-5 h-5 text-primary-foreground" />
                 </div>
                 <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                  FinanceiroLogotiq
+                  Financeiro
                 </h1>
               </div>
             </Button>
@@ -95,7 +95,7 @@ const Privacy = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-muted-foreground">
-                  A <strong>FinanceiroLogotiq</strong> está comprometida em proteger sua privacidade e garantir a segurança de seus dados pessoais. 
+                  A <strong>Financeiro</strong> está comprometida em proteger sua privacidade e garantir a segurança de seus dados pessoais. 
                   Esta Política de Privacidade explica como coletamos, usamos, armazenamos e protegemos suas informações.
                 </p>
                 <div className="bg-primary/5 p-4 rounded-lg">
@@ -357,9 +357,9 @@ const Privacy = () => {
                 <div className="bg-primary/5 p-4 rounded-lg">
                   <p className="text-sm">
                     <strong>Para exercer seus direitos:</strong> Entre em contato conosco através do e-mail: 
-                    <a href="mailto:privacidade@financeirologotiq.com" className="text-primary hover:underline ml-1">
-                      privacidade@financeirologotiq.com
-                    </a>
+                            <a href="mailto:privacidade@financeiro.com" className="text-primary hover:underline ml-1">
+          privacidade@financeiro.com
+        </a>
                   </p>
                 </div>
               </CardContent>
@@ -529,16 +529,16 @@ const Privacy = () => {
                       <Mail className="w-5 h-5 text-primary" />
                       <div>
                         <p className="font-semibold">E-mail</p>
-                        <a href="mailto:privacidade@financeirologotiq.com" className="text-primary hover:underline text-sm">
-                          privacidade@financeirologotiq.com
-                        </a>
+                                <a href="mailto:privacidade@financeiro.com" className="text-primary hover:underline text-sm">
+          privacidade@financeiro.com
+        </a>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <Building className="w-5 h-5 text-primary" />
                       <div>
                         <p className="font-semibold">Empresa</p>
-                        <p className="text-sm text-muted-foreground">FinanceiroLogotiq</p>
+                        <p className="text-sm text-muted-foreground">Financeiro</p>
                       </div>
                     </div>
                   </div>

@@ -80,7 +80,7 @@ const Analytics = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `financeirologotiq-analytics-${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `financeiro-analytics-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -161,7 +161,7 @@ const Analytics = () => {
                   <DollarSign className="w-5 h-5 text-primary-foreground" />
                 </div>
                 <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                  FinanceiroLogotiq
+                  Financeiro
                 </h1>
               </div>
             </Button>
@@ -194,7 +194,7 @@ const Analytics = () => {
             </div>
             <h1 className="text-4xl font-bold mb-4">Analytics do Sistema</h1>
             <p className="text-xl text-muted-foreground">
-              Dashboard exclusivo para análise de dados do FinanceiroLogotiq
+              Dashboard exclusivo para análise de dados do Financeiro
             </p>
             <div className="mt-4">
               <Badge variant="secondary" className="bg-primary/10 text-primary">

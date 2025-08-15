@@ -226,7 +226,7 @@ export default function DashboardMensal() {
                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
                   <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
                 </div>
-                <h1 className="text-lg sm:text-2xl font-bold">FinanceiroLogotiq (Mensal)</h1>
+                <h1 className="text-lg sm:text-2xl font-bold">Financeiro (Mensal)</h1>
               </div>
             </Button>
           </div>

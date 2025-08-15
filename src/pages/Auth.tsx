@@ -58,7 +58,7 @@ export default function Auth() {
                 <DollarSign className="w-6 h-6 text-primary-foreground" />
               </div>
               <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                FinanceiroLogotiq
+                Financeiro
               </h1>
             </div>
             <p className="text-xl text-muted-foreground leading-relaxed">
@@ -103,7 +103,7 @@ export default function Auth() {
                     <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
                       <DollarSign className="w-5 h-5 text-primary-foreground" />
                     </div>
-                    <h1 className="text-2xl font-bold">FinanceiroLogotiq</h1>
+                    <h1 className="text-2xl font-bold">Financeiro</h1>
                   </div>
                 </Button>
               </div>

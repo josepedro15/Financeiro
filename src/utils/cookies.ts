@@ -1,4 +1,4 @@
-// Utilitário para gerenciar cookies no FinanceiroLogotiq
+// Utilitário para gerenciar cookies no Financeiro
 
 interface CookieOptions {
   expires?: number; // dias

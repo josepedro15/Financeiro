@@ -34,7 +34,7 @@ const Terms = () => {
                   <DollarSign className="w-5 h-5 text-primary-foreground" />
                 </div>
                 <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                  FinanceiroLogotiq
+                  Financeiro
                 </h1>
               </div>
             </Button>
@@ -73,7 +73,7 @@ const Terms = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-muted-foreground">
-                  Ao acessar e usar o FinanceiroLogotiq, você concorda em cumprir e estar vinculado a estes Termos de Uso. 
+                  Ao acessar e usar o Financeiro, você concorda em cumprir e estar vinculado a estes Termos de Uso. 
                   Se você não concordar com qualquer parte destes termos, não deve usar nosso serviço.
                 </p>
                 <div className="bg-muted/50 p-4 rounded-lg">
@@ -95,7 +95,7 @@ const Terms = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-muted-foreground">
-                  O FinanceiroLogotiq é uma plataforma de gestão financeira que oferece:
+                  O Financeiro é uma plataforma de gestão financeira que oferece:
                 </p>
                 <ul className="space-y-2 text-muted-foreground">
                   <li className="flex items-start gap-2">
@@ -277,7 +277,7 @@ const Terms = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-muted-foreground">
-                  O FinanceiroLogotiq é fornecido "como está" e "conforme disponível". 
+                  O Financeiro é fornecido "como está" e "conforme disponível". 
                   Não garantimos que o serviço será ininterrupto ou livre de erros.
                 </p>
                 
@@ -369,14 +369,14 @@ const Terms = () => {
                   <div className="p-4 bg-muted/50 rounded-lg">
                     <h4 className="font-semibold mb-2">Suporte</h4>
                     <p className="text-sm text-muted-foreground">
-                      Email: suporte@financeirologotiq.com<br />
+                      Email: suporte@financeiro.com<br />
                       Horário: Segunda a Sexta, 9h às 18h
                     </p>
                   </div>
                   <div className="p-4 bg-muted/50 rounded-lg">
                     <h4 className="font-semibold mb-2">Legal</h4>
                     <p className="text-sm text-muted-foreground">
-                      Email: legal@financeirologotiq.com<br />
+                      Email: legal@financeiro.com<br />
                       Para questões jurídicas e termos
                     </p>
                   </div>
@@ -388,7 +388,7 @@ const Terms = () => {
           {/* Footer */}
           <div className="text-center mt-12 pt-8 border-t">
             <p className="text-muted-foreground mb-4">
-              Ao usar o FinanceiroLogotiq, você concorda com estes termos de uso.
+              Ao usar o Financeiro, você concorda com estes termos de uso.
             </p>
             <Button onClick={() => navigate('/')}>
               <ArrowLeft className="w-4 h-4 mr-2" />

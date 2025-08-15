@@ -644,7 +644,7 @@ export default function Dashboard() {
                     <DollarSign className="w-5 h-5 text-white" />
                   </div>
                   <h1 className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-                    FinanceiroLogotiq
+                    Financeiro
                   </h1>
                 </div>
               </Button>

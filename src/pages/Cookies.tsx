@@ -40,7 +40,7 @@ const Cookies = () => {
                   <DollarSign className="w-5 h-5 text-primary-foreground" />
                 </div>
                 <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                  FinanceiroLogotiq
+                  Financeiro
                 </h1>
               </div>
             </Button>
@@ -179,7 +179,7 @@ const Cookies = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Database className="w-5 h-5 text-primary" />
-                  3. Cookies Específicos do FinanceiroLogotiq
+                  3. Cookies Específicos do Financeiro
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -387,14 +387,14 @@ const Cookies = () => {
                   <div className="p-4 bg-muted/50 rounded-lg">
                     <h4 className="font-semibold mb-2">Suporte Técnico</h4>
                     <p className="text-sm text-muted-foreground">
-                      Email: suporte@financeirologotiq.com<br />
+                      Email: suporte@financeiro.com<br />
                       Para questões técnicas sobre cookies
                     </p>
                   </div>
                   <div className="p-4 bg-muted/50 rounded-lg">
                     <h4 className="font-semibold mb-2">Privacidade</h4>
                     <p className="text-sm text-muted-foreground">
-                      Email: privacidade@financeirologotiq.com<br />
+                      Email: privacidade@financeiro.com<br />
                       Para questões sobre proteção de dados
                     </p>
                   </div>

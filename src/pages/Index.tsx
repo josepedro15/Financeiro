@@ -53,7 +53,7 @@ const Index = () => {
                     <DollarSign className="w-5 h-5 text-primary-foreground" />
                   </div>
                   <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                    FinanceiroLogotiq
+                    Financeiro
                   </h1>
                 </div>
               </Button>
@@ -197,7 +197,7 @@ const Index = () => {
         <section className="py-20">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold mb-4">Por que escolher o FinanceiroLogotiq?</h2>
+              <h2 className="text-3xl font-bold mb-4">Por que escolher o Financeiro?</h2>
               <p className="text-xl text-muted-foreground">Resultados comprovados por centenas de empresas</p>
             </div>
             
@@ -438,7 +438,7 @@ const Index = () => {
                 <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
                   <DollarSign className="w-4 h-4 text-primary-foreground" />
                 </div>
-                <span className="text-lg font-bold">FinanceiroLogotiq</span>
+                <span className="text-lg font-bold">Financeiro</span>
               </div>
               <p className="text-muted-foreground mb-4">
                 A plataforma mais completa para gestão financeira empresarial.
@@ -487,7 +487,7 @@ const Index = () => {
                 <DollarSign className="w-3 h-3 text-primary-foreground" />
               </div>
               <span className="text-sm text-muted-foreground">
-                © 2024 FinanceiroLogotiq. Todos os direitos reservados.
+                © 2024 Financeiro. Todos os direitos reservados.
               </span>
             </div>
             <div className="flex space-x-6 text-sm text-muted-foreground">

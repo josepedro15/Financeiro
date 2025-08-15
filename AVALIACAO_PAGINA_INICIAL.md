@@ -1,10 +1,10 @@
-# 📊 Avaliação Completa da Página Inicial - FinanceiroLogotiq
+# 📊 Avaliação Completa da Página Inicial - Financeiro
 
 ## 🎯 Resumo Executivo
 
 **Pontuação Geral: 8.7/10** - **EXCELENTE**
 
-A página inicial do FinanceiroLogotiq demonstra uma implementação sólida com design moderno, boa performance e usabilidade adequada. Apresenta uma estrutura bem organizada que guia o usuário de forma eficaz através do funil de conversão.
+A página inicial do Financeiro demonstra uma implementação sólida com design moderno, boa performance e usabilidade adequada. Apresenta uma estrutura bem organizada que guia o usuário de forma eficaz através do funil de conversão.
 
 ---
 
@@ -320,7 +320,7 @@ onClick={() => document.getElementById('pricing')?.scrollIntoView()}
 
 ## 🏆 Conclusão
 
-A página inicial do FinanceiroLogotiq apresenta uma **implementação sólida e profissional** com:
+A página inicial do Financeiro apresenta uma **implementação sólida e profissional** com:
 
 - ✅ **Performance excelente** (9.0/10)
 - ✅ **Design moderno e atrativo** (9.2/10)
